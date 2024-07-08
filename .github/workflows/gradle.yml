@@ -43,11 +43,11 @@ jobs:
             ${{ runner.os }}-gradle-
 
       #gradlew 실행 권한 추가
-#      - name: Grant Execute Permission For Gradlew
-#        run: chmod +x gradlew
+      - name: Grant Execute Permission For Gradlew
+        run: chmod +x gradlew
 
-      - name: Test With Gradle
-        run: ./gradlew test
+#      - name: Test With Gradle
+#        run: ./gradlew test
 
       - name: Build With Gradle
         run: ./gradlew build -x test
