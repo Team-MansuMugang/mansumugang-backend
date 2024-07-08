@@ -28,6 +28,7 @@ jobs:
           echo "${{ secrets.APPLICATION_YAML}}" > application.yaml
           echo "${{ secrets.APPLICATION_COMMON_YAML}}" > application-common.yaml
           echo "${{ secrets.APPLICATION_DEV_YAML}}" > application-dev.yaml
+          echo "${{ secrets.APPLICATION_TEST_YAML}}" > application-test.yaml
           ls -al
       # gradle 캐싱
       - name: Gradle Caching
