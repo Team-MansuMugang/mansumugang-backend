@@ -127,7 +127,7 @@ jobs:
           script_stop: true
           # 여기서 -i가 아닌 -it로 진행하면 오류가 발생하고, -c가 없으면 도커가 아닌 호스트에서 경로를 찾는다. 주의
           script: |
-            docker exec -i nginx_mansumugang bash -c 'echo "set \$service_env ${{ env.STOPPED_UPSTREAM }};" > /etc/nginx/conf.d/service-env.inc && service nginx reload'
+            docker exec -i nginx-mansumugang bash -c 'echo "set \$service_env ${{ env.STOPPED_UPSTREAM }};" > /etc/nginx/conf.d/service-env.inc && service nginx reload'
 
       - name: Terminate Current Server
         uses: appleboy/ssh-action@master
