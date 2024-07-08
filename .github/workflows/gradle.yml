@@ -137,7 +137,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            running=$(docker inspect --format='{{.State.Running}}' ${{ env.CURRENT_UPSTREAM }}-mansugang 2>/dev/null || echo "false")
+            running=$(docker inspect --format='{{.State.Running}}' ${{ env.CURRENT_UPSTREAM }}-mansumugang 2>/dev/null || echo "false")
             if [[ "$running" == "true" ]]; then
               echo "${{ env.CURRENT_UPSTREAM }} 컨테이너 중지 및 제거 중..."
               cd ~/Desktop/mansumugang-service/${{env.CURRENT_UPSTREAM}}
