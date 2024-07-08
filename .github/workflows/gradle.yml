@@ -23,6 +23,7 @@ jobs:
 
       - name: Add Profiles
         run: |
+          mkdir -p src/main/resources
           cd src/main/resources
           echo "${{ secrets.APPLICATION_YAML}}" > application.yaml
           echo "${{ secrets.APPLICATION_COMMON_YAML}}" > application-common.yaml
