@@ -32,6 +32,10 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok:1.18.20'
 	annotationProcessor 'org.projectlombok:lombok:1.18.20'
 
+	// use lombok in test-code
+	testCompileOnly 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+
 	// spring data jpa
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
