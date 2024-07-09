@@ -72,7 +72,7 @@ public class ReIssueTokenService {
         // 5. 토큰 재발행
         String reissueToken = jwtTokenProvider.reIssueToken(resolvedAccessToken);
         valueOperations.getAndDelete(resolvedRefreshToken);
-        valueOperations.set(resolvedRefreshToken, resolvedAccessToken);
+        valueOperations.set(resolvedRefreshToken, reissueToken);
 
         return ReissueTokenDto.of(reissueToken);
     }
