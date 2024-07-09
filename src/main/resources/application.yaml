@@ -49,7 +49,7 @@ spring:
 jwt:
   secret: VlwEyVBsYt9V7zq57TejMnVUyzblYcfPQye08f7MGVA9XkHa
   access:
-    expiration: 10000
+    expiration: 6000000
     #    expiration:   10000
     header: Authorization
 
