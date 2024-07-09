@@ -48,10 +48,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
         }catch (Exception e){
 
-            if (request.getRequestURI().equals("/auth/refreshToken") && request.getMethod().equals(HttpMethod.POST.name())) {
+            if (request.getRequestURI().equals("/api/auth/refreshToken") && request.getMethod().equals(HttpMethod.POST.name())) {
                 chain.doFilter(request, response);
             }
-            if (request.getRequestURI().equals("/auth/logout") && request.getMethod().equals(HttpMethod.POST.name())) {
+            if (request.getRequestURI().equals("/api/auth/logout") && request.getMethod().equals(HttpMethod.POST.name())) {
                 chain.doFilter(request, response);
             }
 
