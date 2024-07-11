@@ -67,7 +67,7 @@ public class User implements UserDetails {
     }
 
 
-    public static User patientRequestDtoToUser( // 생년월일 추가필요
+    public static User patientRequestDtoToUser(
             PatientSignupRequestDto patientSignupRequestDto,
             PasswordEncoder passwordEncoder
     ) {
@@ -81,7 +81,7 @@ public class User implements UserDetails {
                 .build();
     }
 
-    public static User protectorRequestDtoToUser( // 생년월일 추가 필요
+    public static User protectorRequestDtoToUser(
             ProtectorSignUpRequestDto protectorSignUpRequestDto, PasswordEncoder passwordEncoder
     ) {
 

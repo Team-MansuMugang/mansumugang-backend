@@ -41,6 +41,10 @@ public enum ErrorType {
     ),
 
     // ----- Token ------
+
+
+
+    // ----- Token ------
     NotValidAccessTokenError(
             HttpStatus.UNAUTHORIZED, "유효하지 않은 AccessToken입니다."
     ),
