@@ -15,20 +15,29 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/location")
 public class PatientLocationController {
 
     private final UserLocationService userLocationService;
 
-    // 환자 현재 위치 정보를 프론트에 전달
-    @PostMapping("/location/{userId}")
-    public ResponseEntity<PatientLocationResponseDto> updateUserLocation(
-            @PathVariable(name = "userId") Long userid,
+    // 환자 현재 위치 정보 저장
+    @PostMapping("/user/{userId}")
+    public ResponseEntity<PatientLocationResponseDto> saveUserLocation(
+            @PathVariable(name = "userId") Long userId,
             @RequestBody PatientLocationRequestDto patientLocationRequestDto
     ){
-        PatientLocationDto patientLocationDto = userLocationService.saveUserLocation(userid, patientLocationRequestDto);
+        PatientLocationDto patientLocationDto = userLocationService.saveUserLocation(userId, patientLocationRequestDto);
 
 
         return new ResponseEntity<>(PatientLocationResponseDto.DtoToResponse(patientLocationDto), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<PatientLocationResponseDto> getUserLocation(
+            @PathVariable(name = "userId") Long userId
+    ){
+        PatientLocationDto patientLocationDto = userLocationService.getUserLocation(userId);
+
+        return new ResponseEntity<>(PatientLocationResponseDto.DtoToResponse(patientLocationDto), HttpStatus.OK);
     }
 }

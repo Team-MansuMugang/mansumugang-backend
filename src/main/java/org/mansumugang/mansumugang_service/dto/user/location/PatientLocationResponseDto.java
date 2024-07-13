@@ -6,13 +6,16 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @AllArgsConstructor
 @Builder
 public class PatientLocationResponseDto {
 
-    private Long id;
+    private String name;
+    private LocalDateTime updatedTime;
     private double longitude;
     private double latitude;
 
@@ -21,7 +24,8 @@ public class PatientLocationResponseDto {
     ){
 
         return PatientLocationResponseDto.builder()
-                .id(patientLocationDto.getId())
+                .name(patientLocationDto.getName())
+                .updatedTime(patientLocationDto.getUpdatedTime())
                 .longitude(patientLocationDto.getLongitude())
                 .latitude(patientLocationDto.getLatitude())
                 .build();

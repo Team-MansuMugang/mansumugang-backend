@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@Setter
 @Table(name = "userLocation")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -19,35 +20,38 @@ public class UserLocation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_id")
+    @Column(name = "location_id")
     private Long id;
 
     private double latitude;
 
     private double longitude;
 
+
     @CreatedDate
     private LocalDateTime createdAt;
 
-
+    // User와의 관계 정의
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    public UserLocation(Long id, double latitude, double longitude, LocalDateTime createdAt) {
-        this.id = id;
+
+
+    public UserLocation(double latitude, double longitude, LocalDateTime createdAt, User user) {
         this.latitude = latitude;
         this.longitude = longitude;
         this.createdAt = createdAt;
+        this.user = user;
     }
 
     public static UserLocation fromRequestDto(
-            Long userId, PatientLocationRequestDto patientLocationRequestDto
+            User user, PatientLocationRequestDto patientLocationRequestDto
     ){
         return UserLocation.builder()
-                .id(userId)
                 .latitude(patientLocationRequestDto.getLatitude())
                 .longitude(patientLocationRequestDto.getLongitude())
+                .user(user)
                 .build();
     }
 

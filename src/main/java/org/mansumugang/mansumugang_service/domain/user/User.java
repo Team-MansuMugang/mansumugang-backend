@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 @Entity
 @Getter
@@ -49,6 +50,11 @@ public class User implements UserDetails {
 
     @CreatedDate
     private LocalDateTime createdAt;
+
+    // UserLocation과의 관계 추가
+    @OneToMany(mappedBy = "user")
+    private List<UserLocation> userLocations;
+
 
     public User(
             String username,
