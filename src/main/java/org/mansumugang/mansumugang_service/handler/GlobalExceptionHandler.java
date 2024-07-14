@@ -1,8 +1,11 @@
-package org.mansumugang.mansumugang_service.exception;
+package org.mansumugang.mansumugang_service.handler;
 
 
-import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
+import org.mansumugang.mansumugang_service.exception.NotValidRequestErrorResponseDto;
+import org.mansumugang.mansumugang_service.exception.CustomErrorException;
+import org.mansumugang.mansumugang_service.exception.CustomNotValidErrorException;
+import org.mansumugang.mansumugang_service.exception.ErrorResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -12,30 +15,32 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.List;
 
-@Slf4j
-@RestControllerAdvice(annotations = {RestController.class})
+@ControllerAdvice
 public class GlobalExceptionHandler {
-
-    // 1. CustomErrorException 을 처리하는 메서드
     @ExceptionHandler(CustomErrorException.class)
-    protected ResponseEntity<ErrorResponseDto> handleCustomErrorException(CustomErrorException e) {
-        log.error(e.getMessage());
-        ErrorResponseDto errorResponseDto = ErrorResponseDto.fromException(e);
-        return new ResponseEntity<>(errorResponseDto, e.getErrorType().getHttpStatus());
+    public ResponseEntity<ErrorResponseDto> handleCustomErrorException(CustomErrorException ex) {
+        ErrorResponseDto errorResponseDto = ErrorResponseDto.fromException(ex);
+        return new ResponseEntity<>(errorResponseDto, ex.getErrorType().getHttpStatus());
     }
 
-    // 2. MethodArgumentTypeMismatchException 을 처리하는 메서드
+    @ExceptionHandler(CustomNotValidErrorException.class)
+    protected ResponseEntity<NotValidRequestErrorResponseDto> handleCustomNotValidErrorException(CustomNotValidErrorException e) {
+        NotValidRequestErrorResponseDto notValidRequestErrorResponseDto =
+                NotValidRequestErrorResponseDto.of(
+                        List.of(NotValidRequestErrorResponseDto.ErrorDescription.of(e.getField(), e.getMessage()))
+                );
+
+        return new ResponseEntity<>(notValidRequestErrorResponseDto, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     protected ResponseEntity<NotValidRequestErrorResponseDto> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
         NotValidRequestErrorResponseDto.ErrorDescription errorDescription
-                = NotValidRequestErrorResponseDto.ErrorDescription.of(ErrorType.QueryParamTypeMismatchError.getMessage());
+                = NotValidRequestErrorResponseDto.ErrorDescription.of( ErrorType.QueryParamTypeMismatchError.name(), ErrorType.QueryParamTypeMismatchError.getMessage());
         List<NotValidRequestErrorResponseDto.ErrorDescription> ErrorDescriptions
                 = List.of(errorDescription);
 
@@ -45,11 +50,10 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(notValidRequestErrorResponseDto, HttpStatus.BAD_REQUEST);
     }
 
-    // 3. MissingServletRequestParameterException 을 처리하는 메서드
     @ExceptionHandler(MissingServletRequestParameterException.class)
     protected ResponseEntity<NotValidRequestErrorResponseDto> handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
         NotValidRequestErrorResponseDto.ErrorDescription errorDescription
-                = NotValidRequestErrorResponseDto.ErrorDescription.of(ErrorType.MissingQueryParamError.getMessage());
+                = NotValidRequestErrorResponseDto.ErrorDescription.of(ErrorType.MissingQueryParamError.name(), ErrorType.MissingQueryParamError.getMessage());
         List<NotValidRequestErrorResponseDto.ErrorDescription> ErrorDescriptions
                 = List.of(errorDescription);
 
@@ -59,7 +63,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(notValidRequestErrorResponseDto, HttpStatus.BAD_REQUEST);
     }
 
-    // 4. AccessDeniedException 을 처리하는 메서드
+
     @ExceptionHandler(AccessDeniedException.class)
     protected ResponseEntity<ErrorResponseDto> handleAccessDeniedException(AccessDeniedException e) {
         ErrorResponseDto errorResponseDto =
@@ -71,7 +75,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponseDto, ErrorType.AccessDeniedError.getHttpStatus());
     }
 
-    // 5. BindException 을 처리하는 메서드
     @ExceptionHandler(BindException.class)
     protected ResponseEntity<NotValidRequestErrorResponseDto> handleBindException(BindException e) {
         List<FieldError> fieldErrors = e.getBindingResult().getFieldErrors();
@@ -85,7 +88,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(notValidRequestErrorResponseDto, HttpStatus.BAD_REQUEST);
     }
 
-    // 6. InternalAuthenticationServiceException 을 처리하는 메서드
     @ExceptionHandler(InternalAuthenticationServiceException.class)
     protected ResponseEntity<ErrorResponseDto> HandleInternalAuthenticationServiceException(Exception e) {
         ErrorResponseDto errorResponseDto =
@@ -97,11 +99,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponseDto, ErrorType.InternalServerError.getHttpStatus());
     }
 
-
-    // 7. 그 외 일반적인 예외를 처리하는 메서드
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ErrorResponseDto> HandleGeneralException(Exception e) {
-        log.error(e.getMessage());
         ErrorResponseDto errorResponseDto =
                 ErrorResponseDto.of(
                         ErrorType.InternalServerError.name(),
@@ -110,5 +109,4 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(errorResponseDto, ErrorType.InternalServerError.getHttpStatus());
     }
-
 }

@@ -15,7 +15,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class NotValidRequestErrorResponseDto {
-
     private String errorType;
     private String message;
     private List<ErrorDescription> errorDescriptions;
@@ -41,10 +40,12 @@ public class NotValidRequestErrorResponseDto {
     @AllArgsConstructor
     @Builder
     public static class ErrorDescription{
+        private String field;
         private String message;
 
-        public static ErrorDescription of(String message){
+        public static ErrorDescription of(String field, String message){
             return ErrorDescription.builder()
+                    .field(field)
                     .message(message)
                     .build();
         }
@@ -52,8 +53,11 @@ public class NotValidRequestErrorResponseDto {
 
         public static ErrorDescription of(FieldError error){
             return ErrorDescription.builder()
+                    .field(error.getField())
                     .message(error.getDefaultMessage())
                     .build();
         }
     }
+
+
 }
