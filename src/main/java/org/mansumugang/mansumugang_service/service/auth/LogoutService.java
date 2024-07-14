@@ -27,7 +27,7 @@ public class LogoutService {
 
         // resolve 된 refreshToken 이 null 이라면 에러 발생
         if (resolvedRefreshToken == null){
-            throw new CustomErrorException(ErrorType.NotValidRequestError);
+            throw new CustomErrorException(ErrorType.NotValidRefreshTokenError);
         }
 
         // 정상로직 2.

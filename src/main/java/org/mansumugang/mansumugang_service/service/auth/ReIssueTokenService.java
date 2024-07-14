@@ -31,8 +31,12 @@ public class ReIssueTokenService {
         log.info("resolve 된 refreshToken={}", resolvedRefreshToken);
 
         // resolve 된 access/refresh token 이 null 이라면 예외 발생
-        if (resolvedAccessToken == null || resolvedRefreshToken == null){
-            throw new CustomErrorException(ErrorType.NotValidRequestError);
+        if (resolvedAccessToken == null){
+            throw new CustomErrorException(ErrorType.NotValidAccessTokenError);
+        }
+
+        if(resolvedRefreshToken == null) {
+            throw new CustomErrorException(ErrorType.NotValidRefreshTokenError);
         }
 
         // 2. redis 에 저장된 토큰 가져오기
