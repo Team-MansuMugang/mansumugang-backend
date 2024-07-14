@@ -41,7 +41,7 @@ public class LogoutService {
 
         // 정상로직 3.
         // savedAccessToken 이 존재한다면 redis 에서 refreshToken 삭제
-        valueOperations.getAndDelete(savedAccessToken);
+        valueOperations.getAndDelete(resolvedRefreshToken);
     }
 
 }
