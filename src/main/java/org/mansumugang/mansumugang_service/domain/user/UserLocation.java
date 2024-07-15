@@ -23,10 +23,11 @@ public class UserLocation {
     @Column(name = "location_id")
     private Long id;
 
+    @Column(nullable = false)
     private double latitude;
 
+    @Column(nullable = false)
     private double longitude;
-
 
     @CreatedDate
     private LocalDateTime createdAt;

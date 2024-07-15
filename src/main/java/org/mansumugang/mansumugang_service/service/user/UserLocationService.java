@@ -38,9 +38,8 @@ public class UserLocationService {
         UserLocation savedUserLocation = userLocationRepository.save(UserLocation.fromRequestDto(findUser, patientLocationRequestDto));
         log.info("경위도 정보 저장 완료");
 
-        String nameOfFoundUser = findUser.getName();
 
-        return PatientLocationDto.fromEntity(nameOfFoundUser,savedUserLocation);
+        return PatientLocationDto.fromEntity(findUser,savedUserLocation);
     }
 
     public PatientLocationDto getUserLocation(Long userId){
@@ -48,15 +47,13 @@ public class UserLocationService {
         // 1. 요청으로 온 userId로 찾은 유저가 존재하는지 검증
         User findUser = validateUser(userId);
 
-        String nameOfFoundUser = findUser.getName(); // 유저 존재하면 해당 유저 이름 추출
-
         // 2. user_id로 찾아진 유저 마지막 위치 저장 시간순으로 내림차순 후 하나의 튜플 추출
         UserLocation foundedLocationInfo = userLocationRepository.findTopByUserOrderByCreatedAtDesc(findUser)
                 .orElseThrow(()-> new CustomErrorException(ErrorType.UserLocationInfoNotFoundError));
 
         UserLocation userLocation = new UserLocation(foundedLocationInfo.getLatitude(), foundedLocationInfo.getLongitude(), foundedLocationInfo.getCreatedAt(), findUser);
 
-        return PatientLocationDto.fromEntity(nameOfFoundUser, userLocation);
+        return PatientLocationDto.fromEntity(findUser, userLocation);
 
 
     }
