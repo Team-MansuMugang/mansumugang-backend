@@ -27,7 +27,8 @@ public class AuthController {
 
     // 로그인 관련
 
-    @PostMapping("/signup/patient") // 환자 회원가입
+    // 환자 회원가입
+    @PostMapping("/signup/patient")
     public ResponseEntity<SignUpResponseDto> patientSignup(
             @Valid @RequestBody PatientSignupRequestDto patientSignupRequestDto
     ){
@@ -38,7 +39,8 @@ public class AuthController {
 
     }
 
-    @PostMapping("/signup/protector") // 보호자 회원가입
+    // 보호자 회원가입
+    @PostMapping("/signup/protector")
     public ResponseEntity<SignUpResponseDto> protectorSignup(
             @Valid @RequestBody ProtectorSignUpRequestDto protectorSignUpRequestDto
             ){
@@ -46,7 +48,8 @@ public class AuthController {
         return new ResponseEntity<>(SignUpResponseDto.dtoToResponse(signUpDto), HttpStatus.CREATED);
     }
 
-    @PostMapping("/check/username") // 유저 id 중복체크 버튼
+    // 유저 id 중복체크 버튼
+    @PostMapping("/check/username")
     public ResponseEntity<UsernameDuplicationCheckResponseDto> checkUsernameDuplication(
             @Valid @RequestBody UsernameDuplicationCheckDto usernameDuplicationCheckDto
     ){

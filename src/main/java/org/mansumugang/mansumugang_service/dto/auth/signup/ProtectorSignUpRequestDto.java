@@ -38,7 +38,7 @@ public class ProtectorSignUpRequestDto {
     private String birthdate; // 생년월일
 
     @Email(message = "유효하지 않은 이메일입니다.")
-    @NotBlank(message = "이메일은 ")
+    @NotBlank(message = "이메일은 공백일 수 없습니다.")
     @Size(max = 30, message = "이메일은 최대 30자리까지 입력 가능합니다.")
     private String email; // 사용자 이메일
 

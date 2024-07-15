@@ -54,6 +54,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (request.getRequestURI().equals("/api/auth/logout") && request.getMethod().equals(HttpMethod.POST.name())) {
                 chain.doFilter(request, response);
             }
+            // user-location 추가
+            if (request.getRequestURI().equals("/api/location/user/\\d+") && request.getMethod().equals(HttpMethod.POST.name())) {
+                chain.doFilter(request, response);
+            }
 
             jwtExceptionHandler(response, e);
         }
