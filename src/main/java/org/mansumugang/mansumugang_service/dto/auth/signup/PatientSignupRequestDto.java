@@ -32,11 +32,6 @@ public class PatientSignupRequestDto {
     @Size(min = 2, max = 20, message = "이름이 너무 짧거나 깁니다.")
     private String name; // 이름
 
-    @NotBlank(message = "")
-    @Size(max = 20, message = "전화번호는 최대 20자리까지 입력해주세요.")
-    @Pattern(regexp = "^\\d{3}-\\d{3,4}-\\d{4}$", message = "올바르지 않은 전화번호 형식입니다.")
-    private String telephone; // 사용자 전화번호
-
     @NotBlank(message = "생년월일은 공백일 수 없습니다.")
     @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "올바른 생년월일 형식은 yyyy-MM-dd 입니다.")
     private String birthdate; // 생년월일
