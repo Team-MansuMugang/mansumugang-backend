@@ -25,11 +25,11 @@ public class UserLocationService {
     private final UserRepository userRepository;
 
     @Transactional
-    public PatientLocationDto saveUserLocation(Long userId, PatientLocationRequestDto patientLocationRequestDto ){
+    public PatientLocationDto saveUserLocation(User user, PatientLocationRequestDto patientLocationRequestDto ){
         log.info("saveUserLocation 호출");
 
         // 1. 요청으로 온 userId로 찾은 유저가 존재하는지 검증
-        User findUser = validateUser(userId);
+        User findUser = validateUser(user.getId());
 
         // 2. 경도, 위도 유효성 검사(대한민국 안에 존재하는지 체크)
         validateUserLocation(patientLocationRequestDto);
