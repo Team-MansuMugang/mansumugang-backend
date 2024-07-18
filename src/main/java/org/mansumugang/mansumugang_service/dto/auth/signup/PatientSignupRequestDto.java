@@ -36,6 +36,15 @@ public class PatientSignupRequestDto {
     @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "올바른 생년월일 형식은 yyyy-MM-dd 입니다.")
     private String birthdate; // 생년월일
 
+    /**
+     * 환자와 보호자 사이의 관계를 정립하기 위해 회원가입시에 보호자 아이디 넘겨받음.
+     */
+
+    @NotBlank(message = "아이디는 공백일 수 없습니다.")
+    @Size(min = 4, max = 16, message = "아이디는 4 ~ 16자리로 입력해주세요")
+    @Pattern(regexp = "^[A-Za-z0-9]+$", message = "아이디는 영어 소/대문자 및 숫자로 이루어져야합니다.")
+    private String protectorUsername; // 보호자 아이디
+
 
 
 }

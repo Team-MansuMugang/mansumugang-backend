@@ -32,9 +32,10 @@ public class AuthController {
     public ResponseEntity<SignUpResponseDto> patientSignup(
             @Valid @RequestBody PatientSignupRequestDto patientSignupRequestDto
     ){
-        log.info("회원가입 시작");
+        log.info("환자 회원가입 시작");
         SignUpDto signUpDto = signUpService.patientSignup(patientSignupRequestDto);
 
+        log.info("환자 회원가입 완료 및 응답 전송");
         return new ResponseEntity<>(SignUpResponseDto.dtoToResponse(signUpDto), HttpStatus.CREATED);
 
     }
@@ -43,14 +44,18 @@ public class AuthController {
     @PostMapping("/signup/protector")
     public ResponseEntity<SignUpResponseDto> protectorSignup(
             @Valid @RequestBody ProtectorSignUpRequestDto protectorSignUpRequestDto
-            ){
+    ){
+
+        log.info("보호자 회원가입 시작");
         SignUpDto signUpDto = signUpService.protectorSignup(protectorSignUpRequestDto);
+
+        log.info("보호자 회원가입 완료 및 응답 전송");
         return new ResponseEntity<>(SignUpResponseDto.dtoToResponse(signUpDto), HttpStatus.CREATED);
     }
 
-    // 유저 id 중복체크 버튼
+    // 회원가입 시  id 중복체크 버튼
     @PostMapping("/check/username")
-    public ResponseEntity<UsernameDuplicationCheckResponseDto> checkUsernameDuplication(
+    public ResponseEntity<UsernameDuplicationCheckResponseDto> checkPatientUsernameDuplication(
             @Valid @RequestBody UsernameDuplicationCheckDto usernameDuplicationCheckDto
     ){
 

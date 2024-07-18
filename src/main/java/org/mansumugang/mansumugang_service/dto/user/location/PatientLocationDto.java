@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.domain.user.UserLocation;
 
@@ -22,12 +23,12 @@ public class PatientLocationDto {
 
 
     public static PatientLocationDto fromEntity(
-            User finduser,
+            Patient foundPatient,
             UserLocation userLocation
     ){
 
         return PatientLocationDto.builder()
-                .name(finduser.getName())
+                .name(foundPatient.getName())
                 .updatedTime(userLocation.getCreatedAt())
                 .longitude(userLocation.getLongitude())
                 .latitude(userLocation.getLatitude())
