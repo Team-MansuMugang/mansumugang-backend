@@ -4,7 +4,7 @@ package org.mansumugang.mansumugang_service.controller.user;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.dto.user.location.PatientLocationDto;
 import org.mansumugang.mansumugang_service.dto.user.location.PatientLocationRequestDto;
 import org.mansumugang.mansumugang_service.dto.user.location.PatientLocationResponseDto;
@@ -25,10 +25,10 @@ public class PatientLocationController {
     // 환자 현재 위치 정보 저장
     @PostMapping("/save")
     public ResponseEntity<PatientLocationResponseDto> saveUserLocation(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal Patient patient,
             @RequestBody PatientLocationRequestDto patientLocationRequestDto
     ){
-        PatientLocationDto patientLocationDto = userLocationService.saveUserLocation(user, patientLocationRequestDto);
+        PatientLocationDto patientLocationDto = userLocationService.saveUserLocation(patient, patientLocationRequestDto);
 
 
         return new ResponseEntity<>(PatientLocationResponseDto.DtoToResponse(patientLocationDto), HttpStatus.CREATED);

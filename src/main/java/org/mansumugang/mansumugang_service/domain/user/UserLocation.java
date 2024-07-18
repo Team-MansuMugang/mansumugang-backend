@@ -32,27 +32,28 @@ public class UserLocation {
     @CreatedDate
     private LocalDateTime createdAt;
 
-    // User와의 관계 정의
+    // Patient 와의 관계 정의
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "patient_id", nullable = false)
+    private Patient patient;
 
 
 
-    public UserLocation(double latitude, double longitude, LocalDateTime createdAt, User user) {
+    public UserLocation(double latitude, double longitude, LocalDateTime createdAt, Patient patient) {
         this.latitude = latitude;
         this.longitude = longitude;
         this.createdAt = createdAt;
-        this.user = user;
+        this.patient = patient;
     }
 
     public static UserLocation fromRequestDto(
-            User user, PatientLocationRequestDto patientLocationRequestDto
+            Patient patient,
+            PatientLocationRequestDto patientLocationRequestDto
     ){
         return UserLocation.builder()
                 .latitude(patientLocationRequestDto.getLatitude())
                 .longitude(patientLocationRequestDto.getLongitude())
-                .user(user)
+                .patient(patient)
                 .build();
     }
 
