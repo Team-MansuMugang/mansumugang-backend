@@ -5,13 +5,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.mansumugang.mansumugang_service.constant.ErrorType;
-import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.UserLocation;
 import org.mansumugang.mansumugang_service.dto.user.location.PatientLocationDto;
 import org.mansumugang.mansumugang_service.dto.user.location.PatientLocationRequestDto;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
+import org.mansumugang.mansumugang_service.repository.PatientRepository;
 import org.mansumugang.mansumugang_service.repository.UserLocationRepository;
-import org.mansumugang.mansumugang_service.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import static org.mansumugang.mansumugang_service.constant.LocationBoundary.*;
@@ -22,48 +22,49 @@ import static org.mansumugang.mansumugang_service.constant.LocationBoundary.*;
 public class UserLocationService {
 
     private final UserLocationRepository userLocationRepository;
-    private final UserRepository userRepository;
+    private final PatientRepository patientRepository;
+//    private final UserRepository userRepository;
 
     @Transactional
-    public PatientLocationDto saveUserLocation(User user, PatientLocationRequestDto patientLocationRequestDto ){
+    public PatientLocationDto saveUserLocation(Patient patient, PatientLocationRequestDto patientLocationRequestDto ){
         log.info("saveUserLocation 호출");
 
         // 1. 요청으로 온 userId로 찾은 유저가 존재하는지 검증
-        User findUser = validateUser(user.getId());
+        Patient foundPatient = validateUser(patient.getId());
 
         // 2. 경도, 위도 유효성 검사(대한민국 안에 존재하는지 체크)
         validateUserLocation(patientLocationRequestDto);
 
         // 3. 경위도 정보 저장
-        UserLocation savedUserLocation = userLocationRepository.save(UserLocation.fromRequestDto(findUser, patientLocationRequestDto));
+        UserLocation savedUserLocation = userLocationRepository.save(UserLocation.fromRequestDto(foundPatient, patientLocationRequestDto));
         log.info("경위도 정보 저장 완료");
 
 
-        return PatientLocationDto.fromEntity(findUser,savedUserLocation);
+        return PatientLocationDto.fromEntity(foundPatient,savedUserLocation);
     }
 
     public PatientLocationDto getUserLocation(Long userId){
 
         // 1. 요청으로 온 userId로 찾은 유저가 존재하는지 검증
-        User findUser = validateUser(userId);
+        Patient foundPatient = validateUser(userId);
 
         // 2. user_id로 찾아진 유저 마지막 위치 저장 시간순으로 내림차순 후 하나의 튜플 추출
-        UserLocation foundedLocationInfo = userLocationRepository.findTopByUserOrderByCreatedAtDesc(findUser)
+        UserLocation foundedLocationInfo = userLocationRepository.findTopByPatientOrderByCreatedAtDesc(foundPatient)
                 .orElseThrow(()-> new CustomErrorException(ErrorType.UserLocationInfoNotFoundError));
 
-        UserLocation userLocation = new UserLocation(foundedLocationInfo.getLatitude(), foundedLocationInfo.getLongitude(), foundedLocationInfo.getCreatedAt(), findUser);
+        UserLocation userLocation = new UserLocation(foundedLocationInfo.getLatitude(), foundedLocationInfo.getLongitude(), foundedLocationInfo.getCreatedAt(), foundPatient);
 
-        return PatientLocationDto.fromEntity(findUser, userLocation);
+        return PatientLocationDto.fromEntity(foundPatient, userLocation);
 
 
     }
 
 
 
-    public User validateUser(Long userId) {
+    public Patient validateUser(Long userId) {
         log.info("userId로 사용자 찾기 시작, userId={}", userId);
 
-        return userRepository.findById(userId)
+        return patientRepository.findById(userId)
                 .orElseThrow(() -> {
                     log.error("userId로 찾은 유저가 존재하지 않음, userId={}", userId);
                     return new CustomErrorException(ErrorType.UserNotFoundError);
