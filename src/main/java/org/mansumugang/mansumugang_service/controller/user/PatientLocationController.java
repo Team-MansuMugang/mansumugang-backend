@@ -5,9 +5,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.mansumugang.mansumugang_service.domain.user.Patient;
-import org.mansumugang.mansumugang_service.domain.user.Protector;
+import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.user.location.PatientLocationDto;
-import org.mansumugang.mansumugang_service.dto.user.location.PatientLocationInquiryRequestDto;
 import org.mansumugang.mansumugang_service.dto.user.location.PatientLocationRequestDto;
 import org.mansumugang.mansumugang_service.dto.user.location.PatientLocationResponseDto;
 import org.mansumugang.mansumugang_service.service.user.UserLocationService;
@@ -27,7 +26,7 @@ public class PatientLocationController {
     // 환자 현재 위치 정보 저장
     @PostMapping("/save")
     public ResponseEntity<PatientLocationResponseDto> saveUserLocation(
-            @AuthenticationPrincipal Patient patient,
+            @AuthenticationPrincipal User patient,
             @RequestBody PatientLocationRequestDto patientLocationRequestDto
     ){
         PatientLocationDto patientLocationDto = userLocationService.saveUserLocation(patient, patientLocationRequestDto);
@@ -36,12 +35,12 @@ public class PatientLocationController {
         return new ResponseEntity<>(PatientLocationResponseDto.DtoToResponse(patientLocationDto), HttpStatus.CREATED);
     }
 
-    @GetMapping("/user")
+    @GetMapping("/user/{patient_id}")
     public ResponseEntity<PatientLocationResponseDto> getUserLocation(
-            @AuthenticationPrincipal Protector protector,
-            @RequestBody PatientLocationInquiryRequestDto patientLocationInquiryRequestDto
+            @AuthenticationPrincipal User protector,
+            @PathVariable("patient_id") Long patientId
     ){
-        PatientLocationDto patientLocationDto = userLocationService.getUserLocation(protector, patientLocationInquiryRequestDto);
+        PatientLocationDto patientLocationDto = userLocationService.getUserLocation(protector, patientId);
 
         return new ResponseEntity<>(PatientLocationResponseDto.DtoToResponse(patientLocationDto), HttpStatus.OK);
     }
