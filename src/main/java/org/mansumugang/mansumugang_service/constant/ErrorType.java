@@ -73,8 +73,28 @@ public enum ErrorType {
     ),
     NoSuchRefreshTokenError(
             HttpStatus.UNAUTHORIZED, "존재하지 않은 RefreshToken입니다."
-    ),;
+    ),
 
+    // ----- Medicine ------
+    NoSuchMedicineInTakeCategoryError(
+            HttpStatus.NOT_FOUND,"존재하지 않는 약 섭취 카테고리입니다"
+    ),
+    NoSuchMedicineError(
+            HttpStatus.NOT_FOUND,"존재하지 않는 약입니다"
+    ),
+    NotExistMedicineScheduleError(
+            HttpStatus.NOT_FOUND, "약에 대한 복용 간격이 존재하지 않습니다."
+    ),
+    NoSuchMedicineIntakeDayError(
+            HttpStatus.NOT_FOUND, "존재하지 않은 약 복용 요일입니다."
+    ),
+    NoSuchMedicineIntakeTimeError(
+            HttpStatus.NOT_FOUND, "존재하지 않은 약 복용 시간입니다."
+    ),
+    NoSuchDayTypeError(
+            HttpStatus.BAD_REQUEST, "유호하지 않은 요일입니다."
+    )
+    ;
 
     private final HttpStatus httpStatus;
     private final String message;
