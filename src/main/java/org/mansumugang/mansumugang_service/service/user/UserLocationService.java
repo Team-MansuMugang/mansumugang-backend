@@ -13,9 +13,7 @@ import org.mansumugang.mansumugang_service.dto.user.location.PatientLocationDto;
 import org.mansumugang.mansumugang_service.dto.user.location.PatientLocationRequestDto;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.PatientRepository;
-import org.mansumugang.mansumugang_service.repository.ProtectorRepository;
 import org.mansumugang.mansumugang_service.repository.UserLocationRepository;
-import org.mansumugang.mansumugang_service.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import static org.mansumugang.mansumugang_service.constant.LocationBoundary.*;
@@ -26,18 +24,18 @@ import static org.mansumugang.mansumugang_service.constant.LocationBoundary.*;
 public class UserLocationService {
 
     private final UserLocationRepository userLocationRepository;
-    private final UserRepository userRepository;
     private final PatientRepository patientRepository;
-    private final ProtectorRepository protectorRepository;
 
     @Transactional
     public PatientLocationDto saveUserLocation(User patient, PatientLocationRequestDto patientLocationRequestDto ){
         log.info("saveUserLocation 호출");
+        // 1. @AuthenticationPrincipal 로 받은 User 객체가 null 인지 검증
+        validateUser(patient);
 
-        // 1. 경도, 위도 유효성 검사(대한민국 안에 존재하는지 체크)
+        // 2. 경도, 위도 유효성 검사(대한민국 안에 존재하는지 체크)
         validateUserLocation(patientLocationRequestDto);
 
-        // 2. 경위도 정보 저장
+        // 3. 경위도 정보 저장
         UserLocation savedUserLocation = userLocationRepository.save(UserLocation.fromRequestDto((Patient) patient, patientLocationRequestDto));
         log.info("경위도 정보 저장 완료");
 
@@ -51,7 +49,7 @@ public class UserLocationService {
         log.info("환자, 보호자 유효성 검사 실시");
 
         Patient foundPatient = validatePatient(patientId);
-        validateProtector(protector); // protector 가 null 인지 검증
+        validateUser(protector); // protector 가 null 인지 검증
 
         log.info("환자, 보호자 유효성 검사 완료. 환자 고유번호(user_id)={}, 보호자 고유번호(user_id)={}", foundPatient.getId(), protector.getId());
 
@@ -70,6 +68,14 @@ public class UserLocationService {
 
 
     }
+    public void validateUser(User user) {
+        log.info("@AuthenticationPrincipal로 받은 User 객체가 null 인지 확인 시작");
+        if (user == null) {
+            throw new CustomErrorException(ErrorType.UserNotFoundError);
+        }
+
+        log.info("@AuthenticationPrincipal로 받은 User 객체가 null 인지 확인 완료");
+    }
 
     public Patient validatePatient(Long patientId) {
         log.info("patientId로 환자 찾기 시작, patientId={}", patientId);
@@ -79,12 +85,6 @@ public class UserLocationService {
                     log.error("userId로 찾은 환자가 존재하지 않음, userId={}", patientId);
                     return new CustomErrorException(ErrorType.UserNotFoundError);
                 });
-    }
-
-    public void validateProtector(User protector) {
-        if (protector == null) {
-            throw new CustomErrorException(ErrorType.UserNotFoundError);
-        }
     }
 
     private void checkUserIsProtectorOfPatient(Protector protector, Patient patient) {
