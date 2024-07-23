@@ -2,7 +2,6 @@ package org.mansumugang.mansumugang_service.domain.medicine;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.mansumugang.mansumugang_service.constant.DayType;
 import org.mansumugang.mansumugang_service.dto.medicine.common.MedicineIntakeTimeDto;
 
 import java.time.LocalTime;

@@ -2,7 +2,6 @@ package org.mansumugang.mansumugang_service.service.medicine;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.mansumugang.mansumugang_service.constant.DayType;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
 import org.mansumugang.mansumugang_service.domain.medicine.Medicine;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineInTakeTime;
@@ -21,9 +20,8 @@ import org.mansumugang.mansumugang_service.repository.*;
 import org.mansumugang.mansumugang_service.utils.DateParser;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Service
@@ -149,14 +147,14 @@ public class MedicineService {
 
     private void saveMedicineIntakeDays(Medicine medicine, Patient patient, MedicineIntakeDayDto medicineIntakeDay) {
 
-        Map<DayType, Boolean> daysMap = new LinkedHashMap<>();
-        daysMap.put(DayType.MONDAY, medicineIntakeDay.getMonday());
-        daysMap.put(DayType.TUESDAY, medicineIntakeDay.getTuesday());
-        daysMap.put(DayType.WEDNESDAY, medicineIntakeDay.getWednesday());
-        daysMap.put(DayType.THURSDAY, medicineIntakeDay.getThursday());
-        daysMap.put(DayType.FRIDAY, medicineIntakeDay.getFriday());
-        daysMap.put(DayType.SATURDAY, medicineIntakeDay.getSaturday());
-        daysMap.put(DayType.SUNDAY, medicineIntakeDay.getSunday());
+        Map<DayOfWeek, Boolean> daysMap = new LinkedHashMap<>();
+        daysMap.put(DayOfWeek.MONDAY, medicineIntakeDay.getMonday());
+        daysMap.put(DayOfWeek.TUESDAY, medicineIntakeDay.getTuesday());
+        daysMap.put(DayOfWeek.WEDNESDAY, medicineIntakeDay.getWednesday());
+        daysMap.put(DayOfWeek.THURSDAY, medicineIntakeDay.getThursday());
+        daysMap.put(DayOfWeek.FRIDAY, medicineIntakeDay.getFriday());
+        daysMap.put(DayOfWeek.SATURDAY, medicineIntakeDay.getSaturday());
+        daysMap.put(DayOfWeek.SUNDAY, medicineIntakeDay.getSunday());
 
         daysMap.forEach((dayType, shouldAdd) -> {
             if (shouldAdd) {

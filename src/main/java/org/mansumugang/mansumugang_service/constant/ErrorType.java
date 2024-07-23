@@ -93,6 +93,12 @@ public enum ErrorType {
     ),
     NoSuchDayTypeError(
             HttpStatus.BAD_REQUEST, "유호하지 않은 요일입니다."
+    ),
+    NoMedicineIntakeRecordForDurationError(
+            HttpStatus.BAD_REQUEST, "해당 기간에는 약 복용 일정이 존재하지 않습니다."
+    ),
+    NonDosageTimeError(
+            HttpStatus.BAD_REQUEST, "해당 약을 복용할 수 없는 시간입니다."
     )
     ;
 

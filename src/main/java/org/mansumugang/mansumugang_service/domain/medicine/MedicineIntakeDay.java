@@ -2,9 +2,9 @@ package org.mansumugang.mansumugang_service.domain.medicine;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.mansumugang.mansumugang_service.constant.DayType;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
-import org.mansumugang.mansumugang_service.domain.user.User;
+
+import java.time.DayOfWeek;
 
 @Entity
 @Getter
@@ -24,9 +24,9 @@ public class MedicineIntakeDay {
     private Medicine medicine;
 
     @Column(nullable = false)
-    private DayType day;
+    private DayOfWeek day;
 
-    public static MedicineIntakeDay of(Medicine newMedicine, Patient patient,  DayType dayType) {
+    public static MedicineIntakeDay of(Medicine newMedicine, Patient patient,  DayOfWeek dayType) {
         return MedicineIntakeDay.builder()
                 .medicine(newMedicine)
                 .patient(patient)
