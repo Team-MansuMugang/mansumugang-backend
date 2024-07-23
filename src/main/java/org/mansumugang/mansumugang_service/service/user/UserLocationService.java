@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.mansumugang.mansumugang_service.constant.ErrorType;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
+import org.mansumugang.mansumugang_service.domain.user.Protector;
+import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.domain.user.UserLocation;
 import org.mansumugang.mansumugang_service.dto.user.location.PatientLocationDto;
 import org.mansumugang.mansumugang_service.dto.user.location.PatientLocationRequestDto;
@@ -23,32 +25,40 @@ public class UserLocationService {
 
     private final UserLocationRepository userLocationRepository;
     private final PatientRepository patientRepository;
-//    private final UserRepository userRepository;
 
     @Transactional
-    public PatientLocationDto saveUserLocation(Patient patient, PatientLocationRequestDto patientLocationRequestDto ){
+    public PatientLocationDto saveUserLocation(User patient, PatientLocationRequestDto patientLocationRequestDto ){
         log.info("saveUserLocation 호출");
-
-        // 1. 요청으로 온 userId로 찾은 유저가 존재하는지 검증
-        Patient foundPatient = validateUser(patient.getId());
+        // 1. @AuthenticationPrincipal 로 받은 User 객체가 null 인지 검증
+        validateUser(patient);
 
         // 2. 경도, 위도 유효성 검사(대한민국 안에 존재하는지 체크)
         validateUserLocation(patientLocationRequestDto);
 
         // 3. 경위도 정보 저장
-        UserLocation savedUserLocation = userLocationRepository.save(UserLocation.fromRequestDto(foundPatient, patientLocationRequestDto));
+        UserLocation savedUserLocation = userLocationRepository.save(UserLocation.fromRequestDto((Patient) patient, patientLocationRequestDto));
         log.info("경위도 정보 저장 완료");
 
 
-        return PatientLocationDto.fromEntity(foundPatient,savedUserLocation);
+        return PatientLocationDto.fromEntity((Patient) patient,savedUserLocation);
     }
 
-    public PatientLocationDto getUserLocation(Long userId){
+    public PatientLocationDto getUserLocation(User protector, Long patientId){
 
         // 1. 요청으로 온 userId로 찾은 유저가 존재하는지 검증
-        Patient foundPatient = validateUser(userId);
+        log.info("환자, 보호자 유효성 검사 실시");
 
-        // 2. user_id로 찾아진 유저 마지막 위치 저장 시간순으로 내림차순 후 하나의 튜플 추출
+        Patient foundPatient = validatePatient(patientId);
+        validateUser(protector); // protector 가 null 인지 검증
+
+        log.info("환자, 보호자 유효성 검사 완료. 환자 고유번호(user_id)={}, 보호자 고유번호(user_id)={}", foundPatient.getId(), protector.getId());
+
+        // 2. 요청으로 온 보호자의 엑세스 토큰으로 보호자의 환자 조회
+        log.info("보호자와 환자 간 관계 유효성 검사 시작");
+        checkUserIsProtectorOfPatient((Protector) protector, foundPatient);
+
+
+        // 3. user_id로 찾아진 유저 마지막 위치 저장 시간순으로 내림차순 후 하나의 튜플 추출
         UserLocation foundedLocationInfo = userLocationRepository.findTopByPatientOrderByCreatedAtDesc(foundPatient)
                 .orElseThrow(()-> new CustomErrorException(ErrorType.UserLocationInfoNotFoundError));
 
@@ -58,17 +68,32 @@ public class UserLocationService {
 
 
     }
+    public void validateUser(User user) {
+        log.info("@AuthenticationPrincipal로 받은 User 객체가 null 인지 확인 시작");
+        if (user == null) {
+            throw new CustomErrorException(ErrorType.UserNotFoundError);
+        }
 
+        log.info("@AuthenticationPrincipal로 받은 User 객체가 null 인지 확인 완료");
+    }
 
+    public Patient validatePatient(Long patientId) {
+        log.info("patientId로 환자 찾기 시작, patientId={}", patientId);
 
-    public Patient validateUser(Long userId) {
-        log.info("userId로 사용자 찾기 시작, userId={}", userId);
-
-        return patientRepository.findById(userId)
+        return patientRepository.findById(patientId)
                 .orElseThrow(() -> {
-                    log.error("userId로 찾은 유저가 존재하지 않음, userId={}", userId);
+                    log.error("userId로 찾은 환자가 존재하지 않음, userId={}", patientId);
                     return new CustomErrorException(ErrorType.UserNotFoundError);
                 });
+    }
+
+    private void checkUserIsProtectorOfPatient(Protector protector, Patient patient) {
+
+        log.info("유저가 환자의 보호자인지 검증 시작");
+        if(!patient.getProtector().getUsername().equals(protector.getUsername())) {
+            throw new CustomErrorException(ErrorType.AccessDeniedError);
+        }
+        log.info("유저가 환자의 보호자인지 검증 완료");
     }
 
 

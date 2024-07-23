@@ -23,12 +23,12 @@ public class PatientLocationDto {
 
 
     public static PatientLocationDto fromEntity(
-            Patient foundPatient,
+            Patient patient,
             UserLocation userLocation
     ){
 
         return PatientLocationDto.builder()
-                .name(foundPatient.getName())
+                .name(patient.getName())
                 .updatedTime(userLocation.getCreatedAt())
                 .longitude(userLocation.getLongitude())
                 .latitude(userLocation.getLatitude())

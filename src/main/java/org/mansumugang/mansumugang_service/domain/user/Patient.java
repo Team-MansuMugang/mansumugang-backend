@@ -11,6 +11,7 @@ import java.util.List;
 @Entity
 @DiscriminatorValue("Patient")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
 public class Patient extends User {
 
     // Protector 와의 관계 정의
