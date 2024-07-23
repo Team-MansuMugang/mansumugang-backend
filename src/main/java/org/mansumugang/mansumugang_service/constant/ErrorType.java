@@ -39,8 +39,8 @@ public enum ErrorType {
     UserNotFoundError(
             HttpStatus.NOT_FOUND, "유저 정보를 찾을 수 없습니다."
     ),
-    RelationDismatchError(
-            HttpStatus.NOT_FOUND, "보호자의 환자 명단에서 해당 환자를 찾을 수 없습니다."
+    UserTypeDismatchError(
+            HttpStatus.NOT_FOUND, "해당 유저는 보호자가 아닌 환자입니다."
     ),
 
     // ----- Location ------

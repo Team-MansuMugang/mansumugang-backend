@@ -62,9 +62,18 @@ public class AuthController {
         // 아이디 중복 확인
         signUpService.checkUsernameDuplication(usernameDuplicationCheckDto);
 
-        // 성공 로직(responeDto 로 변환 및 반환)
+        // 성공 로직(responseDto 로 변환 및 반환)
         return new ResponseEntity<>(new UsernameDuplicationCheckResponseDto(), HttpStatus.OK);
 
+    }
+
+    @PostMapping("/check/protectorUsername")
+    public ResponseEntity<ProtectorUsernameCheckResponseDto> checkProtectorUsername(
+            @Valid @RequestBody ProtectorUsernameCheckRequestDto protectorUsernameCheckRequestDto
+    ){
+        signUpService.checkProtectorUsername(protectorUsernameCheckRequestDto);
+
+        return new ResponseEntity<>(new ProtectorUsernameCheckResponseDto(), HttpStatus.OK);
     }
 
     @PostMapping("/check/nickname") // 유저 닉네임 중복확인 버튼

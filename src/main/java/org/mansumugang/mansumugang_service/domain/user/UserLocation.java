@@ -33,7 +33,7 @@ public class UserLocation {
     private LocalDateTime createdAt;
 
     // Patient 와의 관계 정의
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 
