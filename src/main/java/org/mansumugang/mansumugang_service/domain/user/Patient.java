@@ -15,7 +15,7 @@ import java.util.List;
 public class Patient extends User {
 
     // Protector 와의 관계 정의
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "protector_id", nullable = false)
     private Protector protector;
 
