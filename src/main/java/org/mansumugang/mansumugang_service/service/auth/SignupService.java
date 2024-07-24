@@ -15,6 +15,7 @@ import org.mansumugang.mansumugang_service.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -94,6 +95,22 @@ public class SignupService {
             throw new CustomErrorException(ErrorType.DuplicatedUsernameError);
 
         }
+    }
+
+    public void checkProtectorUsername(ProtectorUsernameCheckRequestDto protectorUsernameCheckRequestDto){
+
+        // 1. userRepository 에서 requestDto 로 받은 아이디로 해당 유저 존재하는지 확인 없으면 에러 발생.
+        Optional<User> foundUser = userRepository.findByUsername(protectorUsernameCheckRequestDto.getUsername());
+
+        if (foundUser.isEmpty()){
+            throw new CustomErrorException(ErrorType.UserNotFoundError);
+        }
+
+        // 2. 찾은 유저의 userType 이 User_protector 라면 패스, User_patient 라면 오류 발생.
+        if (Objects.equals(foundUser.get().getUsertype(), "User_patient")){
+            throw new CustomErrorException(ErrorType.UserTypeDismatchError);
+        }
+
     }
 
     public void checkNicknameDuplication(NicknameDuplicationCheckDto nicknameDuplicationCheckDto){
