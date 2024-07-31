@@ -11,15 +11,13 @@ import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSchedule;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSummaryInfoDto;
-import org.mansumugang.mansumugang_service.dto.medicine.common.MedicineIntakeDayDto;
 import org.mansumugang.mansumugang_service.dto.medicine.medicineDelete.MedicineDeleteRequestDto;
-import org.mansumugang.mansumugang_service.dto.medicine.medicineSave.MedicineSaveRequestDto;
+import org.mansumugang.mansumugang_service.dto.medicine.MedicineSave;
 import org.mansumugang.mansumugang_service.dto.medicine.medicineUpdate.MedicineUpdateRequestDto;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.exception.CustomNotValidErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
 import org.mansumugang.mansumugang_service.utils.DateParser;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
@@ -60,7 +58,7 @@ public class MedicineService {
         return MedicineSchedule.Dto.of(parsedTargetDate, elements);
     }
 
-    public void saveMedicine(User user, MedicineSaveRequestDto requestDto) {
+    public void saveMedicine(User user, MedicineSave.Request requestDto) {
         Protector validProtector = validateProtector(user);
         Patient foundPatient = findPatient(requestDto.getPatientId());
         checkUserIsProtectorOfPatient(validProtector, foundPatient);
@@ -140,7 +138,7 @@ public class MedicineService {
     }
 
 
-    private void saveMedicineIntakeDays(Medicine medicine, Patient patient, MedicineIntakeDayDto medicineIntakeDay) {
+    private void saveMedicineIntakeDays(Medicine medicine, Patient patient, MedicineSave.MedicineIntakeDay medicineIntakeDay) {
 
         Map<DayOfWeek, Boolean> daysMap = new LinkedHashMap<>();
         daysMap.put(DayOfWeek.MONDAY, medicineIntakeDay.getMonday());

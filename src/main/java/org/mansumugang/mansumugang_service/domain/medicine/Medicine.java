@@ -3,7 +3,7 @@ package org.mansumugang.mansumugang_service.domain.medicine;
 import jakarta.persistence.*;
 import lombok.*;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
-import org.mansumugang.mansumugang_service.dto.medicine.medicineSave.MedicineSaveRequestDto;
+import org.mansumugang.mansumugang_service.dto.medicine.MedicineSave;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -44,7 +44,7 @@ public class Medicine {
     private LocalDateTime updatedAt;
 
     public static Medicine of(Patient patient,
-                              MedicineSaveRequestDto requestDto,
+                              MedicineSave.Request requestDto,
                               LocalDate parsedMedicineIntakeStopDay,
                               String medicineImageName) {
         return Medicine.builder()

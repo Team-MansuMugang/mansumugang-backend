@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import org.mansumugang.mansumugang_service.dto.medicine.common.MedicineIntakeDayDto;
+import org.mansumugang.mansumugang_service.dto.medicine.MedicineSave;
 import org.mansumugang.mansumugang_service.validation.ValidDate;
 
 import java.time.LocalTime;
@@ -30,7 +30,7 @@ public class MedicineUpdateRequestDto {
     private List<LocalTime> medicineIntakeTimes;
 
     @Valid
-    private MedicineIntakeDayDto medicineIntakeDays;
+    private MedicineSave.MedicineIntakeDay medicineIntakeDays;
 
     @ValidDate(message = "유효하지 않은 날짜 형식입니다.")
     private String medicineIntakeStopDay;
