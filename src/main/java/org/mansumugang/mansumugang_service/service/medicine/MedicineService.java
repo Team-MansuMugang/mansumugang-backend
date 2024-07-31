@@ -9,6 +9,8 @@ import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeDay;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.dto.medicine.MedicineSchedule;
+import org.mansumugang.mansumugang_service.dto.medicine.MedicineSummaryInfoDto;
 import org.mansumugang.mansumugang_service.dto.medicine.common.MedicineIntakeDayDto;
 import org.mansumugang.mansumugang_service.dto.medicine.common.MedicineIntakeTimeDto;
 import org.mansumugang.mansumugang_service.dto.medicine.medicineDelete.MedicineDeleteRequestDto;
@@ -22,7 +24,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,25 +40,27 @@ public class MedicineService {
     private final DateParser dateParser;
 
     private final PatientRepository patientRepository;
-    private final ProtectorRepository protectorRepository;
 
-    public void getMedicineByDate(User user, Long patientId, String targetDateStr){
+    public MedicineSchedule.Dto getMedicineByDate(User user, Long patientId, String targetDateStr) {
         Protector validProtector = validateProtector(user);
         Patient foundPatient = findPatient(patientId);
         checkUserIsProtectorOfPatient(validProtector, foundPatient);
 
         LocalDate parsedTargetDate = dateParser.parseDate(targetDateStr);
 
-        /*
-        TargetDate에 대한 요일 얻기
-        환자 아이디와 요일을 이용하여 약 복용 스케줄 필터링 하기
-        필터링 된 약 복용 스케줄에서의 약 아이디만 가져오기
-        약 아이디마다 복용시간 가져오기
-        약 아이디, 약 복용시간 아이디, 약 복용 스케줄 아이디, 약 복용일을 이용하여 약 복용여부 찾기
-        */
+        List<MedicineSummaryInfoDto> medicineDayInfos =
+                medicineIntakeRecordRepository.findMedicineScheduleByDate(parsedTargetDate, patientId, parsedTargetDate.getDayOfWeek());
+
+
+        Map<LocalTime, List<MedicineSummaryInfoDto>> collect = medicineDayInfos.stream()
+                .collect(Collectors.groupingBy(MedicineSummaryInfoDto::getMedicineIntakeTime));
+
+        List<MedicineSchedule.Element> elements = new ArrayList<>();
+        collect.forEach((localTime, medicineSummaryInfos) -> elements.add(MedicineSchedule.Element.of(localTime, medicineSummaryInfos)));
+        return MedicineSchedule.Dto.of(parsedTargetDate, elements);
     }
 
-    public void getMedicineById(User user, Long patientId, Long medicineId){
+    public void getMedicineById(User user, Long patientId, Long medicineId) {
         Protector validProtector = validateProtector(user);
         Patient foundPatient = findPatient(patientId);
         checkUserIsProtectorOfPatient(validProtector, foundPatient);
@@ -70,7 +76,7 @@ public class MedicineService {
         checkUserIsProtectorOfPatient(validProtector, foundPatient);
 
         LocalDate parsedMedicineIntakeStopDay = dateParser.parseDate(requestDto.getMedicineIntakeStopDay());
-        if(!parsedMedicineIntakeStopDay.isAfter(LocalDate.now())) {
+        if (!parsedMedicineIntakeStopDay.isAfter(LocalDate.now())) {
             throw new CustomNotValidErrorException("medicineIntakeStopDay", "약 복용 중단일자는 금일 이후여야 합니다.");
         }
         validateMedicineIntakeTimes(requestDto.getMedicineIntakeTimes());
@@ -89,28 +95,28 @@ public class MedicineService {
         Medicine foundMedicine = medicineRepository.findById(medicineId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
 
-        if(requestDto.getMedicineName() != null) {
+        if (requestDto.getMedicineName() != null) {
             foundMedicine.setMedicineName(requestDto.getMedicineName());
         }
 
-        if(requestDto.getHospitalName() != null) {
+        if (requestDto.getHospitalName() != null) {
             foundMedicine.setHospitalName(requestDto.getHospitalName());
         }
 
-        if(requestDto.getMedicineDescription() != null) {
+        if (requestDto.getMedicineDescription() != null) {
             foundMedicine.setMedicineDescription(requestDto.getMedicineDescription());
         }
 
-        if(requestDto.getMedicineIntakeStopDay() != null) {
+        if (requestDto.getMedicineIntakeStopDay() != null) {
             LocalDate parsedMedicineIntakeStopDay = dateParser.parseDate(requestDto.getMedicineIntakeStopDay());
-            if(!parsedMedicineIntakeStopDay.isAfter(LocalDate.now())) {
+            if (!parsedMedicineIntakeStopDay.isAfter(LocalDate.now())) {
                 throw new CustomNotValidErrorException("medicineIntakeStopDay", "약 복용 중단일자는 금일 이후여야 합니다.");
             }
 
             foundMedicine.setIntakeStopDate(parsedMedicineIntakeStopDay);
         }
 
-        if(requestDto.getMedicineIntakeTimes() != null) {
+        if (requestDto.getMedicineIntakeTimes() != null) {
             validateMedicineIntakeTimes(requestDto.getMedicineIntakeTimes());
 
             List<MedicineInTakeTime> foundMedicineInTakeTimes = medicineIntakeTimeRepository.findAllByMedicine(foundMedicine);
@@ -120,7 +126,7 @@ public class MedicineService {
             saveMedicineIntakeTimes(foundMedicine, requestDto.getMedicineIntakeTimes());
         }
 
-        if(requestDto.getMedicineIntakeDays() != null) {
+        if (requestDto.getMedicineIntakeDays() != null) {
             List<MedicineIntakeDay> foundMedicineInTakeDays = medicineIntakeDayRepository.findAllByMedicine(foundMedicine);
             foundMedicineInTakeDays.forEach(medicineIntakeRecordRepository::deleteByMedicineIntakeDay);
             medicineIntakeDayRepository.deleteAll(foundMedicineInTakeDays);
@@ -142,7 +148,6 @@ public class MedicineService {
         medicineIntakeDayRepository.deleteAllByMedicine(foundMedicine);
         medicineRepository.delete(foundMedicine);
     }
-
 
 
     private void saveMedicineIntakeDays(Medicine medicine, Patient patient, MedicineIntakeDayDto medicineIntakeDay) {
@@ -171,7 +176,8 @@ public class MedicineService {
                     String hours = String.valueOf(medicineIntakeTime.getMedicineIntakeHours());
                     String minutes = String.valueOf(medicineIntakeTime.getMedicineIntakeMinutes());
                     String time = hours + minutes;
-                    if (!MedicineIntakeTimeSet.add(time)) throw new CustomNotValidErrorException("medicineIntakeTime", "중복된 시간이 존재합니다.");
+                    if (!MedicineIntakeTimeSet.add(time))
+                        throw new CustomNotValidErrorException("medicineIntakeTime", "중복된 시간이 존재합니다.");
                 }
         );
     }
@@ -182,25 +188,25 @@ public class MedicineService {
         );
     }
 
-    private Patient findPatient(Long patientId){
+    private Patient findPatient(Long patientId) {
         return patientRepository.findById(patientId).orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
     }
 
-    private Protector validateProtector(User user){
+    private Protector validateProtector(User user) {
         if (user == null) {
             throw new CustomErrorException(ErrorType.UserNotFoundError);
         }
 
-        if(user instanceof Protector){
+        if (user instanceof Protector) {
             return (Protector) user;
         }
 
         throw new CustomErrorException(ErrorType.AccessDeniedError);
     }
 
-    private void checkUserIsProtectorOfPatient(Protector targetProtector, Patient patient){
+    private void checkUserIsProtectorOfPatient(Protector targetProtector, Patient patient) {
         // TODO: equals, hashcode 구현
-        if(!patient.getProtector().getUsername().equals(targetProtector.getUsername())) {
+        if (!patient.getProtector().getUsername().equals(targetProtector.getUsername())) {
             throw new CustomErrorException(ErrorType.AccessDeniedError);
         }
     }
