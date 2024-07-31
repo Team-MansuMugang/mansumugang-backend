@@ -5,8 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSchedule;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineUpdate;
-import org.mansumugang.mansumugang_service.dto.medicine.medicineDelete.MedicineDeleteRequestDto;
-import org.mansumugang.mansumugang_service.dto.medicine.medicineDelete.MedicineDeleteResponseDto;
+import org.mansumugang.mansumugang_service.dto.medicine.MedicineDelete;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSave;
 import org.mansumugang.mansumugang_service.service.medicine.MedicineService;
 import org.springframework.http.HttpStatus;
@@ -44,10 +43,10 @@ public class MedicineController {
     }
 
     @DeleteMapping("/{medicineId}")
-    public ResponseEntity<MedicineDeleteResponseDto> deleteMedicine(@AuthenticationPrincipal User user,
+    public ResponseEntity<MedicineDelete.Response> deleteMedicine(@AuthenticationPrincipal User user,
                                                                     @PathVariable Long medicineId,
-                                                                    @Valid @RequestBody MedicineDeleteRequestDto requestDto) {
+                                                                    @Valid @RequestBody MedicineDelete.Request requestDto) {
         medicineService.deleteMedicine(user, medicineId, requestDto);
-        return new ResponseEntity<>(new MedicineDeleteResponseDto(), HttpStatus.CREATED);
+        return new ResponseEntity<>(MedicineDelete.Response.createNewResponse(), HttpStatus.CREATED);
     }
 }

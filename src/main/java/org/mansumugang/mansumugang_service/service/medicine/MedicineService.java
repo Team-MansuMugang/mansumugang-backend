@@ -12,7 +12,7 @@ import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSchedule;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSummaryInfoDto;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineUpdate;
-import org.mansumugang.mansumugang_service.dto.medicine.medicineDelete.MedicineDeleteRequestDto;
+import org.mansumugang.mansumugang_service.dto.medicine.MedicineDelete;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSave;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.exception.CustomNotValidErrorException;
@@ -153,7 +153,7 @@ public class MedicineService {
         }
     }
 
-    public void deleteMedicine(User user, Long medicineId, MedicineDeleteRequestDto requestDto) {
+    public void deleteMedicine(User user, Long medicineId, MedicineDelete.Request requestDto) {
         Protector validProtector = validateProtector(user);
         Patient foundPatient = findPatient(requestDto.getPatientId());
         checkUserIsProtectorOfPatient(validProtector, foundPatient);
