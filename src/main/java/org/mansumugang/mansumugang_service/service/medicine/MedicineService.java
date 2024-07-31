@@ -11,9 +11,9 @@ import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSchedule;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSummaryInfoDto;
+import org.mansumugang.mansumugang_service.dto.medicine.MedicineUpdate;
 import org.mansumugang.mansumugang_service.dto.medicine.medicineDelete.MedicineDeleteRequestDto;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSave;
-import org.mansumugang.mansumugang_service.dto.medicine.medicineUpdate.MedicineUpdateRequestDto;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.exception.CustomNotValidErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
@@ -75,7 +75,7 @@ public class MedicineService {
         saveMedicineIntakeTimes(newMedicine, requestDto.getMedicineIntakeTimes());
     }
 
-    public void updateMedicine(User user, Long medicineId, MedicineUpdateRequestDto requestDto) {
+    public void updateMedicine(User user, Long medicineId, MedicineUpdate.Request requestDto) {
         Protector validProtector = validateProtector(user);
         Patient foundPatient = findPatient(requestDto.getPatientId());
         checkUserIsProtectorOfPatient(validProtector, foundPatient);
@@ -104,22 +104,52 @@ public class MedicineService {
             foundMedicine.setIntakeStopDate(parsedMedicineIntakeStopDay);
         }
 
-        if (requestDto.getMedicineIntakeTimes() != null) {
-            validateMedicineIntakeTimes(requestDto.getMedicineIntakeTimes());
+        if (requestDto.getMedicineIntakeTimeToAdd() != null) {
+            validateMedicineIntakeTimes(requestDto.getMedicineIntakeTimeToAdd());
+            for (LocalTime newMedicineIntakeTime : requestDto.getMedicineIntakeTimeToAdd()) {
+                Optional<MedicineInTakeTime> foundMedicineIntakeTime = medicineIntakeTimeRepository.findByMedicineAndMedicineIntakeTime(foundMedicine, newMedicineIntakeTime);
+                if (foundMedicineIntakeTime.isPresent()) {
+                    throw new CustomErrorException(ErrorType.AlreadyExistMedicineIntakeTimeError);
+                }
 
-            List<MedicineInTakeTime> foundMedicineInTakeTimes = medicineIntakeTimeRepository.findAllByMedicine(foundMedicine);
-            foundMedicineInTakeTimes.forEach(medicineIntakeRecordRepository::deleteByMedicineInTakeTime);
-            medicineIntakeTimeRepository.deleteAll(foundMedicineInTakeTimes);
-
-            saveMedicineIntakeTimes(foundMedicine, requestDto.getMedicineIntakeTimes());
+                medicineIntakeTimeRepository.save(MedicineInTakeTime.of(foundMedicine, newMedicineIntakeTime));
+            }
         }
 
-        if (requestDto.getMedicineIntakeDays() != null) {
-            List<MedicineIntakeDay> foundMedicineInTakeDays = medicineIntakeDayRepository.findAllByMedicine(foundMedicine);
-            foundMedicineInTakeDays.forEach(medicineIntakeRecordRepository::deleteByMedicineIntakeDay);
-            medicineIntakeDayRepository.deleteAll(foundMedicineInTakeDays);
+        if (requestDto.getMedicineIntakeTimeToDelete() != null) {
+            validateMedicineIntakeTimes(requestDto.getMedicineIntakeTimeToDelete());
+            for (LocalTime newMedicineIntakeTime : requestDto.getMedicineIntakeTimeToDelete()) {
+                Optional<MedicineInTakeTime> foundMedicineIntakeTime = medicineIntakeTimeRepository.findByMedicineAndMedicineIntakeTime(foundMedicine, newMedicineIntakeTime);
+                if (foundMedicineIntakeTime.isEmpty()) {
+                    throw new CustomErrorException(ErrorType.NoSuchMedicineIntakeTimeError);
+                }
 
-            saveMedicineIntakeDays(foundMedicine, foundPatient, requestDto.getMedicineIntakeDays());
+                medicineIntakeTimeRepository.delete(foundMedicineIntakeTime.get());
+            }
+        }
+
+        if (requestDto.getMedicineIntakeDayToAdd() != null) {
+            validateMedicineIntakeDays(requestDto.getMedicineIntakeDayToAdd());
+            for (DayOfWeek newMedicineIntakeDay : requestDto.getMedicineIntakeDayToAdd()) {
+                Optional<MedicineIntakeDay> foundMedicineIntakeDay = medicineIntakeDayRepository.findByMedicineAndDay(foundMedicine, newMedicineIntakeDay);
+                if (foundMedicineIntakeDay.isPresent()) {
+                    throw new CustomErrorException(ErrorType.AlreadyExistMedicineIntakeDayError);
+                }
+
+                medicineIntakeDayRepository.save(MedicineIntakeDay.of(foundMedicine, foundPatient, newMedicineIntakeDay));
+            }
+        }
+
+        if (requestDto.getMedicineIntakeDayToDelete() != null) {
+            validateMedicineIntakeDays(requestDto.getMedicineIntakeDayToDelete());
+            for (DayOfWeek newMedicineIntakeDay : requestDto.getMedicineIntakeDayToDelete()) {
+                Optional<MedicineIntakeDay> foundMedicineIntakeDay = medicineIntakeDayRepository.findByMedicineAndDay(foundMedicine, newMedicineIntakeDay);
+                if (foundMedicineIntakeDay.isEmpty()) {
+                    throw new CustomErrorException(ErrorType.NoSuchMedicineIntakeDayError);
+                }
+
+                medicineIntakeDayRepository.delete(foundMedicineIntakeDay.get());
+            }
         }
     }
 
@@ -164,6 +194,17 @@ public class MedicineService {
                     String time = Integer.toString(medicineIntakeTime.getHour()) + Integer.toString(medicineIntakeTime.getMinute());
                     if (!MedicineIntakeTimeSet.add(time))
                         throw new CustomNotValidErrorException("medicineIntakeTime", "중복된 시간이 존재합니다.");
+                }
+        );
+    }
+
+    private void validateMedicineIntakeDays(List<DayOfWeek> medicineIntakeDays) {
+        Set<DayOfWeek> MedicineIntakeTimeSet = new HashSet<>();
+
+        medicineIntakeDays.forEach(
+                medicineIntakeDay -> {
+                    if (!MedicineIntakeTimeSet.add(medicineIntakeDay))
+                        throw new CustomNotValidErrorException("medicineIntakeDay", "중복된 요일이 존재합니다.");
                 }
         );
     }

@@ -4,11 +4,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSchedule;
+import org.mansumugang.mansumugang_service.dto.medicine.MedicineUpdate;
 import org.mansumugang.mansumugang_service.dto.medicine.medicineDelete.MedicineDeleteRequestDto;
 import org.mansumugang.mansumugang_service.dto.medicine.medicineDelete.MedicineDeleteResponseDto;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSave;
-import org.mansumugang.mansumugang_service.dto.medicine.medicineUpdate.MedicineUpdateRequestDto;
-import org.mansumugang.mansumugang_service.dto.medicine.medicineUpdate.MedicineUpdateResponseDto;
 import org.mansumugang.mansumugang_service.service.medicine.MedicineService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,11 +36,11 @@ public class MedicineController {
     }
 
     @PatchMapping("/{medicineId}")
-    public ResponseEntity<MedicineUpdateResponseDto> updateMedicine(@AuthenticationPrincipal User user,
-                                                                    @PathVariable Long medicineId,
-                                                                    @Valid @RequestBody MedicineUpdateRequestDto requestDto) {
+    public ResponseEntity<MedicineUpdate.Response> updateMedicine(@AuthenticationPrincipal User user,
+                                                         @PathVariable Long medicineId,
+                                                         @Valid @RequestBody MedicineUpdate.Request requestDto) {
         medicineService.updateMedicine(user, medicineId, requestDto);
-        return new ResponseEntity<>(new MedicineUpdateResponseDto(), HttpStatus.CREATED);
+        return new ResponseEntity<>(MedicineUpdate.Response.createNewResponse(), HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{medicineId}")

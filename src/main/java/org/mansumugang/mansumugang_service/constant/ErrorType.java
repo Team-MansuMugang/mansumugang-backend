@@ -42,7 +42,7 @@ public enum ErrorType {
 
     // ----- Location ------
     OutOfBoundaryError(
-            HttpStatus.BAD_REQUEST,"경위도가 범위(대한민국 내)를 벗어났습니다."
+            HttpStatus.BAD_REQUEST, "경위도가 범위(대한민국 내)를 벗어났습니다."
     ),
 
     UserLocationInfoNotFoundError(
@@ -77,10 +77,10 @@ public enum ErrorType {
 
     // ----- Medicine ------
     NoSuchMedicineInTakeCategoryError(
-            HttpStatus.NOT_FOUND,"존재하지 않는 약 섭취 카테고리입니다"
+            HttpStatus.NOT_FOUND, "존재하지 않는 약 섭취 카테고리입니다"
     ),
     NoSuchMedicineError(
-            HttpStatus.NOT_FOUND,"존재하지 않는 약입니다"
+            HttpStatus.NOT_FOUND, "존재하지 않는 약입니다"
     ),
     NotExistMedicineScheduleError(
             HttpStatus.NOT_FOUND, "약에 대한 복용 간격이 존재하지 않습니다."
@@ -99,8 +99,13 @@ public enum ErrorType {
     ),
     NonDosageTimeError(
             HttpStatus.BAD_REQUEST, "해당 약을 복용할 수 없는 시간입니다."
-    )
-    ;
+    ),
+    AlreadyExistMedicineIntakeTimeError(
+            HttpStatus.CONFLICT, "이미 존재하는 약 복용시간입니다.")
+    ,
+    AlreadyExistMedicineIntakeDayError(
+            HttpStatus.CONFLICT, "이미 존재하는 약 복용요일입니다."
+    );
 
     private final HttpStatus httpStatus;
     private final String message;
