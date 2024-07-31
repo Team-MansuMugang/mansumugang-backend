@@ -3,8 +3,9 @@ package org.mansumugang.mansumugang_service.dto.medicineIntake;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import org.mansumugang.mansumugang_service.dto.medicine.common.MedicineIntakeTimeDto;
 import org.mansumugang.mansumugang_service.validation.ValidDate;
+
+import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -13,7 +14,7 @@ public class MedicineIntakeToggleRequestDto {
     private Long medicineId;
 
     @NotNull(message = "약 복용시간이 필요합니다.")
-    private MedicineIntakeTimeDto medicineIntakeTime;
+    private LocalTime medicineIntakeTime;
 
     @ValidDate
     @NotNull(message = "약 복용 일자가 필요합니다.")

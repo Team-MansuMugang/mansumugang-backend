@@ -6,10 +6,9 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.mansumugang.mansumugang_service.dto.medicine.common.MedicineIntakeDayDto;
-import org.mansumugang.mansumugang_service.dto.medicine.common.MedicineIntakeTimeDto;
 import org.mansumugang.mansumugang_service.validation.ValidDate;
 
-import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Getter
@@ -30,7 +29,7 @@ public class MedicineSaveRequestDto {
 
     @Valid
     @NotNull(message = "약 복용시간이 필요합니다.")
-    private List<MedicineIntakeTimeDto> medicineIntakeTimes;
+    private List<LocalTime> medicineIntakeTimes;
 
     @Valid
     @NotNull(message = "약 복용요일이 필요합니다.")

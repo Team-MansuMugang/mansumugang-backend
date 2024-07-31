@@ -39,7 +39,7 @@ public class MedicineIntakeService {
         }
 
         LocalDate parsedScheduledMedicineIntakeDate = dateParser.parseDate(requestDto.getScheduledMedicineIntakeDate());
-        LocalTime parsedIntakeTime = LocalTime.of(requestDto.getMedicineIntakeTime().getMedicineIntakeHours(), requestDto.getMedicineIntakeTime().getMedicineIntakeMinutes());
+        LocalTime parsedIntakeTime = LocalTime.of(requestDto.getMedicineIntakeTime().getHour(), requestDto.getMedicineIntakeTime().getMinute());
 
         Medicine foundMedicine = medicineRepository.findById(requestDto.getMedicineId())
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
@@ -61,8 +61,8 @@ public class MedicineIntakeService {
         MedicineInTakeTime foundMedicineIntakeTime = medicineIntakeTimeRepository.findByMedicineAndMedicineIntakeTime(
                         foundMedicine,
                         LocalTime.of(
-                                requestDto.getMedicineIntakeTime().getMedicineIntakeHours(),
-                                requestDto.getMedicineIntakeTime().getMedicineIntakeMinutes())
+                                requestDto.getMedicineIntakeTime().getHour(),
+                                requestDto.getMedicineIntakeTime().getMinute())
                         ).orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineIntakeTimeError));
 
         Optional<MedicineIntakeRecord> foundMedicineIntakeRecord = medicineIntakeRecordRepository.findByMedicineAndMedicineIntakeDayAndMedicineInTakeTimeAndScheduledIntakeDate(

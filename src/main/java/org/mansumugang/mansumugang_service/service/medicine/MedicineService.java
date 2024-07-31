@@ -12,7 +12,6 @@ import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSchedule;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSummaryInfoDto;
 import org.mansumugang.mansumugang_service.dto.medicine.common.MedicineIntakeDayDto;
-import org.mansumugang.mansumugang_service.dto.medicine.common.MedicineIntakeTimeDto;
 import org.mansumugang.mansumugang_service.dto.medicine.medicineDelete.MedicineDeleteRequestDto;
 import org.mansumugang.mansumugang_service.dto.medicine.medicineSave.MedicineSaveRequestDto;
 import org.mansumugang.mansumugang_service.dto.medicine.medicineUpdate.MedicineUpdateRequestDto;
@@ -20,6 +19,7 @@ import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.exception.CustomNotValidErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
 import org.mansumugang.mansumugang_service.utils.DateParser;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
@@ -58,16 +58,6 @@ public class MedicineService {
         List<MedicineSchedule.Element> elements = new ArrayList<>();
         collect.forEach((localTime, medicineSummaryInfos) -> elements.add(MedicineSchedule.Element.of(localTime, medicineSummaryInfos)));
         return MedicineSchedule.Dto.of(parsedTargetDate, elements);
-    }
-
-    public void getMedicineById(User user, Long patientId, Long medicineId) {
-        Protector validProtector = validateProtector(user);
-        Patient foundPatient = findPatient(patientId);
-        checkUserIsProtectorOfPatient(validProtector, foundPatient);
-
-        Medicine foundMedicine = medicineRepository.findById(medicineId)
-                .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
-
     }
 
     public void saveMedicine(User user, MedicineSaveRequestDto requestDto) {
@@ -168,23 +158,21 @@ public class MedicineService {
         });
     }
 
-    private void validateMedicineIntakeTimes(List<MedicineIntakeTimeDto> medicineIntakeTimes) {
+    private void validateMedicineIntakeTimes(List<LocalTime> medicineIntakeTimes) {
         Set<String> MedicineIntakeTimeSet = new HashSet<>();
 
         medicineIntakeTimes.forEach(
                 medicineIntakeTime -> {
-                    String hours = String.valueOf(medicineIntakeTime.getMedicineIntakeHours());
-                    String minutes = String.valueOf(medicineIntakeTime.getMedicineIntakeMinutes());
-                    String time = hours + minutes;
+                    String time = Integer.toString(medicineIntakeTime.getHour()) + Integer.toString(medicineIntakeTime.getMinute());
                     if (!MedicineIntakeTimeSet.add(time))
                         throw new CustomNotValidErrorException("medicineIntakeTime", "중복된 시간이 존재합니다.");
                 }
         );
     }
 
-    private void saveMedicineIntakeTimes(Medicine medicine, List<MedicineIntakeTimeDto> medicineIntakeTimes) {
+    private void saveMedicineIntakeTimes(Medicine medicine, List<LocalTime> medicineIntakeTimes) {
         medicineIntakeTimes.forEach(
-                medicineIntakeTime -> medicineIntakeTimeRepository.save(MedicineInTakeTime.of(medicine, medicineIntakeTime))
+                intakeTime -> medicineIntakeTimeRepository.save(MedicineInTakeTime.of(medicine, intakeTime))
         );
     }
 

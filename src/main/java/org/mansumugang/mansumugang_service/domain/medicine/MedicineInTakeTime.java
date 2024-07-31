@@ -2,7 +2,6 @@ package org.mansumugang.mansumugang_service.domain.medicine;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.mansumugang.mansumugang_service.dto.medicine.common.MedicineIntakeTimeDto;
 
 import java.time.LocalTime;
 
@@ -23,11 +22,11 @@ public class MedicineInTakeTime {
     @Column(nullable = false)
     private LocalTime medicineIntakeTime;
 
-    public static MedicineInTakeTime of(Medicine medicine, MedicineIntakeTimeDto medicineIntakeTimeDto) {
+    public static MedicineInTakeTime of(Medicine medicine, LocalTime intakeTime) {
         return MedicineInTakeTime.builder()
                 .medicine(medicine)
                 .medicineIntakeTime(
-                        LocalTime.of(medicineIntakeTimeDto.getMedicineIntakeHours(), medicineIntakeTimeDto.getMedicineIntakeMinutes())
+                        LocalTime.of(intakeTime.getHour(), intakeTime.getMinute())
                 )
                 .build();
     }
