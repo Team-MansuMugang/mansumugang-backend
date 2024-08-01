@@ -27,7 +27,7 @@ public class LogoutService {
 
         // resolve 된 refreshToken 이 null 이라면 에러 발생
         if (resolvedRefreshToken == null){
-            throw new CustomErrorException(ErrorType.NotValidRequestError);
+            throw new CustomErrorException(ErrorType.NotValidRefreshTokenError);
         }
 
         // 정상로직 2.
@@ -41,7 +41,7 @@ public class LogoutService {
 
         // 정상로직 3.
         // savedAccessToken 이 존재한다면 redis 에서 refreshToken 삭제
-        valueOperations.getAndDelete(savedAccessToken);
+        valueOperations.getAndDelete(resolvedRefreshToken);
     }
 
 }
