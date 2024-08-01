@@ -22,11 +22,18 @@ import java.util.List;
 public class MedicineController {
     private final MedicineService medicineService;
 
-    @GetMapping()
+    @GetMapping("/protector")
     public ResponseEntity<MedicineSchedule.Response> getMedicineByDate(@AuthenticationPrincipal User user,
                                                                   @RequestParam(required = true) String date,
                                                                   @RequestParam(required = true) Long patientId) {
         MedicineSchedule.Dto medicineByDate = medicineService.getMedicineByDate(user, patientId, date);
+        return new ResponseEntity<>(MedicineSchedule.Response.fromDto(medicineByDate), HttpStatus.OK);
+    }
+
+    @GetMapping("/patient")
+    public ResponseEntity<MedicineSchedule.Response> getMedicineByDate(@AuthenticationPrincipal User user,
+                                                                       @RequestParam(required = true) String date) {
+        MedicineSchedule.Dto medicineByDate = medicineService.getMedicineByDate(user, date);
         return new ResponseEntity<>(MedicineSchedule.Response.fromDto(medicineByDate), HttpStatus.OK);
     }
 

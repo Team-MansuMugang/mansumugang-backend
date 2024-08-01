@@ -50,14 +50,31 @@ public class MedicineService {
     private final PatientRepository patientRepository;
 
     public MedicineSchedule.Dto getMedicineByDate(User user, Long patientId, String targetDateStr) {
-        Protector validProtector = validateProtector(user);
+        Protector validatedPatient = validateProtector(user);
         Patient foundPatient = findPatient(patientId);
-        checkUserIsProtectorOfPatient(validProtector, foundPatient);
+        checkUserIsProtectorOfPatient(validatedPatient, foundPatient);
 
         LocalDate parsedTargetDate = dateParser.parseDate(targetDateStr);
 
         List<MedicineSummaryInfoDto> medicineDayInfos =
                 medicineIntakeRecordRepository.findMedicineScheduleByDate(parsedTargetDate, patientId, parsedTargetDate.getDayOfWeek());
+
+
+        Map<LocalTime, List<MedicineSummaryInfoDto>> collect = medicineDayInfos.stream()
+                .collect(Collectors.groupingBy(MedicineSummaryInfoDto::getMedicineIntakeTime));
+
+        List<MedicineSchedule.Element> elements = new ArrayList<>();
+        collect.forEach((localTime, medicineSummaryInfos) -> elements.add(MedicineSchedule.Element.of(localTime, medicineSummaryInfos)));
+        return MedicineSchedule.Dto.of(imageApiUrl, parsedTargetDate, elements);
+    }
+
+    public MedicineSchedule.Dto getMedicineByDate(User user, String targetDateStr) {
+        Patient validatedPatient = validatePatient(user);
+
+        LocalDate parsedTargetDate = dateParser.parseDate(targetDateStr);
+
+        List<MedicineSummaryInfoDto> medicineDayInfos =
+                medicineIntakeRecordRepository.findMedicineScheduleByDate(parsedTargetDate, validatedPatient.getId(), parsedTargetDate.getDayOfWeek());
 
 
         Map<LocalTime, List<MedicineSummaryInfoDto>> collect = medicineDayInfos.stream()
@@ -262,6 +279,18 @@ public class MedicineService {
 
         if (user instanceof Protector) {
             return (Protector) user;
+        }
+
+        throw new CustomErrorException(ErrorType.AccessDeniedError);
+    }
+
+    private Patient validatePatient(User user) {
+        if (user == null) {
+            throw new CustomErrorException(ErrorType.UserNotFoundError);
+        }
+
+        if (user instanceof Patient) {
+            return (Patient) user;
         }
 
         throw new CustomErrorException(ErrorType.AccessDeniedError);
