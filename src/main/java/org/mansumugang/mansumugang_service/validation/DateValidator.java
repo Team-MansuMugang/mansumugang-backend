@@ -20,7 +20,7 @@ public class DateValidator implements ConstraintValidator<ValidDate, String> {
     @Override
     public boolean isValid(String dateStr, ConstraintValidatorContext context) {
         if (dateStr == null || dateStr.isEmpty()) {
-            return false; // null 또는 빈 문자열은 다른 어노테이션에서 검증
+            return true; // null 또는 빈 문자열은 다른 어노테이션에서 검증
         }
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(datePattern);

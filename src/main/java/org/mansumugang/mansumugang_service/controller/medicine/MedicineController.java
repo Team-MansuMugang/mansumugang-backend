@@ -12,6 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,16 +32,18 @@ public class MedicineController {
 
     @PostMapping()
     public ResponseEntity<MedicineSave.Response> saveMedicine(@AuthenticationPrincipal User user,
-                                                                @Valid @RequestBody MedicineSave.Request requestDto) {
-        medicineService.saveMedicine(user, requestDto);
+                                                              @RequestPart(name = "image", required = false) MultipartFile medicineImage,
+                                                              @Valid @RequestPart(name = "medicine") MedicineSave.Request requestDto) {
+        medicineService.saveMedicine(user, medicineImage, requestDto);
         return new ResponseEntity<>(MedicineSave.Response.createNewResponse(), HttpStatus.CREATED);
     }
 
     @PatchMapping("/{medicineId}")
     public ResponseEntity<MedicineUpdate.Response> updateMedicine(@AuthenticationPrincipal User user,
-                                                         @PathVariable Long medicineId,
-                                                         @Valid @RequestBody MedicineUpdate.Request requestDto) {
-        medicineService.updateMedicine(user, medicineId, requestDto);
+                                                                  @PathVariable Long medicineId,
+                                                                  @RequestPart(name = "image", required = false) MultipartFile medicineImage,
+                                                                  @Valid @RequestPart(name = "medicine") MedicineUpdate.Request requestDto) {
+        medicineService.updateMedicine(user, medicineId, medicineImage, requestDto);
         return new ResponseEntity<>(MedicineUpdate.Response.createNewResponse(), HttpStatus.CREATED);
     }
 

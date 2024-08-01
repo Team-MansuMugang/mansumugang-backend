@@ -30,11 +30,13 @@ public class MedicineSchedule {
     @AllArgsConstructor
     @Builder
     public static class Dto{
+        private String imageApiUrlPrefix;
         private LocalDate date;
         private List<Element> medicineSchedules;
 
-        public static Dto of(LocalDate date, List<Element> medicineSchedules) {
+        public static Dto of(String imageApiUrlPrefix, LocalDate date, List<Element> medicineSchedules) {
             return Dto.builder()
+                    .imageApiUrlPrefix(imageApiUrlPrefix)
                     .date(date)
                     .medicineSchedules(medicineSchedules)
                     .build();
@@ -45,11 +47,13 @@ public class MedicineSchedule {
     @AllArgsConstructor
     @Builder
     public static class Response{
+        private String imageApiUrlPrefix;
         private LocalDate date;
         private List<Element> medicineSchedules;
 
         public static Response fromDto(Dto dto) {
             return Response.builder()
+                    .imageApiUrlPrefix(dto.imageApiUrlPrefix)
                     .date(dto.getDate())
                     .medicineSchedules(dto.getMedicineSchedules())
                     .build();

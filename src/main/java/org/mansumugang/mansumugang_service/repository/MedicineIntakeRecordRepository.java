@@ -28,8 +28,12 @@ public interface MedicineIntakeRecordRepository extends JpaRepository<MedicineIn
             LocalDate scheduledIntakeDate);
 
     @Query("SELECT new org.mansumugang.mansumugang_service.dto.medicine.MedicineSummaryInfoDto(" +
-            "mir.status, mit.medicineIntakeTime, m.id, " +
-            "m.hospitalName, m.medicineDescription, " +
+            "mir.status, " +
+            "mit.medicineIntakeTime, " +
+            "m.id, " +
+            "m.medicineImageName," +
+            "m.hospitalName," +
+            " m.medicineDescription, " +
             "m.medicineName) " +
             "FROM MedicineIntakeRecord mir " +
             "RIGHT JOIN mir.medicineInTakeTime mit " +

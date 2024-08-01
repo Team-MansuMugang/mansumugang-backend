@@ -105,6 +105,9 @@ public enum ErrorType {
     ,
     AlreadyExistMedicineIntakeDayError(
             HttpStatus.CONFLICT, "이미 존재하는 약 복용요일입니다."
+    ),
+    NoImageFileError(
+            HttpStatus.BAD_REQUEST, "유효하지 않은 이미지 파일입니다."
     );
 
     private final HttpStatus httpStatus;

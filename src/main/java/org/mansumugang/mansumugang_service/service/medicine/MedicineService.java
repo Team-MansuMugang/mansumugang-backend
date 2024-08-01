@@ -3,6 +3,7 @@ package org.mansumugang.mansumugang_service.service.medicine;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
+import org.mansumugang.mansumugang_service.constant.InternalErrorType;
 import org.mansumugang.mansumugang_service.domain.medicine.Medicine;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineInTakeTime;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeDay;
@@ -16,9 +17,13 @@ import org.mansumugang.mansumugang_service.dto.medicine.MedicineDelete;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSave;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.exception.CustomNotValidErrorException;
+import org.mansumugang.mansumugang_service.exception.InternalErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
+import org.mansumugang.mansumugang_service.service.fileService.FileService;
 import org.mansumugang.mansumugang_service.utils.DateParser;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -30,10 +35,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 public class MedicineService {
+    @Value("${file.upload.image.api}")
+    private String imageApiUrl;
+
     private final MedicineRepository medicineRepository;
     private final MedicineIntakeDayRepository medicineIntakeDayRepository;
     private final MedicineIntakeTimeRepository medicineIntakeTimeRepository;
     private final MedicineIntakeRecordRepository medicineIntakeRecordRepository;
+
+    private final FileService fileService;
 
     private final DateParser dateParser;
 
@@ -55,10 +65,10 @@ public class MedicineService {
 
         List<MedicineSchedule.Element> elements = new ArrayList<>();
         collect.forEach((localTime, medicineSummaryInfos) -> elements.add(MedicineSchedule.Element.of(localTime, medicineSummaryInfos)));
-        return MedicineSchedule.Dto.of(parsedTargetDate, elements);
+        return MedicineSchedule.Dto.of(imageApiUrl, parsedTargetDate, elements);
     }
 
-    public void saveMedicine(User user, MedicineSave.Request requestDto) {
+    public void saveMedicine(User user, MultipartFile medicineImage, MedicineSave.Request requestDto) {
         Protector validProtector = validateProtector(user);
         Patient foundPatient = findPatient(requestDto.getPatientId());
         checkUserIsProtectorOfPatient(validProtector, foundPatient);
@@ -69,13 +79,22 @@ public class MedicineService {
         }
         validateMedicineIntakeTimes(requestDto.getMedicineIntakeTimes());
 
-        // TODO: 사진 이미지 등록필요
-        Medicine newMedicine = medicineRepository.save(Medicine.of(foundPatient, requestDto, parsedMedicineIntakeStopDay, null));
+        String medicineImageName = null;
+        if (medicineImage != null) {
+            try {
+                medicineImageName = fileService.saveImageFiles(medicineImage);
+            } catch (Exception e) {
+                throw new CustomErrorException(ErrorType.InternalServerError);
+            }
+
+        }
+
+        Medicine newMedicine = medicineRepository.save(Medicine.of(foundPatient, requestDto, parsedMedicineIntakeStopDay, medicineImageName));
         saveMedicineIntakeDays(newMedicine, foundPatient, requestDto.getMedicineIntakeDays());
         saveMedicineIntakeTimes(newMedicine, requestDto.getMedicineIntakeTimes());
     }
 
-    public void updateMedicine(User user, Long medicineId, MedicineUpdate.Request requestDto) {
+    public void updateMedicine(User user, Long medicineId, MultipartFile medicineImage, MedicineUpdate.Request requestDto) {
         Protector validProtector = validateProtector(user);
         Patient foundPatient = findPatient(requestDto.getPatientId());
         checkUserIsProtectorOfPatient(validProtector, foundPatient);
@@ -151,6 +170,16 @@ public class MedicineService {
                 medicineIntakeDayRepository.delete(foundMedicineIntakeDay.get());
             }
         }
+
+        if(medicineImage != null) {
+            try {
+                String originalMedicineImageName = foundMedicine.getMedicineImageName();
+                foundMedicine.setMedicineImageName(fileService.saveImageFiles(medicineImage));
+                fileService.deleteImageFile(originalMedicineImageName);
+            } catch (Exception e) {
+                throw new CustomErrorException(ErrorType.InternalServerError);
+            }
+        }
     }
 
     public void deleteMedicine(User user, Long medicineId, MedicineDelete.Request requestDto) {
@@ -160,6 +189,13 @@ public class MedicineService {
 
         Medicine foundMedicine = medicineRepository.findById(medicineId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
+
+        try {
+            String originalMedicineImageName = foundMedicine.getMedicineImageName();
+            fileService.deleteImageFile(originalMedicineImageName);
+        } catch (Exception e) {
+            throw new CustomErrorException(ErrorType.InternalServerError);
+        }
 
         medicineIntakeRecordRepository.deleteAllByMedicine(foundMedicine);
         medicineIntakeTimeRepository.deleteAllByMedicine(foundMedicine);
