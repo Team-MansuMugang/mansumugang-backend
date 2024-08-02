@@ -1,12 +1,11 @@
-package org.mansumugang.mansumugang_service.dto.user.location;
+package org.mansumugang.mansumugang_service.dto.location;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.mansumugang.mansumugang_service.domain.location.Location;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
-import org.mansumugang.mansumugang_service.domain.user.User;
-import org.mansumugang.mansumugang_service.domain.user.UserLocation;
 
 import java.time.LocalDateTime;
 
@@ -24,14 +23,14 @@ public class PatientLocationDto {
 
     public static PatientLocationDto fromEntity(
             Patient patient,
-            UserLocation userLocation
+            Location location
     ){
 
         return PatientLocationDto.builder()
                 .name(patient.getName())
-                .updatedTime(userLocation.getCreatedAt())
-                .longitude(userLocation.getLongitude())
-                .latitude(userLocation.getLatitude())
+                .updatedTime(location.getCreatedAt())
+                .longitude(location.getLongitude())
+                .latitude(location.getLatitude())
                 .build();
     }
 

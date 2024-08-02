@@ -52,6 +52,12 @@ public enum ErrorType {
             HttpStatus.NOT_FOUND, "유저는 존재하지만, 유저의 위치 정보가 존재하지 않습니다."
     ),
 
+    // ----- Record ------
+    UserRecordInfoNotFoundError(
+            HttpStatus.NOT_FOUND, "유저는 존재하지만, 유저의 음성녹음 정보가 존재하지 않습니다."
+    ),
+
+
     // ----- Token ------
     NotValidAccessTokenError(
             HttpStatus.UNAUTHORIZED, "유효하지 않은 AccessToken입니다."

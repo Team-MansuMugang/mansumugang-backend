@@ -1,12 +1,15 @@
-package org.mansumugang.mansumugang_service.dto.user.location;
+package org.mansumugang.mansumugang_service.dto.location;
 
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.mansumugang.mansumugang_service.domain.user.Patient;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -29,6 +32,16 @@ public class PatientLocationResponseDto {
                 .longitude(patientLocationDto.getLongitude())
                 .latitude(patientLocationDto.getLatitude())
                 .build();
+    }
+
+    public static List<PatientLocationResponseDto> fromDtoList(Patient patient, List<PatientLocationDto> patientLocationDtos) {
+        return patientLocationDtos.stream()
+                .map(dto -> new PatientLocationResponseDto(
+                        dto.getName(),
+                        dto.getUpdatedTime(),
+                        dto.getLongitude(),
+                        dto.getLatitude()))
+                .collect(Collectors.toList());
     }
 
 }
