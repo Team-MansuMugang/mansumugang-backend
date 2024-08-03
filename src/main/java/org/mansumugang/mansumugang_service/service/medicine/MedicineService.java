@@ -3,21 +3,15 @@ package org.mansumugang.mansumugang_service.service.medicine;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
-import org.mansumugang.mansumugang_service.constant.InternalErrorType;
 import org.mansumugang.mansumugang_service.domain.medicine.Medicine;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineInTakeTime;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeDay;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineSchedule;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineSummaryInfoDto;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineUpdate;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineDelete;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineSave;
+import org.mansumugang.mansumugang_service.dto.medicine.*;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.exception.CustomNotValidErrorException;
-import org.mansumugang.mansumugang_service.exception.InternalErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
 import org.mansumugang.mansumugang_service.service.fileService.FileService;
 import org.mansumugang.mansumugang_service.utils.DateParser;
@@ -27,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,52 +32,57 @@ import java.util.stream.Collectors;
 public class MedicineService {
     @Value("${file.upload.image.api}")
     private String imageApiUrl;
+    private final DateParser dateParser;
 
     private final MedicineRepository medicineRepository;
     private final MedicineIntakeDayRepository medicineIntakeDayRepository;
     private final MedicineIntakeTimeRepository medicineIntakeTimeRepository;
     private final MedicineIntakeRecordRepository medicineIntakeRecordRepository;
-
-    private final FileService fileService;
-
-    private final DateParser dateParser;
-
     private final PatientRepository patientRepository;
 
-    public MedicineSchedule.Dto getMedicineByDate(User user, Long patientId, String targetDateStr) {
-        Protector validatedPatient = validateProtector(user);
+    private final FileService fileService;
+    private final MedicineCommonService medicineCommonService;
+
+    public MedicineSummaryInfo.Dto getMedicineSummaryInfoByDate(User user, Long patientId, String targetDateStr) {
+        Protector validatedProtector = validateProtector(user);
         Patient foundPatient = findPatient(patientId);
-        checkUserIsProtectorOfPatient(validatedPatient, foundPatient);
+        checkUserIsProtectorOfPatient(validatedProtector, foundPatient);
 
         LocalDate parsedTargetDate = dateParser.parseDate(targetDateStr);
 
-        List<MedicineSummaryInfoDto> medicineDayInfos =
-                medicineIntakeRecordRepository.findMedicineScheduleByDate(parsedTargetDate, patientId, parsedTargetDate.getDayOfWeek());
-
-
-        Map<LocalTime, List<MedicineSummaryInfoDto>> collect = medicineDayInfos.stream()
-                .collect(Collectors.groupingBy(MedicineSummaryInfoDto::getMedicineIntakeTime));
-
-        List<MedicineSchedule.Element> elements = new ArrayList<>();
-        collect.forEach((localTime, medicineSummaryInfos) -> elements.add(MedicineSchedule.Element.of(localTime, medicineSummaryInfos)));
-        return MedicineSchedule.Dto.of(imageApiUrl, parsedTargetDate, elements);
+        return getMedicineSummaryInfoByDate(parsedTargetDate, foundPatient.getId());
     }
 
-    public MedicineSchedule.Dto getMedicineByDate(User user, String targetDateStr) {
+    public MedicineSummaryInfo.Dto getMedicineSummaryInfoByDate(User user, String targetDateStr) {
         Patient validatedPatient = validatePatient(user);
 
         LocalDate parsedTargetDate = dateParser.parseDate(targetDateStr);
 
-        List<MedicineSummaryInfoDto> medicineDayInfos =
-                medicineIntakeRecordRepository.findMedicineScheduleByDate(parsedTargetDate, validatedPatient.getId(), parsedTargetDate.getDayOfWeek());
+        return getMedicineSummaryInfoByDate(parsedTargetDate, validatedPatient.getId());
+    }
 
+    // 특정일에 대한 환자의 약 정보 조회
+    public MedicineSummaryInfo.Dto getMedicineSummaryInfoByDate(LocalDate targetDate, Long patientId){
+        // 테이터베이스로부터 특정일에 대한 환자의 약 정보 쿼리 결과
+        List<MedicineSummaryInfoResult> medicineDayInfoResult =
+                medicineIntakeRecordRepository.findMedicineScheduleByDate(targetDate, patientId, targetDate.getDayOfWeek());
 
-        Map<LocalTime, List<MedicineSummaryInfoDto>> collect = medicineDayInfos.stream()
-                .collect(Collectors.groupingBy(MedicineSummaryInfoDto::getMedicineIntakeTime));
+        // 각각의 약에 대해 상태를 정의함
+        List<MedicineSummaryInfo.MedicineSummaryInfoElement> medicineSummaryInfos = medicineDayInfoResult.stream().map(medicineSummaryInfoResult ->
+                MedicineSummaryInfo.MedicineSummaryInfoElement.of(
+                        medicineSummaryInfoResult,
+                        medicineCommonService.assignMedicineStatus(
+                                medicineSummaryInfoResult.getStatus(),
+                                LocalDateTime.of(targetDate, medicineSummaryInfoResult.getMedicineIntakeTime())
+                        )
+                )
+        ).toList();
 
-        List<MedicineSchedule.Element> elements = new ArrayList<>();
-        collect.forEach((localTime, medicineSummaryInfos) -> elements.add(MedicineSchedule.Element.of(localTime, medicineSummaryInfos)));
-        return MedicineSchedule.Dto.of(imageApiUrl, parsedTargetDate, elements);
+        // 같은 복용시간을 가진 약끼리 그룹화
+        Map<LocalTime, List<MedicineSummaryInfo.MedicineSummaryInfoElement>> medicineSummaryInfoByTime = medicineSummaryInfos.stream()
+                .collect(Collectors.groupingBy(MedicineSummaryInfo.MedicineSummaryInfoElement::getMedicineIntakeTime));
+
+        return MedicineSummaryInfo.Dto.of(imageApiUrl, targetDate, MedicineSummaryInfo.TimeElement.convertTimeElements(medicineSummaryInfoByTime));
     }
 
     public void saveMedicine(User user, MultipartFile medicineImage, MedicineSave.Request requestDto) {
@@ -220,7 +220,6 @@ public class MedicineService {
         medicineRepository.delete(foundMedicine);
     }
 
-
     private void saveMedicineIntakeDays(Medicine medicine, Patient patient, MedicineSave.MedicineIntakeDay medicineIntakeDay) {
 
         Map<DayOfWeek, Boolean> daysMap = new LinkedHashMap<>();
@@ -231,6 +230,7 @@ public class MedicineService {
         daysMap.put(DayOfWeek.FRIDAY, medicineIntakeDay.getFriday());
         daysMap.put(DayOfWeek.SATURDAY, medicineIntakeDay.getSaturday());
         daysMap.put(DayOfWeek.SUNDAY, medicineIntakeDay.getSunday());
+
 
         daysMap.forEach((dayType, shouldAdd) -> {
             if (shouldAdd) {
