@@ -12,13 +12,9 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 @Transactional
-@Slf4j
 public class MedicineCommonService {
     // 약의 상태를 정의하는 메소드
     public MedicineStatusType assignMedicineStatus(MedicineRecordStatusType medicineRecordStatusType, LocalDateTime medicineIntakeTime) {
-        log.info(medicineIntakeTime.toString());
-        log.info(LocalDateTime.now().toString());
-
         if(medicineRecordStatusType == MedicineRecordStatusType.PASS){
             return MedicineStatusType.PASS;
         }
