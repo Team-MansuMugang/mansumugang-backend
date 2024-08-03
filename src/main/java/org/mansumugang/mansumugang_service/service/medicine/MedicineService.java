@@ -3,9 +3,11 @@ package org.mansumugang.mansumugang_service.service.medicine;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
+import org.mansumugang.mansumugang_service.constant.MedicineRecordStatusType;
 import org.mansumugang.mansumugang_service.domain.medicine.Medicine;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineInTakeTime;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeDay;
+import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeRecord;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
@@ -107,8 +109,32 @@ public class MedicineService {
         }
 
         Medicine newMedicine = medicineRepository.save(Medicine.of(foundPatient, requestDto, parsedMedicineIntakeStopDay, medicineImageName));
-        saveMedicineIntakeDays(newMedicine, foundPatient, requestDto.getMedicineIntakeDays());
-        saveMedicineIntakeTimes(newMedicine, requestDto.getMedicineIntakeTimes());
+        List<MedicineIntakeDay> newMedicineIntakeDays = saveMedicineIntakeDays(newMedicine, foundPatient, requestDto.getMedicineIntakeDays());
+        List<MedicineInTakeTime> newMedicineInTakeTimes = saveMedicineIntakeTimes(newMedicine, requestDto.getMedicineIntakeTimes());
+
+        DayOfWeek todayDayOfWeek = LocalDate.now().getDayOfWeek();
+        LocalTime nowTime = LocalTime.now();
+        LocalDate nowDate = LocalDate.now();
+
+        // 금일 약을 복용할 경우 현시간 이전의 약은 PASS로 처리
+        for (MedicineIntakeDay medicineIntakeDay : newMedicineIntakeDays) {
+            if(todayDayOfWeek.equals(medicineIntakeDay.getDay())) {
+                for(MedicineInTakeTime medicineInTakeTime : newMedicineInTakeTimes) {
+                    if(medicineInTakeTime.getMedicineIntakeTime().isBefore(nowTime)) {
+                        medicineIntakeRecordRepository.save(
+                                MedicineIntakeRecord.createNewEntity(
+                                        newMedicine,
+                                        medicineIntakeDay,
+                                        medicineInTakeTime,
+                                        nowDate,
+                                        MedicineRecordStatusType.PASS
+                                )
+                        );
+                    }
+                }
+            }
+        }
+
     }
 
     public void updateMedicine(User user, Long medicineId, MultipartFile medicineImage, MedicineUpdate.Request requestDto) {
@@ -220,23 +246,15 @@ public class MedicineService {
         medicineRepository.delete(foundMedicine);
     }
 
-    private void saveMedicineIntakeDays(Medicine medicine, Patient patient, MedicineSave.MedicineIntakeDay medicineIntakeDay) {
+    private List<MedicineIntakeDay> saveMedicineIntakeDays(Medicine medicine, Patient patient, List<DayOfWeek> medicineIntakeDay) {
+        validateMedicineIntakeDays(medicineIntakeDay);
 
-        Map<DayOfWeek, Boolean> daysMap = new LinkedHashMap<>();
-        daysMap.put(DayOfWeek.MONDAY, medicineIntakeDay.getMonday());
-        daysMap.put(DayOfWeek.TUESDAY, medicineIntakeDay.getTuesday());
-        daysMap.put(DayOfWeek.WEDNESDAY, medicineIntakeDay.getWednesday());
-        daysMap.put(DayOfWeek.THURSDAY, medicineIntakeDay.getThursday());
-        daysMap.put(DayOfWeek.FRIDAY, medicineIntakeDay.getFriday());
-        daysMap.put(DayOfWeek.SATURDAY, medicineIntakeDay.getSaturday());
-        daysMap.put(DayOfWeek.SUNDAY, medicineIntakeDay.getSunday());
+        return medicineIntakeDay.stream().map(dayOfWeek -> medicineIntakeDayRepository.save(MedicineIntakeDay.of(medicine, patient, dayOfWeek))).toList();
+    }
 
-
-        daysMap.forEach((dayType, shouldAdd) -> {
-            if (shouldAdd) {
-                medicineIntakeDayRepository.save(MedicineIntakeDay.of(medicine, patient, dayType));
-            }
-        });
+    private List<MedicineInTakeTime> saveMedicineIntakeTimes(Medicine medicine, List<LocalTime> medicineIntakeTimes) {
+        return medicineIntakeTimes.stream().map(
+                intakeTime -> medicineIntakeTimeRepository.save(MedicineInTakeTime.of(medicine, intakeTime))).toList();
     }
 
     private void validateMedicineIntakeTimes(List<LocalTime> medicineIntakeTimes) {
@@ -259,12 +277,6 @@ public class MedicineService {
                     if (!MedicineIntakeTimeSet.add(medicineIntakeDay))
                         throw new CustomNotValidErrorException("medicineIntakeDay", "중복된 요일이 존재합니다.");
                 }
-        );
-    }
-
-    private void saveMedicineIntakeTimes(Medicine medicine, List<LocalTime> medicineIntakeTimes) {
-        medicineIntakeTimes.forEach(
-                intakeTime -> medicineIntakeTimeRepository.save(MedicineInTakeTime.of(medicine, intakeTime))
         );
     }
 
