@@ -3,7 +3,7 @@ package org.mansumugang.mansumugang_service.controller.medicine;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.mansumugang.mansumugang_service.domain.user.User;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineSchedule;
+import org.mansumugang.mansumugang_service.dto.medicine.MedicineSummaryInfo;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineUpdate;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineDelete;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicineSave;
@@ -14,8 +14,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/medicine")
@@ -23,18 +21,18 @@ public class MedicineController {
     private final MedicineService medicineService;
 
     @GetMapping("/protector")
-    public ResponseEntity<MedicineSchedule.Response> getMedicineByDate(@AuthenticationPrincipal User user,
-                                                                  @RequestParam(required = true) String date,
-                                                                  @RequestParam(required = true) Long patientId) {
-        MedicineSchedule.Dto medicineByDate = medicineService.getMedicineByDate(user, patientId, date);
-        return new ResponseEntity<>(MedicineSchedule.Response.fromDto(medicineByDate), HttpStatus.OK);
+    public ResponseEntity<MedicineSummaryInfo.Response> getMedicineSummaryInfoByDate(@AuthenticationPrincipal User user,
+                                                                                     @RequestParam(required = true) String date,
+                                                                                     @RequestParam(required = true) Long patientId) {
+        MedicineSummaryInfo.Dto medicineByDate = medicineService.getMedicineSummaryInfoByDate(user, patientId, date);
+        return new ResponseEntity<>(MedicineSummaryInfo.Response.fromDto(medicineByDate), HttpStatus.OK);
     }
 
     @GetMapping("/patient")
-    public ResponseEntity<MedicineSchedule.Response> getMedicineByDate(@AuthenticationPrincipal User user,
-                                                                       @RequestParam(required = true) String date) {
-        MedicineSchedule.Dto medicineByDate = medicineService.getMedicineByDate(user, date);
-        return new ResponseEntity<>(MedicineSchedule.Response.fromDto(medicineByDate), HttpStatus.OK);
+    public ResponseEntity<MedicineSummaryInfo.Response> getMedicineSummaryInfoByDate(@AuthenticationPrincipal User user,
+                                                                                     @RequestParam(required = true) String date) {
+        MedicineSummaryInfo.Dto medicineByDate = medicineService.getMedicineSummaryInfoByDate(user, date);
+        return new ResponseEntity<>(MedicineSummaryInfo.Response.fromDto(medicineByDate), HttpStatus.OK);
     }
 
     @PostMapping()

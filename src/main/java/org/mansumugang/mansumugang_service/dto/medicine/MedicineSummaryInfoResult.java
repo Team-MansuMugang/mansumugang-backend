@@ -3,6 +3,8 @@ package org.mansumugang.mansumugang_service.dto.medicine;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.mansumugang.mansumugang_service.constant.MedicineRecordStatusType;
+import org.mansumugang.mansumugang_service.constant.MedicineStatusType;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalTime;
@@ -10,8 +12,8 @@ import java.util.Objects;
 
 @Getter
 @Setter
-public class MedicineSummaryInfoDto {
-        private Boolean status;
+public class MedicineSummaryInfoResult {
+        private MedicineRecordStatusType status;
         private LocalTime medicineIntakeTime;
         private Long medicineId;
         private String medicineImageName;
@@ -19,14 +21,14 @@ public class MedicineSummaryInfoDto {
         private String medicineDescription;
         private String medicineName;
 
-        public MedicineSummaryInfoDto(Boolean status,
+        public MedicineSummaryInfoResult(MedicineRecordStatusType status,
                                       LocalTime medicineIntakeTime,
                                       Long medicineId,
                                       String medicineImageName,
                                       String hospitalName,
                                       String medicineDescription,
                                       String medicineName) {
-            this.status = Objects.requireNonNullElse(status, false);
+            this.status = status;
             this.medicineIntakeTime = medicineIntakeTime;
             this.medicineId = medicineId;
             this.medicineImageName = medicineImageName;
