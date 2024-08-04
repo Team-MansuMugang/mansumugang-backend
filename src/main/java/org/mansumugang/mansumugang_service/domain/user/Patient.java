@@ -3,6 +3,7 @@ package org.mansumugang.mansumugang_service.domain.user;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.mansumugang.mansumugang_service.domain.location.Location;
 import org.mansumugang.mansumugang_service.dto.auth.signup.PatientSignupRequestDto;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -21,7 +22,7 @@ public class Patient extends User {
 
     // UserLocation 과의 관계 추가
     @OneToMany(mappedBy = "patient")
-    private List<UserLocation> userLocations;
+    private List<Location> userLocations;
 
     @Builder
     public Patient(

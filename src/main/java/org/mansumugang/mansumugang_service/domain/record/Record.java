@@ -1,33 +1,34 @@
-package org.mansumugang.mansumugang_service.domain.user;
+package org.mansumugang.mansumugang_service.domain.record;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.mansumugang.mansumugang_service.dto.user.location.PatientLocationRequestDto;
+import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
+
 @Entity
 @Getter
 @Setter
-@Table(name = "userLocation")
+@Table(name = "userRecord")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-public class UserLocation {
+public class Record {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "location_id")
+    @Column(name = "record_id")
     private Long id;
 
     @Column(nullable = false)
-    private double latitude;
+    private String filename;
 
     @Column(nullable = false)
-    private double longitude;
+    private Long duration;
 
     @CreatedDate
     private LocalDateTime createdAt;
@@ -37,24 +38,23 @@ public class UserLocation {
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 
-
-
-    public UserLocation(double latitude, double longitude, LocalDateTime createdAt, Patient patient) {
-        this.latitude = latitude;
-        this.longitude = longitude;
+    private Record(String filename, Long duration, LocalDateTime createdAt, Patient patient) {
+        this.filename = filename;
+        this.duration = duration;
         this.createdAt = createdAt;
         this.patient = patient;
     }
 
-    public static UserLocation fromRequestDto(
-            Patient patient,
-            PatientLocationRequestDto patientLocationRequestDto
+    public static Record of(Patient validPatient,
+                            String recordFileName,
+                            Long recordDuration
     ){
-        return UserLocation.builder()
-                .latitude(patientLocationRequestDto.getLatitude())
-                .longitude(patientLocationRequestDto.getLongitude())
-                .patient(patient)
+        return Record.builder()
+                .patient(validPatient)
+                .filename(recordFileName)
+                .duration(recordDuration)
                 .build();
     }
+
 
 }
