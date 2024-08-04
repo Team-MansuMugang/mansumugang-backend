@@ -50,7 +50,9 @@ public class FileService {
             log.info("녹음파일 원래이름 -> UUID로 변경 시작");
             String uniqueFileName = generateUniqueFileName(Objects.requireNonNull(file.getOriginalFilename()));
             Path filePath = Paths.get(audioUploadPath + "/" + uniqueFileName);
+
             Files.copy(file.getInputStream(), filePath);
+
             return uniqueFileName;
         } catch (Exception e) {
             throw new InternalErrorException(InternalErrorType.RecordSaveError);

@@ -205,8 +205,13 @@ public class RecordService {
     }
 
     private List<Record> getOnePatientRecords(Long patientId) {
-        return Optional.ofNullable(recordRepository.findByPatientIdOrderByCreatedAtDesc(patientId))
-                .orElseThrow(() -> new CustomErrorException(ErrorType.UserRecordInfoNotFoundError));
+        List<Record> foundAllRecords = recordRepository.findByPatientIdOrderByCreatedAtDesc(patientId);
+
+        if (foundAllRecords.isEmpty()){
+            throw new CustomErrorException(ErrorType.UserRecordInfoNotFoundError);
+        }
+
+        return  foundAllRecords;
     }
 
 }
