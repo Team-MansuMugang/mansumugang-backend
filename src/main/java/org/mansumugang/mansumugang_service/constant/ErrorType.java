@@ -52,7 +52,19 @@ public enum ErrorType {
             HttpStatus.NOT_FOUND, "유저는 존재하지만, 유저의 위치 정보가 존재하지 않습니다."
     ),
 
+    UserLocationInfoWithinRangeNotFoundError(
+            HttpStatus.NOT_FOUND, "유저는 존재하지만, 조회하려는 시간 범위 내 위치 정보가 존재하지 않습니다."
+    ),
+
     // ----- Record ------
+    RecordFileNotFound(
+            HttpStatus.NOT_FOUND, "저장할 음성녹음 파일을 찾을 수 없습니다.."
+    ),
+
+    RecordInfoNotFound(
+            HttpStatus.NOT_FOUND, "해당 고유번호를 가진 음성녹음 파일이 존재하지 않습니다."
+    ),
+
     UserRecordInfoNotFoundError(
             HttpStatus.NOT_FOUND, "유저는 존재하지만, 유저의 음성녹음 정보가 존재하지 않습니다."
     ),

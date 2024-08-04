@@ -9,9 +9,9 @@ import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.domain.location.Location;
-import org.mansumugang.mansumugang_service.dto.location.PatientLocationDto;
+import org.mansumugang.mansumugang_service.dto.location.PatientLocation;
+import org.mansumugang.mansumugang_service.dto.location.PatientLocationList;
 import org.mansumugang.mansumugang_service.dto.location.PatientLocationRequestDto;
-import org.mansumugang.mansumugang_service.dto.location.PatientLocationResponseDto;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.PatientRepository;
 import org.mansumugang.mansumugang_service.repository.UserLocationRepository;
@@ -33,7 +33,7 @@ public class UserLocationService {
     private final PatientRepository patientRepository;
 
     @Transactional
-    public PatientLocationDto saveUserLocation(User patient, PatientLocationRequestDto patientLocationRequestDto ){
+    public PatientLocation.Dto saveUserLocation(User patient, PatientLocationRequestDto patientLocationRequestDto ){
         log.info("saveUserLocation 호출");
         // 1. @AuthenticationPrincipal 로 받은 User 객체가 null 인지 검증
         validateUser(patient);
@@ -46,10 +46,10 @@ public class UserLocationService {
         log.info("경위도 정보 저장 완료");
 
 
-        return PatientLocationDto.fromEntity((Patient) patient, savedLocation);
+        return PatientLocation.Dto.of((Patient) patient, savedLocation);
     }
 
-    public PatientLocationDto getUserLatestLocation(User protector, Long patientId){
+    public PatientLocation.Dto getUserLatestLocation(User protector, Long patientId){
 
         // 1. 요청으로 온 userId로 찾은 유저가 존재하는지 검증
         log.info("환자, 보호자 유효성 검사 실시");
@@ -69,12 +69,12 @@ public class UserLocationService {
 
         Location location = new Location(foundedLatestLocationInfo.getLatitude(), foundedLatestLocationInfo.getLongitude(), foundedLatestLocationInfo.getCreatedAt(), foundPatient);
 
-        return PatientLocationDto.fromEntity(foundPatient, location);
+        return PatientLocation.Dto.of(foundPatient, location);
 
 
     }
 
-    public List<PatientLocationResponseDto> getUserLocationWithinRange(User protector, Long patientId, LocalDateTime standardTime){
+    public PatientLocationList.Dto getUserLocationWithinRange(User protector, Long patientId, LocalDateTime standardTime){
         // 0. 호출 시간 확인
         log.info("쿼리 파라미터로 받은 시간 : {}", standardTime);
 
@@ -99,11 +99,15 @@ public class UserLocationService {
         List<Location> foundedLocationInfoWithinRange = getUserLocationsWithinRange(foundPatient, inquiryStartTime, inquiryEndTime);
         log.info("요청 시간 전후 30분 동안 조회된 환자 위치 개수={}", (long) foundedLocationInfoWithinRange.size());
 
-        List<PatientLocationDto> patientLocationDtos = foundedLocationInfoWithinRange.stream()
-                .map(userLocation -> PatientLocationDto.fromEntity(foundPatient, userLocation))
+        if(foundedLocationInfoWithinRange.isEmpty()){
+            throw new CustomErrorException(ErrorType.UserLocationInfoWithinRangeNotFoundError);
+        }
+
+        List<PatientLocationList.LocationElement> locations = foundedLocationInfoWithinRange.stream()
+                .map(userLocation -> PatientLocationList.LocationElement.fromEntity(userLocation))
                 .collect(Collectors.toList());
 
-        return PatientLocationResponseDto.fromDtoList(foundPatient, patientLocationDtos);
+        return PatientLocationList.Dto.of(foundPatient, locations);
     }
 
 
@@ -157,8 +161,7 @@ public class UserLocationService {
     }
 
     public List<Location> getUserLocationsWithinRange(Patient foundPatient, LocalDateTime inquiryStartTime, LocalDateTime inquiryEndTime) {
-        return Optional.ofNullable(userLocationRepository.findByPatientWithinTimeRange(foundPatient, inquiryStartTime, inquiryEndTime))
-                .orElseThrow(() -> new CustomErrorException(ErrorType.UserLocationInfoNotFoundError));
+        return userLocationRepository.findByPatientWithinTimeRange(foundPatient, inquiryStartTime, inquiryEndTime);
     }
 
 }

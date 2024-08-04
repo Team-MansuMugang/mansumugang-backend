@@ -30,9 +30,6 @@ public class Record {
     @Column(nullable = false)
     private Long duration;
 
-    @Column(nullable = false)
-    private String savedPath;
-
     @CreatedDate
     private LocalDateTime createdAt;
 
@@ -41,24 +38,21 @@ public class Record {
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 
-    private Record(String filename, Long duration, String savedPath, LocalDateTime createdAt, Patient patient) {
+    private Record(String filename, Long duration, LocalDateTime createdAt, Patient patient) {
         this.filename = filename;
         this.duration = duration;
-        this.savedPath = savedPath;
         this.createdAt = createdAt;
         this.patient = patient;
     }
 
     public static Record of(Patient validPatient,
                             String recordFileName,
-                            Long recordDuration,
-                            String savedPath
+                            Long recordDuration
     ){
         return Record.builder()
                 .patient(validPatient)
                 .filename(recordFileName)
                 .duration(recordDuration)
-                .savedPath(savedPath)
                 .build();
     }
 

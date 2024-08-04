@@ -9,12 +9,14 @@ import org.mansumugang.mansumugang_service.domain.record.Record;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.dto.record.RecordDelete;
 import org.mansumugang.mansumugang_service.dto.record.RecordInquiry;
 import org.mansumugang.mansumugang_service.dto.record.RecordSave;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.PatientRepository;
 import org.mansumugang.mansumugang_service.repository.RecordRepository;
 import org.mansumugang.mansumugang_service.service.fileService.FileService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,43 +35,39 @@ public class RecordService {
 
     private final FileService fileService;
 
+    @Value("${file.upload.audio.api}")
+    private String audioApiUrlPrefix;
+
     @Transactional
-    public RecordSave.SavedInfo saveRecord(User user, MultipartFile recordFile){
+    public RecordSave.Dto saveRecord(User user, MultipartFile recordFile){
 
         log.info("RecordService -> saveRecord 메서드 호출");
 
         // 1. 음성녹음을 저장하려는 유저가 환자인지 검증
         Patient validPatient = validatePatient(user);
 
-        String recordFileName = null;
-        Long recordDuration = null;
-        String savedPath = null;
-        if (recordFile != null) {
-            try {
-                log.info("녹음파일 저장 시작");
-                recordFileName = fileService.saveRecordFile(recordFile);
-                log.info("녹음파일 저장 완료");
 
-                log.info("저장된 녹음파일 이름={}", recordFileName );
+        if (recordFile == null){
+            throw new CustomErrorException(ErrorType.RecordFileNotFound);
+        }
 
-                recordDuration = fileService.getRecordDuration(recordFileName);
-                log.info("저장된 녹음파일의 재생시간 : {}초", recordDuration);
+            try{
+                String recordFileName = fileService.saveRecordFile(recordFile);
+                Long recordDuration = fileService.getRecordDuration(recordFileName);
 
-                savedPath = fileService.getSavedPath(recordFileName);
+                Record newRecord = recordRepository.save(Record.of(validPatient, recordFileName, recordDuration));
+
+                return RecordSave.Dto.getInfo(newRecord);
+
 
             } catch (Exception e) {
                 throw new CustomErrorException(ErrorType.InternalServerError);
             }
 
-        }
-        Record newRecord = recordRepository.save(Record.of(validPatient, recordFileName, recordDuration, savedPath));
-        log.info("저장된 녹음파일에 대한 정보 DB에 저장 완료");
-
-        return RecordSave.SavedInfo.getInfo(newRecord);
 
     }
 
-    public List<RecordInquiry.Response> getAllPatientsRecords(User user){
+    public RecordInquiry.Dto getAllPatientsRecords(User user){
         log.info("RecordService -> getAllRecords 메서드 호출");
 
         // 1. 음성을 조회하려는 유저가 보호자 객체인지 검증
@@ -82,12 +80,11 @@ public class RecordService {
         // 3. 찾은 환자들의 녹음파일에 대한 정보들 조회
         List<Record> foundAllRecords = getAllPatientsRecords(foundPatients);
 
-        List<RecordInquiry.Dto> recordInquiryDtos = getDtos(foundAllRecords);
+        return RecordInquiry.Dto.fromEntity(foundAllRecords, audioApiUrlPrefix);
 
-        return RecordInquiry.Response.createNewResponse(recordInquiryDtos);
     }
 
-    public List<RecordInquiry.Response> getOnePatientsRecords(User user, Long patientId){
+    public RecordInquiry.Dto getAllRecordsByPatientId(User user, Long patientId){
 
         // 1. 음성을 조회하려는 유저가 보호자 객체인지 검증
         Protector validProtector = validateProtector(user);
@@ -101,12 +98,35 @@ public class RecordService {
         // 4.
         List<Record> foundAllRecords = getOnePatientRecords(patientId);
 
-        List<RecordInquiry.Dto> recordInquiryDtos = getDtos(foundAllRecords);
-
-        return RecordInquiry.Response.createNewResponse(recordInquiryDtos);
+        return RecordInquiry.Dto.fromEntity(foundAllRecords, audioApiUrlPrefix);
 
     }
 
+    public RecordDelete.Dto deleteRecord(User user, Long recordId){
+
+        // 1. 음성 녹음 파일을 제거하려는 객체가 보호자 객체가 맞는지 검증
+        Protector validProtector = validateProtector(user);
+
+        // 2. 경로 변수로 받은 음성녹음 파일이 존재하는지 검증
+        Record foundRecord = findRecord(recordId);
+        String foundRecordFileName = foundRecord.getFilename();
+
+        // 3. 보호자와 녹음파일의 소유자(환자) 간 관계 검증
+        checkUserIsProtectorOfPatient(validProtector, foundRecord.getPatient());
+
+        // 4. 서버에서 녹음파일 삭제 진행
+        try {
+            String originalRecordFileName = foundRecord.getFilename();
+            fileService.deleteRecordFile(originalRecordFileName);
+        } catch (Exception e) {
+            throw new CustomErrorException(ErrorType.InternalServerError);
+        }
+
+        // 5. DB에 저장된 녹음파일 정보 삭제
+        recordRepository.delete(foundRecord);
+
+        return RecordDelete.Dto.fromEntity(foundRecordFileName);
+    }
 
 
     private Patient validatePatient(User user) {
@@ -149,6 +169,11 @@ public class RecordService {
                 });
     }
 
+    private Record findRecord(Long recordId) {
+        return recordRepository.findById(recordId)
+                .orElseThrow(() -> new CustomErrorException(ErrorType.RecordInfoNotFound));
+    }
+
     private void checkUserIsProtectorOfPatient(Protector protector, Patient patient) {
 
         log.info("유저가 환자의 보호자인지 검증 시작");
@@ -167,22 +192,21 @@ public class RecordService {
     }
 
     private List<Record> getAllPatientsRecords(List<Patient> foundPatients) {
-        List<Record> foundAllRecords = new ArrayList<>();
-        for (Patient patient : foundPatients) {
-            List<Record> patientRecords = recordRepository.findByPatient_idOrderByCreatedAtDesc(patient.getId());
-            foundAllRecords.addAll(patientRecords);
+
+        List<Long> foundPatientIds = foundPatients.stream().map(Patient::getId).collect(Collectors.toList());
+
+        List<Record> foundAllRecords = recordRepository.findAllByPatientIdsOrderByCreatedAtDesc(foundPatientIds);
+
+        if(foundAllRecords.isEmpty()){
+            throw new CustomErrorException(ErrorType.UserRecordInfoNotFoundError);
         }
+
         return foundAllRecords;
     }
 
     private List<Record> getOnePatientRecords(Long patientId) {
-        return Optional.ofNullable(recordRepository.findByPatient_idOrderByCreatedAtDesc(patientId))
+        return Optional.ofNullable(recordRepository.findByPatientIdOrderByCreatedAtDesc(patientId))
                 .orElseThrow(() -> new CustomErrorException(ErrorType.UserRecordInfoNotFoundError));
     }
 
-    private static List<RecordInquiry.Dto> getDtos(List<Record> foundAllRecords) {
-        return foundAllRecords.stream()
-                .map(record -> RecordInquiry.Dto.fromEntity(record))
-                .collect(Collectors.toList());
-    }
 }
