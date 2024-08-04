@@ -1,4 +1,4 @@
-package org.mansumugang.mansumugang_service.dto.user.location;
+package org.mansumugang.mansumugang_service.dto.location;
 
 
 import jakarta.validation.constraints.NotNull;
