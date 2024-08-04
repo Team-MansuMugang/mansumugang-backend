@@ -3,21 +3,17 @@ package org.mansumugang.mansumugang_service.service.medicine;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
-import org.mansumugang.mansumugang_service.constant.InternalErrorType;
+import org.mansumugang.mansumugang_service.constant.MedicineRecordStatusType;
 import org.mansumugang.mansumugang_service.domain.medicine.Medicine;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineInTakeTime;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeDay;
+import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeRecord;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineSchedule;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineSummaryInfoDto;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineUpdate;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineDelete;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineSave;
+import org.mansumugang.mansumugang_service.dto.medicine.*;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.exception.CustomNotValidErrorException;
-import org.mansumugang.mansumugang_service.exception.InternalErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
 import org.mansumugang.mansumugang_service.service.fileService.FileService;
 import org.mansumugang.mansumugang_service.utils.DateParser;
@@ -27,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,52 +34,57 @@ import java.util.stream.Collectors;
 public class MedicineService {
     @Value("${file.upload.image.api}")
     private String imageApiUrl;
+    private final DateParser dateParser;
 
     private final MedicineRepository medicineRepository;
     private final MedicineIntakeDayRepository medicineIntakeDayRepository;
     private final MedicineIntakeTimeRepository medicineIntakeTimeRepository;
     private final MedicineIntakeRecordRepository medicineIntakeRecordRepository;
-
-    private final FileService fileService;
-
-    private final DateParser dateParser;
-
     private final PatientRepository patientRepository;
 
-    public MedicineSchedule.Dto getMedicineByDate(User user, Long patientId, String targetDateStr) {
-        Protector validatedPatient = validateProtector(user);
+    private final FileService fileService;
+    private final MedicineCommonService medicineCommonService;
+
+    public MedicineSummaryInfo.Dto getMedicineSummaryInfoByDate(User user, Long patientId, String targetDateStr) {
+        Protector validatedProtector = validateProtector(user);
         Patient foundPatient = findPatient(patientId);
-        checkUserIsProtectorOfPatient(validatedPatient, foundPatient);
+        checkUserIsProtectorOfPatient(validatedProtector, foundPatient);
 
         LocalDate parsedTargetDate = dateParser.parseDate(targetDateStr);
 
-        List<MedicineSummaryInfoDto> medicineDayInfos =
-                medicineIntakeRecordRepository.findMedicineScheduleByDate(parsedTargetDate, patientId, parsedTargetDate.getDayOfWeek());
-
-
-        Map<LocalTime, List<MedicineSummaryInfoDto>> collect = medicineDayInfos.stream()
-                .collect(Collectors.groupingBy(MedicineSummaryInfoDto::getMedicineIntakeTime));
-
-        List<MedicineSchedule.Element> elements = new ArrayList<>();
-        collect.forEach((localTime, medicineSummaryInfos) -> elements.add(MedicineSchedule.Element.of(localTime, medicineSummaryInfos)));
-        return MedicineSchedule.Dto.of(imageApiUrl, parsedTargetDate, elements);
+        return getMedicineSummaryInfoByDate(parsedTargetDate, foundPatient.getId());
     }
 
-    public MedicineSchedule.Dto getMedicineByDate(User user, String targetDateStr) {
+    public MedicineSummaryInfo.Dto getMedicineSummaryInfoByDate(User user, String targetDateStr) {
         Patient validatedPatient = validatePatient(user);
 
         LocalDate parsedTargetDate = dateParser.parseDate(targetDateStr);
 
-        List<MedicineSummaryInfoDto> medicineDayInfos =
-                medicineIntakeRecordRepository.findMedicineScheduleByDate(parsedTargetDate, validatedPatient.getId(), parsedTargetDate.getDayOfWeek());
+        return getMedicineSummaryInfoByDate(parsedTargetDate, validatedPatient.getId());
+    }
 
+    // 특정일에 대한 환자의 약 정보 조회
+    public MedicineSummaryInfo.Dto getMedicineSummaryInfoByDate(LocalDate targetDate, Long patientId) {
+        // 테이터베이스로부터 특정일에 대한 환자의 약 정보 쿼리 결과
+        List<MedicineSummaryInfoResult> medicineDayInfoResult =
+                medicineIntakeRecordRepository.findMedicineScheduleByDate(targetDate, patientId, targetDate.getDayOfWeek());
 
-        Map<LocalTime, List<MedicineSummaryInfoDto>> collect = medicineDayInfos.stream()
-                .collect(Collectors.groupingBy(MedicineSummaryInfoDto::getMedicineIntakeTime));
+        // 각각의 약에 대해 상태를 정의함
+        List<MedicineSummaryInfo.MedicineSummaryInfoElement> medicineSummaryInfos = medicineDayInfoResult.stream().map(medicineSummaryInfoResult ->
+                MedicineSummaryInfo.MedicineSummaryInfoElement.of(
+                        medicineSummaryInfoResult,
+                        medicineCommonService.assignMedicineStatus(
+                                medicineSummaryInfoResult.getStatus(),
+                                LocalDateTime.of(targetDate, medicineSummaryInfoResult.getMedicineIntakeTime())
+                        )
+                )
+        ).toList();
 
-        List<MedicineSchedule.Element> elements = new ArrayList<>();
-        collect.forEach((localTime, medicineSummaryInfos) -> elements.add(MedicineSchedule.Element.of(localTime, medicineSummaryInfos)));
-        return MedicineSchedule.Dto.of(imageApiUrl, parsedTargetDate, elements);
+        // 같은 복용시간을 가진 약끼리 그룹화
+        Map<LocalTime, List<MedicineSummaryInfo.MedicineSummaryInfoElement>> medicineSummaryInfoByTime = medicineSummaryInfos.stream()
+                .collect(Collectors.groupingBy(MedicineSummaryInfo.MedicineSummaryInfoElement::getMedicineIntakeTime));
+
+        return MedicineSummaryInfo.Dto.of(imageApiUrl, targetDate, MedicineSummaryInfo.TimeElement.convertTimeElements(medicineSummaryInfoByTime));
     }
 
     public void saveMedicine(User user, MultipartFile medicineImage, MedicineSave.Request requestDto) {
@@ -107,17 +109,25 @@ public class MedicineService {
         }
 
         Medicine newMedicine = medicineRepository.save(Medicine.of(foundPatient, requestDto, parsedMedicineIntakeStopDay, medicineImageName));
-        saveMedicineIntakeDays(newMedicine, foundPatient, requestDto.getMedicineIntakeDays());
-        saveMedicineIntakeTimes(newMedicine, requestDto.getMedicineIntakeTimes());
+        List<MedicineIntakeDay> newMedicineIntakeDays = saveMedicineIntakeDays(newMedicine, foundPatient, requestDto.getMedicineIntakeDays());
+        List<MedicineInTakeTime> newMedicineInTakeTimes = saveMedicineIntakeTimes(newMedicine, requestDto.getMedicineIntakeTimes());
+
+        savePassedMedicineRecord(newMedicine, newMedicineIntakeDays, newMedicineInTakeTimes);
+
+
     }
 
     public void updateMedicine(User user, Long medicineId, MultipartFile medicineImage, MedicineUpdate.Request requestDto) {
+        MedicineIntakeDay passedTargetMedicineIntakeDay = null;
+
         Protector validProtector = validateProtector(user);
         Patient foundPatient = findPatient(requestDto.getPatientId());
         checkUserIsProtectorOfPatient(validProtector, foundPatient);
 
         Medicine foundMedicine = medicineRepository.findById(medicineId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
+
+        List<MedicineInTakeTime> renewedMedicineIntakeTimes = medicineIntakeTimeRepository.findAllByMedicine(foundMedicine);
 
         if (requestDto.getMedicineName() != null) {
             foundMedicine.setMedicineName(requestDto.getMedicineName());
@@ -148,7 +158,8 @@ public class MedicineService {
                     throw new CustomErrorException(ErrorType.AlreadyExistMedicineIntakeTimeError);
                 }
 
-                medicineIntakeTimeRepository.save(MedicineInTakeTime.of(foundMedicine, newMedicineIntakeTime));
+                MedicineInTakeTime newMedicineIntakeTimeEntity = medicineIntakeTimeRepository.save(MedicineInTakeTime.of(foundMedicine, newMedicineIntakeTime));
+                renewedMedicineIntakeTimes.add(newMedicineIntakeTimeEntity);
             }
         }
 
@@ -160,7 +171,10 @@ public class MedicineService {
                     throw new CustomErrorException(ErrorType.NoSuchMedicineIntakeTimeError);
                 }
 
+                medicineIntakeRecordRepository.deleteByMedicineInTakeTime(foundMedicineIntakeTime.get());
                 medicineIntakeTimeRepository.delete(foundMedicineIntakeTime.get());
+
+                renewedMedicineIntakeTimes = renewedMedicineIntakeTimes.stream().filter(medicineInTakeTime -> !Objects.equals(medicineInTakeTime.getId(), foundMedicineIntakeTime.get().getId())).toList();
             }
         }
 
@@ -172,7 +186,11 @@ public class MedicineService {
                     throw new CustomErrorException(ErrorType.AlreadyExistMedicineIntakeDayError);
                 }
 
-                medicineIntakeDayRepository.save(MedicineIntakeDay.of(foundMedicine, foundPatient, newMedicineIntakeDay));
+                MedicineIntakeDay newMedicineIntakeDayEntity = medicineIntakeDayRepository.save(MedicineIntakeDay.of(foundMedicine, foundPatient, newMedicineIntakeDay));
+
+                if (newMedicineIntakeDayEntity.getDay().equals(LocalDate.now().getDayOfWeek())) {
+                    passedTargetMedicineIntakeDay = newMedicineIntakeDayEntity;
+                }
             }
         }
 
@@ -184,11 +202,12 @@ public class MedicineService {
                     throw new CustomErrorException(ErrorType.NoSuchMedicineIntakeDayError);
                 }
 
+                medicineIntakeRecordRepository.deleteByMedicineIntakeDay(foundMedicineIntakeDay.get());
                 medicineIntakeDayRepository.delete(foundMedicineIntakeDay.get());
             }
         }
 
-        if(medicineImage != null) {
+        if (medicineImage != null) {
             try {
                 String originalMedicineImageName = foundMedicine.getMedicineImageName();
                 foundMedicine.setMedicineImageName(fileService.saveImageFiles(medicineImage));
@@ -196,6 +215,10 @@ public class MedicineService {
             } catch (Exception e) {
                 throw new CustomErrorException(ErrorType.InternalServerError);
             }
+        }
+
+        if (passedTargetMedicineIntakeDay != null) {
+            savePassedMedicineRecord(foundMedicine, List.of(passedTargetMedicineIntakeDay), renewedMedicineIntakeTimes);
         }
     }
 
@@ -220,23 +243,15 @@ public class MedicineService {
         medicineRepository.delete(foundMedicine);
     }
 
+    private List<MedicineIntakeDay> saveMedicineIntakeDays(Medicine medicine, Patient patient, List<DayOfWeek> medicineIntakeDay) {
+        validateMedicineIntakeDays(medicineIntakeDay);
 
-    private void saveMedicineIntakeDays(Medicine medicine, Patient patient, MedicineSave.MedicineIntakeDay medicineIntakeDay) {
+        return medicineIntakeDay.stream().map(dayOfWeek -> medicineIntakeDayRepository.save(MedicineIntakeDay.of(medicine, patient, dayOfWeek))).toList();
+    }
 
-        Map<DayOfWeek, Boolean> daysMap = new LinkedHashMap<>();
-        daysMap.put(DayOfWeek.MONDAY, medicineIntakeDay.getMonday());
-        daysMap.put(DayOfWeek.TUESDAY, medicineIntakeDay.getTuesday());
-        daysMap.put(DayOfWeek.WEDNESDAY, medicineIntakeDay.getWednesday());
-        daysMap.put(DayOfWeek.THURSDAY, medicineIntakeDay.getThursday());
-        daysMap.put(DayOfWeek.FRIDAY, medicineIntakeDay.getFriday());
-        daysMap.put(DayOfWeek.SATURDAY, medicineIntakeDay.getSaturday());
-        daysMap.put(DayOfWeek.SUNDAY, medicineIntakeDay.getSunday());
-
-        daysMap.forEach((dayType, shouldAdd) -> {
-            if (shouldAdd) {
-                medicineIntakeDayRepository.save(MedicineIntakeDay.of(medicine, patient, dayType));
-            }
-        });
+    private List<MedicineInTakeTime> saveMedicineIntakeTimes(Medicine medicine, List<LocalTime> medicineIntakeTimes) {
+        return medicineIntakeTimes.stream().map(
+                intakeTime -> medicineIntakeTimeRepository.save(MedicineInTakeTime.of(medicine, intakeTime))).toList();
     }
 
     private void validateMedicineIntakeTimes(List<LocalTime> medicineIntakeTimes) {
@@ -262,10 +277,41 @@ public class MedicineService {
         );
     }
 
-    private void saveMedicineIntakeTimes(Medicine medicine, List<LocalTime> medicineIntakeTimes) {
-        medicineIntakeTimes.forEach(
-                intakeTime -> medicineIntakeTimeRepository.save(MedicineInTakeTime.of(medicine, intakeTime))
-        );
+    // 금일 약을 복용할 경우 현시간 이전의 약은 PASS로 처리
+    private void savePassedMedicineRecord(Medicine medicine,
+                                          List<MedicineIntakeDay> MedicineIntakeDays,
+                                          List<MedicineInTakeTime> medicineIntakeTimes) {
+        DayOfWeek todayDayOfWeek = LocalDate.now().getDayOfWeek();
+        LocalTime nowTime = LocalTime.now();
+        LocalDate nowDate = LocalDate.now();
+
+        for (MedicineIntakeDay medicineIntakeDay : MedicineIntakeDays) {
+            if (todayDayOfWeek.equals(medicineIntakeDay.getDay())) {
+                for (MedicineInTakeTime medicineInTakeTime : medicineIntakeTimes) {
+                    if (medicineInTakeTime.getMedicineIntakeTime().isBefore(nowTime)) {
+                        Optional<MedicineIntakeRecord> foundMedicineIntakeRecord =
+                                medicineIntakeRecordRepository.findByMedicineAndMedicineIntakeDayAndMedicineInTakeTimeAndScheduledIntakeDate(
+                                        medicine,
+                                        medicineIntakeDay,
+                                        medicineInTakeTime,
+                                        nowDate
+                                );
+
+                        if(foundMedicineIntakeRecord.isEmpty()) {
+                            medicineIntakeRecordRepository.save(
+                                    MedicineIntakeRecord.createNewEntity(
+                                            medicine,
+                                            medicineIntakeDay,
+                                            medicineInTakeTime,
+                                            nowDate,
+                                            MedicineRecordStatusType.PASS
+                                    )
+                            );
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private Patient findPatient(Long patientId) {

@@ -2,6 +2,7 @@ package org.mansumugang.mansumugang_service.dto.medicineIntake;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.mansumugang.mansumugang_service.constant.MedicineRecordStatusType;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeRecord;
 import org.mansumugang.mansumugang_service.dto.auth.signup.SignUpDto;
 import org.mansumugang.mansumugang_service.dto.auth.signup.SignUpResponseDto;
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class MedicineIntakeToggleResponseDto {
-    private Boolean status;
+    private MedicineRecordStatusType status;
 
     private LocalDateTime actualIntakeTime;
 

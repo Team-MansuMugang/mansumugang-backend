@@ -97,12 +97,6 @@ public enum ErrorType {
     NoSuchDayTypeError(
             HttpStatus.BAD_REQUEST, "유호하지 않은 요일입니다."
     ),
-    NoMedicineIntakeRecordForDurationError(
-            HttpStatus.BAD_REQUEST, "해당 기간에는 약 복용 일정이 존재하지 않습니다."
-    ),
-    NonDosageTimeError(
-            HttpStatus.BAD_REQUEST, "해당 약을 복용할 수 없는 시간입니다."
-    ),
     AlreadyExistMedicineIntakeTimeError(
             HttpStatus.CONFLICT, "이미 존재하는 약 복용시간입니다.")
     ,
@@ -111,6 +105,9 @@ public enum ErrorType {
     ),
     NoImageFileError(
             HttpStatus.BAD_REQUEST, "유효하지 않은 이미지 파일입니다."
+    ),
+    ConditionOfNotBeingAbleToToggleError(
+            HttpStatus.BAD_REQUEST, "Toggle이 가능한 조건이 아닙니다."
     );
 
     private final HttpStatus httpStatus;

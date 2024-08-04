@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.mansumugang.mansumugang_service.constant.MedicineRecordStatusType;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeRecord;
 import org.mansumugang.mansumugang_service.dto.auth.signup.SignUpDto;
 import org.mansumugang.mansumugang_service.dto.auth.signup.SignUpResponseDto;
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class MedicineIntakeToggleDto {
-    private Boolean status;
+    private MedicineRecordStatusType status;
 
     private LocalDateTime actualIntakeTime;
 

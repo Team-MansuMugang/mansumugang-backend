@@ -2,6 +2,7 @@ package org.mansumugang.mansumugang_service.domain.medicine;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.mansumugang.mansumugang_service.constant.MedicineRecordStatusType;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
@@ -9,6 +10,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -31,31 +33,23 @@ public class MedicineIntakeRecord {
     private LocalDate scheduledIntakeDate;
 
     @Column(nullable = false)
-    private Boolean status;
+    private MedicineRecordStatusType status;
 
     private LocalDateTime actualIntakeTime;
 
     private Boolean isPushed;
 
-    public void toggle() {
-        this.status = !this.status;
-        if (!this.status) {
-            actualIntakeTime = null;
-        }else{
-            actualIntakeTime = LocalDateTime.now();
-        }
-    }
-
     public static MedicineIntakeRecord createNewEntity(Medicine medicine,
-                                          MedicineIntakeDay medicineIntakeDay,
-                                          MedicineInTakeTime medicineInTakeTime,
-                                          LocalDate scheduledIntakeDate) {
+                                                       MedicineIntakeDay medicineIntakeDay,
+                                                       MedicineInTakeTime medicineInTakeTime,
+                                                       LocalDate scheduledIntakeDate,
+                                                       MedicineRecordStatusType status) {
         return MedicineIntakeRecord.builder()
                 .medicine(medicine)
                 .medicineIntakeDay(medicineIntakeDay)
                 .medicineInTakeTime(medicineInTakeTime)
                 .scheduledIntakeDate(scheduledIntakeDate)
-                .status(true)
+                .status(status)
                 .actualIntakeTime(LocalDateTime.now())
                 .isPushed(false)
                 .build();
