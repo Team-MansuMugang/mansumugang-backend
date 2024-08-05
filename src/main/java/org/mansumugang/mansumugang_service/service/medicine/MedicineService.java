@@ -84,7 +84,20 @@ public class MedicineService {
         Map<LocalTime, List<MedicineSummaryInfo.MedicineSummaryInfoElement>> medicineSummaryInfoByTime = medicineSummaryInfos.stream()
                 .collect(Collectors.groupingBy(MedicineSummaryInfo.MedicineSummaryInfoElement::getMedicineIntakeTime));
 
-        return MedicineSummaryInfo.Dto.of(imageApiUrl, targetDate, MedicineSummaryInfo.TimeElement.convertTimeElements(medicineSummaryInfoByTime));
+
+        // LocalTime 기준으로 정렬
+        Map<LocalTime, List<MedicineSummaryInfo.MedicineSummaryInfoElement>> sortedMap = medicineSummaryInfoByTime.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
+
+
+        return MedicineSummaryInfo.Dto.of(imageApiUrl, targetDate, MedicineSummaryInfo.TimeElement.convertTimeElements(sortedMap));
     }
 
     public void saveMedicine(User user, MultipartFile medicineImage, MedicineSave.Request requestDto) {
