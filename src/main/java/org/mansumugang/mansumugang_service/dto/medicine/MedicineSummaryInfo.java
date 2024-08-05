@@ -37,17 +37,40 @@ public class MedicineSummaryInfo {
         }
     }
 
+    @Getter
+    @AllArgsConstructor
+    @Builder
+    public static class FilteredMedicineSummaryInfoElement {
+        private Long medicineId;
+        private String medicineName;
+        private String medicineImageName;
+        private String hospitalName;
+        private String medicineDescription;
+        private MedicineStatusType status;
+
+        public static FilteredMedicineSummaryInfoElement of(MedicineSummaryInfoElement medicineSummaryInfoElement) {
+            return FilteredMedicineSummaryInfoElement.builder()
+                    .medicineId(medicineSummaryInfoElement.getMedicineId())
+                    .medicineName(medicineSummaryInfoElement.getMedicineName())
+                    .medicineImageName(medicineSummaryInfoElement.getMedicineImageName())
+                    .hospitalName(medicineSummaryInfoElement.getHospitalName())
+                    .medicineDescription(medicineSummaryInfoElement.getMedicineDescription())
+                    .status(medicineSummaryInfoElement.getStatus())
+                    .build();
+        }
+    }
+
 
     @Getter
     @AllArgsConstructor
     @Builder
     public static class TimeElement {
-        private LocalTime time;
-        private List<MedicineSummaryInfoElement> medicines;
+        private String time;
+        private List<FilteredMedicineSummaryInfoElement> medicines;
 
-        public static TimeElement of(LocalTime time, List<MedicineSummaryInfoElement> medicines) {
+        public static TimeElement of(LocalTime time, List<FilteredMedicineSummaryInfoElement> medicines) {
             return TimeElement.builder()
-                    .time(time)
+                    .time(time.getHour()+ ":" + time.getMinute())
                     .medicines(medicines)
                     .build();
         }
@@ -55,10 +78,14 @@ public class MedicineSummaryInfo {
         public static List<TimeElement> convertTimeElements(Map<LocalTime, List<MedicineSummaryInfoElement>> medicineSummaryInfoByTime) {
             List<org.mansumugang.mansumugang_service.dto.medicine.MedicineSummaryInfo.TimeElement> timeElements = new ArrayList<>();
             medicineSummaryInfoByTime.forEach((localTime, medicineSummaryInfos1) ->
-                    timeElements.add(org.mansumugang.mansumugang_service.dto.medicine.MedicineSummaryInfo.TimeElement.of(localTime, medicineSummaryInfos1))
+                    timeElements.add(TimeElement.of(localTime, convertFilteredMedicineSummaryInfoElement(medicineSummaryInfos1)))
             );
 
             return timeElements;
+        }
+
+        public static List<FilteredMedicineSummaryInfoElement> convertFilteredMedicineSummaryInfoElement(List<MedicineSummaryInfo. MedicineSummaryInfoElement> medicineSummaryInfos) {
+            return medicineSummaryInfos.stream().map(FilteredMedicineSummaryInfoElement::of).toList();
         }
     }
 
