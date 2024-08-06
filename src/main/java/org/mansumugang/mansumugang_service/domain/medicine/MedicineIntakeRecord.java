@@ -55,5 +55,22 @@ public class MedicineIntakeRecord {
                 .build();
     }
 
+    public static MedicineIntakeRecord createNewEntity(Medicine medicine,
+                                                       MedicineIntakeDay medicineIntakeDay,
+                                                       MedicineInTakeTime medicineInTakeTime,
+                                                       LocalDate scheduledIntakeDate,
+                                                       MedicineRecordStatusType status,
+                                                       boolean isPushed) {
+        return MedicineIntakeRecord.builder()
+                .medicine(medicine)
+                .medicineIntakeDay(medicineIntakeDay)
+                .medicineInTakeTime(medicineInTakeTime)
+                .scheduledIntakeDate(scheduledIntakeDate)
+                .status(status)
+                .actualIntakeTime(LocalDateTime.now())
+                .isPushed(isPushed)
+                .build();
+    }
+
 
 }
