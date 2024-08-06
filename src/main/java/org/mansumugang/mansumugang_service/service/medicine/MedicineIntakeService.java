@@ -10,8 +10,7 @@ import org.mansumugang.mansumugang_service.domain.medicine.MedicineInTakeTime;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeDay;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeRecord;
 import org.mansumugang.mansumugang_service.domain.user.User;
-import org.mansumugang.mansumugang_service.dto.medicineIntake.MedicineIntakeToggleDto;
-import org.mansumugang.mansumugang_service.dto.medicineIntake.MedicineIntakeToggleRequestDto;
+import org.mansumugang.mansumugang_service.dto.medicineIntake.MedicineIntakeToggle;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
 import org.mansumugang.mansumugang_service.utils.DateParser;
@@ -20,6 +19,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -36,15 +37,25 @@ public class MedicineIntakeService {
     private final MedicineCommonService medicineCommonService;
 
 
-    public MedicineIntakeToggleDto toggleMedicineIntakeStatus(User patient, MedicineIntakeToggleRequestDto requestDto) {
+    public MedicineIntakeToggle.Dto toggleMedicineIntakeStatus(User patient, MedicineIntakeToggle.Request requestDto) {
         if (patient == null) {
             throw new CustomErrorException(ErrorType.UserNotFoundError);
         }
 
-        LocalDate parsedScheduledMedicineIntakeDate = dateParser.parseDate(requestDto.getScheduledMedicineIntakeDate());
-        LocalTime parsedIntakeTime = LocalTime.of(requestDto.getMedicineIntakeTime().getHour(), requestDto.getMedicineIntakeTime().getMinute());
+        List<MedicineIntakeToggle.ToggleResultElement> toggleResult = new ArrayList<>();
+        for (Long medicineId : requestDto.getMedicineIds()) {
+            MedicineIntakeToggle.ToggleResultElement toggleResultElement = _toggleMedicineIntakeStatus(medicineId, requestDto.getMedicineIntakeTime(), requestDto.getScheduledMedicineIntakeDate());
+            toggleResult.add(toggleResultElement);
+        }
 
-        Medicine foundMedicine = medicineRepository.findById(requestDto.getMedicineId())
+        return MedicineIntakeToggle.Dto.fromElement(toggleResult);
+    }
+
+    private MedicineIntakeToggle.ToggleResultElement _toggleMedicineIntakeStatus(Long medicineId, LocalTime medicineIntakeTime, String scheduledMedicineIntakeDate) {
+        LocalDate parsedScheduledMedicineIntakeDate = dateParser.parseDate(scheduledMedicineIntakeDate);
+        LocalTime parsedIntakeTime = LocalTime.of(medicineIntakeTime.getHour(), medicineIntakeTime.getMinute());
+
+        Medicine foundMedicine = medicineRepository.findById(medicineId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
 
         MedicineIntakeDay foundMedicineIntakeDay = medicineIntakeDayRepository.findByMedicineAndDay(
@@ -54,8 +65,8 @@ public class MedicineIntakeService {
         MedicineInTakeTime foundMedicineIntakeTime = medicineIntakeTimeRepository.findByMedicineAndMedicineIntakeTime(
                 foundMedicine,
                 LocalTime.of(
-                        requestDto.getMedicineIntakeTime().getHour(),
-                        requestDto.getMedicineIntakeTime().getMinute())
+                        medicineIntakeTime.getHour(),
+                        medicineIntakeTime.getMinute())
         ).orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineIntakeTimeError));
 
         Optional<MedicineIntakeRecord> foundMedicineIntakeRecord = medicineIntakeRecordRepository.findByMedicineAndMedicineIntakeDayAndMedicineInTakeTimeAndScheduledIntakeDate(
@@ -72,13 +83,15 @@ public class MedicineIntakeService {
 
             if (foundMedicineIntakeRecord.get().getStatus() == MedicineRecordStatusType.TRUE) {
                 foundMedicineIntakeRecord.get().setStatus(MedicineRecordStatusType.FALSE);
-                return MedicineIntakeToggleDto.fromEntity(foundMedicineIntakeRecord.get());
+                foundMedicineIntakeRecord.get().setActualIntakeTime(null);
+                return MedicineIntakeToggle.ToggleResultElement.fromEntity(foundMedicineIntakeRecord.get());
             }
 
             if (foundMedicineIntakeRecord.get().getStatus() == MedicineRecordStatusType.FALSE) {
                 if (assginedMedicineStatusType == MedicineStatusType.NO_TAKEN) {
                     foundMedicineIntakeRecord.get().setStatus(MedicineRecordStatusType.TRUE);
-                    return MedicineIntakeToggleDto.fromEntity(foundMedicineIntakeRecord.get());
+                    foundMedicineIntakeRecord.get().setActualIntakeTime(LocalDateTime.now());
+                    return MedicineIntakeToggle.ToggleResultElement.fromEntity(foundMedicineIntakeRecord.get());
                 }
             }
         } else {
@@ -92,11 +105,14 @@ public class MedicineIntakeService {
                         foundMedicineIntakeTime,
                         parsedScheduledMedicineIntakeDate,
                         MedicineRecordStatusType.TRUE));
-                return MedicineIntakeToggleDto.fromEntity(newMedicineIntakeRecord);
+                return MedicineIntakeToggle.ToggleResultElement.fromEntity(newMedicineIntakeRecord);
             }
 
         }
 
         throw new CustomErrorException(ErrorType.ConditionOfNotBeingAbleToToggleError);
     }
+
+
+
 }
