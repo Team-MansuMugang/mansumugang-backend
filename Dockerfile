@@ -13,4 +13,4 @@ COPY ${JAR_FILE} mansumugang-spring-boot-app.jar
 RUN mkdir -p /app/mm
 
 # 시스템 진입점 정의
-ENTRYPOINT ["java", "-Dspring.profiles.active=${PROFILES}", "-Dserver.env=${ENV}", "-jar", "mansumugang-spring-boot-app.jar"]
+ENTRYPOINT ["java", "-Duser.timezone=Asia/Seoul", "-Dspring.profiles.active=${PROFILES}", "-Dserver.env=${ENV}", "-jar", "mansumugang-spring-boot-app.jar"]
