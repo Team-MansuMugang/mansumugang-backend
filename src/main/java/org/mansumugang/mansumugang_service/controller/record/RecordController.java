@@ -30,6 +30,7 @@ public class RecordController {
     ){
         RecordSave.Dto savedInfo = recordService.saveRecord(user, recordFile);
 
+        log.info("녹음파일 저장완료 및 JSON 응답객체 전송 시작");
         return new ResponseEntity<>(RecordSave.Response.createNewResponse(savedInfo), HttpStatus.CREATED);
     }
 
