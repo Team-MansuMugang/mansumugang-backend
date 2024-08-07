@@ -52,10 +52,20 @@ public class RecordService {
         }
 
             try{
-                String recordFileName = fileService.saveRecordFile(recordFile);
-                Long recordDuration = fileService.getRecordDuration(recordFileName);
 
+                log.info("audios 파일내에 녹음파일 저장 시작");
+                String recordFileName = fileService.saveRecordFile(recordFile);
+                log.info("audios 파일내에 녹음파일 저장 완료");
+
+                log.info("녹음파일 재생 시간 가져오기 시작");
+                Long recordDuration = fileService.getRecordDuration(recordFileName);
+                log.info("녹음파일 재생 시간 가져오기 완료");
+
+
+                log.info("녹음파일 정보 DB에 저장 시작");
                 Record newRecord = recordRepository.save(Record.of(validPatient, recordFileName, recordDuration));
+                log.info("녹음파일 정보 DB에 저장 완료");
+
 
                 return RecordSave.Dto.getInfo(newRecord);
 
