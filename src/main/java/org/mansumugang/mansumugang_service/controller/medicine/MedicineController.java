@@ -54,9 +54,8 @@ public class MedicineController {
 
     @DeleteMapping("/{medicineId}")
     public ResponseEntity<MedicineDelete.Response> deleteMedicine(@AuthenticationPrincipal User user,
-                                                                    @PathVariable Long medicineId,
-                                                                    @Valid @RequestBody MedicineDelete.Request requestDto) {
-        medicineService.deleteMedicine(user, medicineId, requestDto);
+                                                                  @PathVariable Long medicineId) {
+        medicineService.deleteMedicine(user, medicineId);
         return new ResponseEntity<>(MedicineDelete.Response.createNewResponse(), HttpStatus.CREATED);
     }
 }

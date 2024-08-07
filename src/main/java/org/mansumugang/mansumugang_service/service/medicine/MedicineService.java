@@ -133,12 +133,12 @@ public class MedicineService {
     public void updateMedicine(User user, Long medicineId, MultipartFile medicineImage, MedicineUpdate.Request requestDto) {
         MedicineIntakeDay passedTargetMedicineIntakeDay = null;
 
-        Protector validProtector = validateProtector(user);
-        Patient foundPatient = findPatient(requestDto.getPatientId());
-        checkUserIsProtectorOfPatient(validProtector, foundPatient);
-
         Medicine foundMedicine = medicineRepository.findById(medicineId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
+
+        Protector validProtector = validateProtector(user);
+        Patient foundPatient = findPatient(foundMedicine.getPatient().getId());
+        checkUserIsProtectorOfPatient(validProtector, foundPatient);
 
         List<MedicineInTakeTime> renewedMedicineIntakeTimes = medicineIntakeTimeRepository.findAllByMedicine(foundMedicine);
 
@@ -235,13 +235,13 @@ public class MedicineService {
         }
     }
 
-    public void deleteMedicine(User user, Long medicineId, MedicineDelete.Request requestDto) {
-        Protector validProtector = validateProtector(user);
-        Patient foundPatient = findPatient(requestDto.getPatientId());
-        checkUserIsProtectorOfPatient(validProtector, foundPatient);
-
+    public void deleteMedicine(User user, Long medicineId) {
         Medicine foundMedicine = medicineRepository.findById(medicineId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
+
+        Protector validProtector = validateProtector(user);
+        Patient foundPatient = findPatient(foundMedicine.getPatient().getId());
+        checkUserIsProtectorOfPatient(validProtector, foundPatient);
 
         try {
             String originalMedicineImageName = foundMedicine.getMedicineImageName();

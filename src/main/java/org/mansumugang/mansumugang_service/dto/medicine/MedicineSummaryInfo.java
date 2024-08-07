@@ -7,6 +7,7 @@ import org.mansumugang.mansumugang_service.constant.MedicineStatusType;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -69,8 +70,9 @@ public class MedicineSummaryInfo {
         private List<FilteredMedicineSummaryInfoElement> medicines;
 
         public static TimeElement of(LocalTime time, List<FilteredMedicineSummaryInfoElement> medicines) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
             return TimeElement.builder()
-                    .time(time.getHour()+ ":" + time.getMinute())
+                    .time(time.format(formatter))
                     .medicines(medicines)
                     .build();
         }
