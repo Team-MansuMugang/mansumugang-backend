@@ -7,14 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class MedicineDelete {
-
-    @Getter
-    @Setter
-    public static class Request {
-        @NotNull(message = "환자 아이디를 기입해주세요")
-        private Long patientId;
-    }
-
     @Getter
     @AllArgsConstructor
     @Builder
