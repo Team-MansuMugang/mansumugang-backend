@@ -15,6 +15,10 @@ import org.mansumugang.mansumugang_service.repository.HospitalRepository;
 import org.mansumugang.mansumugang_service.repository.PatientRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Optional;
+
 import static org.mansumugang.mansumugang_service.constant.LocationBoundary.*;
 import static org.mansumugang.mansumugang_service.constant.LocationBoundary.EXTREME_EAST;
 
@@ -42,7 +46,9 @@ public class HospitalService {
 
         validateUserLocation(requestDto.getLatitude(), requestDto.getLongitude());
 
-        hospitalRepository.save(Hospital.of(requestDto, foundPatient));
+        LocalDateTime filteredLocalDateTime = validateHospitalVisitingTime(foundPatient, requestDto.getHospitalVisitingTime());
+
+        hospitalRepository.save(Hospital.of(requestDto, foundPatient, filteredLocalDateTime));
     }
 
     public void updateHospital(User user, Long hospitalId, HospitalUpdate.Request requestDto) {
@@ -56,8 +62,8 @@ public class HospitalService {
             foundHospital.setHospitalName(requestDto.getHospitalName());
         }
 
-        if(requestDto.getHospitalAddress() != null) {
-            if(requestDto.getLatitude() == null || requestDto.getLongitude() == null) {
+        if (requestDto.getHospitalAddress() != null) {
+            if (requestDto.getLatitude() == null || requestDto.getLongitude() == null) {
                 throw new CustomErrorException(ErrorType.NeedLatitudeAndLongitudeError);
             }
 
@@ -72,8 +78,10 @@ public class HospitalService {
             foundHospital.setHospitalDescription(requestDto.getHospitalDescription());
         }
 
-        if(requestDto.getHospitalVisitingTime() != null) {
-            foundHospital.setHospitalVisitingTime(requestDto.getHospitalVisitingTime());
+        if (requestDto.getHospitalVisitingTime() != null) {
+            LocalDateTime filteredLocalDateTime = validateHospitalVisitingTime(foundPatient, requestDto.getHospitalVisitingTime());
+
+            foundHospital.setHospitalVisitingTime(filteredLocalDateTime);
         }
     }
 
@@ -87,9 +95,26 @@ public class HospitalService {
         hospitalRepository.delete(foundHospital);
     }
 
+    private LocalDateTime validateHospitalVisitingTime(Patient patient, LocalDateTime hospitalVisitingTime) {
+        LocalDateTime filteredLocalDateTime = LocalDateTime.of(
+                hospitalVisitingTime.toLocalDate(),
+                LocalTime.of(hospitalVisitingTime.toLocalTime().getHour(),
+                        hospitalVisitingTime.toLocalTime().getMinute(),
+                        0
+                )
+        );
+
+        Optional<Hospital> checkTargetHospital = hospitalRepository.findByPatientAndHospitalVisitingTime(patient, filteredLocalDateTime);
+        if (checkTargetHospital.isPresent()) {
+            throw new CustomErrorException(ErrorType.DuplicatedHospitalVisitingTimeError);
+        }
+
+        return filteredLocalDateTime;
+    }
+
     public void validateUserLocation(Double latitude, Double longitude) {
         if (!(EXTREME_SOUTH.getCoordinate() < latitude && latitude < EXTREME_NORTH.getCoordinate())
-                || !(EXTREME_WEST.getCoordinate() < longitude && longitude < EXTREME_EAST.getCoordinate())){
+                || !(EXTREME_WEST.getCoordinate() < longitude && longitude < EXTREME_EAST.getCoordinate())) {
 
             throw new CustomErrorException(ErrorType.OutOfBoundaryError);
         }

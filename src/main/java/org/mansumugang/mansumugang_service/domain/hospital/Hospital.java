@@ -43,7 +43,7 @@ public class Hospital {
     private LocalDateTime hospitalVisitingTime;
 
 
-    public static Hospital of(HospitalSave.Request requestDto, Patient patient){
+    public static Hospital of(HospitalSave.Request requestDto, Patient patient, LocalDateTime filteredLocalDateTime){
         return Hospital.builder()
                 .patient(patient)
                 .hospitalName(requestDto.getHospitalName())
@@ -51,7 +51,7 @@ public class Hospital {
                 .latitude(requestDto.getLatitude())
                 .longitude(requestDto.getLongitude())
                 .hospitalDescription(requestDto.getHospitalDescription())
-                .hospitalVisitingTime(requestDto.getHospitalVisitingTime())
+                .hospitalVisitingTime(filteredLocalDateTime)
                 .build();
     }
 }
