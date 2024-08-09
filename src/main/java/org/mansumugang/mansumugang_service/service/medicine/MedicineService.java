@@ -45,6 +45,20 @@ public class MedicineService {
     private final FileService fileService;
     private final MedicineCommonService medicineCommonService;
 
+    // 보호자가 환자에 대한 약 상세정보 조회
+    public MedicineDetailGet.Dto getMedicineById(User user, Long medicineId) {
+        Medicine foundMedicine = medicineRepository.findById(medicineId).orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
+
+        Protector validatedProtector = validateProtector(user);
+        Patient foundPatient = foundMedicine.getPatient();
+        checkUserIsProtectorOfPatient(validatedProtector, foundPatient);
+
+        List<MedicineIntakeDay> foundMedicineIntakeDays = medicineIntakeDayRepository.findAllByMedicine(foundMedicine);
+        List<MedicineInTakeTime> foundMedicineIntakeTimes = medicineIntakeTimeRepository.findAllByMedicine(foundMedicine);
+
+        return MedicineDetailGet.Dto.of(foundMedicine, foundMedicineIntakeDays, foundMedicineIntakeTimes);
+    }
+
     public MedicineSummaryInfo.Dto getMedicineSummaryInfoByDate(User user, Long patientId, String targetDateStr) {
         Protector validatedProtector = validateProtector(user);
         Patient foundPatient = findPatient(patientId);
