@@ -20,22 +20,22 @@ public class MedicineSummaryInfo {
     @Builder
     public static class HospitalSummaryInfoElement {
         private Long hospitalId;
-        private Long patientId;
         private String hospitalName;
         private String hospitalAddress;
         private Double latitude;
         private Double longitude;
         private String hospitalDescription;
+        private Boolean status;
 
         public static HospitalSummaryInfoElement fromEntity(Hospital hospital) {
             return HospitalSummaryInfoElement.builder()
                     .hospitalId(hospital.getId())
-                    .patientId(hospital.getPatient().getId())
                     .hospitalName(hospital.getHospitalName())
                     .hospitalAddress(hospital.getHospitalAddress())
                     .latitude(hospital.getLatitude())
                     .longitude(hospital.getLongitude())
                     .hospitalDescription(hospital.getHospitalDescription())
+                    .status(hospital.getStatus())
                     .build();
         }
     }
@@ -113,7 +113,7 @@ public class MedicineSummaryInfo {
             return TimeElement.builder()
                     .time(time.format(formatter))
                     .medicines(FilteredMedicineSummaryInfoElement.convertFilteredMedicineSummaryInfoElement(scheduleElement.getMedicines()))
-                    .hospital(HospitalSummaryInfoElement.fromEntity(scheduleElement.getHospital()))
+                    .hospital(scheduleElement.getHospital() == null ? null : HospitalSummaryInfoElement.fromEntity(scheduleElement.getHospital()))
                     .build();
         }
 
