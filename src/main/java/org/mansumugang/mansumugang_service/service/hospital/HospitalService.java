@@ -66,6 +66,16 @@ public class HospitalService {
         }
     }
 
+    public void deleteHospital(User user, Long hospitalId) {
+        Hospital foundHospital = hospitalRepository.findById(hospitalId).orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchHospitalError));
+
+        Protector validProtector = validateProtector(user);
+        Patient foundPatient = findPatient(foundHospital.getPatient().getId());
+        checkUserIsProtectorOfPatient(validProtector, foundPatient);
+
+        hospitalRepository.delete(foundHospital);
+    }
+
     public void validateUserLocation(Double latitude, Double longitude) {
         if (!(EXTREME_SOUTH.getCoordinate() < latitude && latitude < EXTREME_NORTH.getCoordinate())
                 || !(EXTREME_WEST.getCoordinate() < longitude && longitude < EXTREME_EAST.getCoordinate())){

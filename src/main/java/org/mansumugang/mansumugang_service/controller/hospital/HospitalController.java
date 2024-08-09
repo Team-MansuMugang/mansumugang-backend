@@ -3,6 +3,7 @@ package org.mansumugang.mansumugang_service.controller.hospital;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.dto.hospital.HospitalDelete;
 import org.mansumugang.mansumugang_service.dto.hospital.HospitalSave;
 import org.mansumugang.mansumugang_service.dto.hospital.HospitalUpdate;
 import org.mansumugang.mansumugang_service.service.hospital.HospitalService;
@@ -30,5 +31,12 @@ public class HospitalController {
                                                                   @Valid @RequestBody HospitalUpdate.Request requestDto) {
         hospitalService.updateHospital(user, hospitalId, requestDto);
         return new ResponseEntity<>(HospitalUpdate.Response.createNewResponse(), HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/{hospitalId}")
+    public ResponseEntity<HospitalDelete.Response> updateHospital(@AuthenticationPrincipal User user,
+                                                                  @PathVariable Long hospitalId) {
+        hospitalService.deleteHospital(user, hospitalId);
+        return new ResponseEntity<>(HospitalDelete.Response.createNewResponse(), HttpStatus.CREATED);
     }
 }
