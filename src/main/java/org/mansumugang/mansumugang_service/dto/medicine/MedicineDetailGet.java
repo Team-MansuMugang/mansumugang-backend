@@ -10,6 +10,7 @@ import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeDay;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class MedicineDetailGet {
@@ -27,7 +28,7 @@ public class MedicineDetailGet {
 
         private String medicineDescription;
 
-        private List<LocalTime> medicineIntakeTimes;
+        private List<String> medicineIntakeTimes;
 
         private List<DayOfWeek> medicineIntakeDays;
 
@@ -35,13 +36,14 @@ public class MedicineDetailGet {
 
 
         public static Dto of(Medicine medicine, List<MedicineIntakeDay> medicineIntakeDays, List<MedicineInTakeTime> medicineInTakeTimes) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
             return Dto.builder()
                     .patientId(medicine.getPatient().getId())
                     .medicineId(medicine.getId())
                     .medicineName(medicine.getMedicineName())
                     .hospitalName(medicine.getHospitalName())
                     .medicineDescription(medicine.getMedicineDescription())
-                    .medicineIntakeTimes(medicineInTakeTimes.stream().map(MedicineInTakeTime::getMedicineIntakeTime).toList())
+                    .medicineIntakeTimes(medicineInTakeTimes.stream().map(medicine1 -> medicine1.getMedicineIntakeTime().format(formatter)).toList())
                     .medicineIntakeDays(medicineIntakeDays.stream().map(MedicineIntakeDay::getDay).toList())
                     .medicineIntakeStopDay(medicine.getIntakeStopDate())
                     .build();
@@ -63,7 +65,7 @@ public class MedicineDetailGet {
 
         private String medicineDescription;
 
-        private List<LocalTime> medicineIntakeTimes;
+        private List<String> medicineIntakeTimes;
 
         private List<DayOfWeek> medicineIntakeDays;
 
