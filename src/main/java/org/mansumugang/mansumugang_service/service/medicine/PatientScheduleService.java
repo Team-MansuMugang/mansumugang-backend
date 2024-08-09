@@ -45,18 +45,22 @@ public class PatientScheduleService {
 
         List<PatientScheduleToggle.ToggleResultElement> toggleResult = new ArrayList<>();
 
-        if(requestDto.getMedicine() != null) {
+        if (requestDto.getMedicine() != null) {
             PatientScheduleToggle.MedicineRequest medicineRequest = requestDto.getMedicine();
             LocalTime parsedScheduleTime = LocalTime.of(medicineRequest.getMedicineIntakeTime().getHour(), medicineRequest.getMedicineIntakeTime().getMinute());
 
             for (Long medicineId : medicineRequest.getMedicineIds()) {
                 PatientScheduleToggle.ToggleResultElement MedicineToggleResultElement =
-                        toggleMedicineIntakeStatus(medicineId, medicineRequest.getScheduledMedicineIntakeDate(), parsedScheduleTime);
+                        toggleMedicineIntakeStatus(validatedPatient,
+                                medicineId,
+                                medicineRequest.getScheduledMedicineIntakeDate(),
+                                parsedScheduleTime
+                        );
                 toggleResult.add(MedicineToggleResultElement);
             }
         }
 
-        if(requestDto.getHospitalId() != null){
+        if (requestDto.getHospitalId() != null) {
             PatientScheduleToggle.ToggleResultElement HospitalToggleResult = toggleHospitalStatus(validatedPatient, requestDto.getHospitalId());
             toggleResult.add(HospitalToggleResult);
         }
@@ -64,12 +68,17 @@ public class PatientScheduleService {
         return PatientScheduleToggle.Dto.fromElement(toggleResult);
     }
 
-    private PatientScheduleToggle.ToggleResultElement toggleMedicineIntakeStatus(Long medicineId,
+    private PatientScheduleToggle.ToggleResultElement toggleMedicineIntakeStatus(Patient patient,
+                                                                                 Long medicineId,
                                                                                  LocalDate scheduledMedicineIntakeDate,
                                                                                  LocalTime medicineIntakeTime
     ) {
         Medicine foundMedicine = medicineRepository.findById(medicineId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
+
+        if (!foundMedicine.getPatient().getId().equals(patient.getId())) {
+            throw new CustomErrorException(ErrorType.AccessDeniedError);
+        }
 
         MedicineIntakeDay foundMedicineIntakeDay = medicineIntakeDayRepository.findByMedicineAndDay(
                 foundMedicine, scheduledMedicineIntakeDate.getDayOfWeek()
@@ -131,7 +140,7 @@ public class PatientScheduleService {
         Hospital foundHospital = hospitalRepository.findById(hospitalId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchHospitalError));
 
-        if(!foundHospital.getPatient().getId().equals(patient.getId())) {
+        if (!foundHospital.getPatient().getId().equals(patient.getId())) {
             throw new CustomErrorException(ErrorType.AccessDeniedError);
         }
 
