@@ -55,6 +55,9 @@ public enum ErrorType {
     UserLocationInfoWithinRangeNotFoundError(
             HttpStatus.NOT_FOUND, "유저는 존재하지만, 조회하려는 시간 범위 내 위치 정보가 존재하지 않습니다."
     ),
+    NeedLatitudeAndLongitudeError(
+            HttpStatus.BAD_REQUEST, "위도와 경도 정보가 필요합니다."
+    ),
 
     // ----- Record ------
     RecordFileNotFound(
@@ -69,6 +72,10 @@ public enum ErrorType {
             HttpStatus.NOT_FOUND, "유저는 존재하지만, 유저의 음성녹음 정보가 존재하지 않습니다."
     ),
 
+    // ----- Image ------
+    NoImageFileError(
+            HttpStatus.BAD_REQUEST, "유효하지 않은 이미지 파일입니다."
+    ),
 
     // ----- Token ------
     NotValidAccessTokenError(
@@ -116,17 +123,23 @@ public enum ErrorType {
             HttpStatus.BAD_REQUEST, "유호하지 않은 요일입니다."
     ),
     AlreadyExistMedicineIntakeTimeError(
-            HttpStatus.CONFLICT, "이미 존재하는 약 복용시간입니다.")
-    ,
+            HttpStatus.CONFLICT, "이미 존재하는 약 복용시간입니다."
+    ),
     AlreadyExistMedicineIntakeDayError(
             HttpStatus.CONFLICT, "이미 존재하는 약 복용요일입니다."
     ),
-    NoImageFileError(
-            HttpStatus.BAD_REQUEST, "유효하지 않은 이미지 파일입니다."
-    ),
     ConditionOfNotBeingAbleToToggleError(
             HttpStatus.BAD_REQUEST, "Toggle이 가능한 조건이 아닙니다."
-    );
+    ),
+
+    // ----- Hospital ------
+    NoSuchHospitalError(
+            HttpStatus.NOT_FOUND, "존재하지 않은 병원 아이디 입니다."
+    ),
+    DuplicatedHospitalVisitingTimeError(
+            HttpStatus.CONFLICT, "병원 방문 시간은 중복될 수 없습니다."
+    )
+    ;
 
     private final HttpStatus httpStatus;
     private final String message;
