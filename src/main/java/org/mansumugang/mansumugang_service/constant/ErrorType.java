@@ -126,6 +126,12 @@ public enum ErrorType {
     ),
     ConditionOfNotBeingAbleToToggleError(
             HttpStatus.BAD_REQUEST, "Toggle이 가능한 조건이 아닙니다."
+    ),
+    NoSuchHospitalError(
+            HttpStatus.NOT_FOUND, "존재하지 않은 병원 아이디 입니다."
+    ),
+    NeedLatitudeAndLongitudeError(
+            HttpStatus.BAD_REQUEST, "위도와 경도 정보가 필요합니다."
     );
 
     private final HttpStatus httpStatus;

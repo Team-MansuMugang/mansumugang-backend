@@ -8,7 +8,7 @@ import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.hospital.HospitalSave;
-import org.mansumugang.mansumugang_service.dto.location.PatientLocationRequestDto;
+import org.mansumugang.mansumugang_service.dto.hospital.HospitalUpdate;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.HospitalRepository;
 import org.mansumugang.mansumugang_service.repository.PatientRepository;
@@ -32,6 +32,38 @@ public class HospitalService {
         validateUserLocation(requestDto.getLatitude(), requestDto.getLongitude());
 
         hospitalRepository.save(Hospital.of(requestDto, foundPatient));
+    }
+
+    public void updateHospital(User user, Long hospitalId, HospitalUpdate.Request requestDto) {
+        Hospital foundHospital = hospitalRepository.findById(hospitalId).orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchHospitalError));
+
+        Protector validProtector = validateProtector(user);
+        Patient foundPatient = findPatient(foundHospital.getPatient().getId());
+        checkUserIsProtectorOfPatient(validProtector, foundPatient);
+
+        if (requestDto.getHospitalName() != null) {
+            foundHospital.setHospitalName(requestDto.getHospitalName());
+        }
+
+        if(requestDto.getHospitalAddress() != null) {
+            if(requestDto.getLatitude() == null || requestDto.getLongitude() == null) {
+                throw new CustomErrorException(ErrorType.NeedLatitudeAndLongitudeError);
+            }
+
+            validateUserLocation(requestDto.getLatitude(), requestDto.getLongitude());
+
+            foundHospital.setHospitalAddress(requestDto.getHospitalAddress());
+            foundHospital.setLatitude(requestDto.getLatitude());
+            foundHospital.setLongitude(requestDto.getLongitude());
+        }
+
+        if (requestDto.getHospitalDescription() != null) {
+            foundHospital.setHospitalDescription(requestDto.getHospitalDescription());
+        }
+
+        if(requestDto.getHospitalVisitingTime() != null) {
+            foundHospital.setHospitalVisitingTime(requestDto.getHospitalVisitingTime());
+        }
     }
 
     public void validateUserLocation(Double latitude, Double longitude) {
