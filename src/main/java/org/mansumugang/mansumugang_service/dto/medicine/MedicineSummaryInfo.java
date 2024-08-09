@@ -113,7 +113,7 @@ public class MedicineSummaryInfo {
             return TimeElement.builder()
                     .time(time.format(formatter))
                     .medicines(FilteredMedicineSummaryInfoElement.convertFilteredMedicineSummaryInfoElement(scheduleElement.getMedicines()))
-                    .hospital(HospitalSummaryInfoElement.fromEntity(scheduleElement.getHospital()))
+                    .hospital(scheduleElement.getHospital() == null ? null : HospitalSummaryInfoElement.fromEntity(scheduleElement.getHospital()))
                     .build();
         }
 
