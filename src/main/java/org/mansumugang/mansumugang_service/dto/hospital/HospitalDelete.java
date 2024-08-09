@@ -1,12 +1,10 @@
-package org.mansumugang.mansumugang_service.dto.medicine;
+package org.mansumugang.mansumugang_service.dto.hospital;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 
-public class MedicineDelete {
+public class HospitalDelete {
     @Getter
     @AllArgsConstructor
     @Builder
@@ -15,7 +13,7 @@ public class MedicineDelete {
 
         public static Response createNewResponse() {
             return Response.builder()
-                    .message("약 정보를 성공적으로 삭제하였습니다.")
+                    .message("병원 정보를 성공적으로 삭제하였습니다.")
                     .build();
         }
 

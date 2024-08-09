@@ -49,6 +49,7 @@ public class FileService {
         try {
             log.info("녹음파일 원래이름 -> UUID로 변경 시작");
             String uniqueFileName = generateUniqueFileName(Objects.requireNonNull(file.getOriginalFilename()));
+            log.info("녹음파일 UUID 변경 완료");
             Path filePath = Paths.get(audioUploadPath + "/" + uniqueFileName);
 
             Files.copy(file.getInputStream(), filePath);

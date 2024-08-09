@@ -16,9 +16,6 @@ public class MedicineUpdate {
     @Getter
     @Setter
     public static class Request {
-        @NotNull(message = "환자 아이디를 기입해주세요")
-        private Long patientId;
-
         @Size(min = 2, max = 20, message = "약 이름의 길이는 2에서 20자 사이여야 합니다")
         private String medicineName;
 

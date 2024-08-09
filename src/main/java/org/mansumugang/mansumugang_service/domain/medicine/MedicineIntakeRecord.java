@@ -50,7 +50,7 @@ public class MedicineIntakeRecord {
                 .medicineInTakeTime(medicineInTakeTime)
                 .scheduledIntakeDate(scheduledIntakeDate)
                 .status(status)
-                .actualIntakeTime(LocalDateTime.now())
+                .actualIntakeTime(status == MedicineRecordStatusType.TRUE ? LocalDateTime.now() : null)
                 .isPushed(false)
                 .build();
     }
@@ -67,7 +67,7 @@ public class MedicineIntakeRecord {
                 .medicineInTakeTime(medicineInTakeTime)
                 .scheduledIntakeDate(scheduledIntakeDate)
                 .status(status)
-                .actualIntakeTime(LocalDateTime.now())
+                .actualIntakeTime(status == MedicineRecordStatusType.TRUE ? LocalDateTime.now() : null)
                 .isPushed(isPushed)
                 .build();
     }

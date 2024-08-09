@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
 import org.mansumugang.mansumugang_service.constant.MedicineRecordStatusType;
+import org.mansumugang.mansumugang_service.domain.hospital.Hospital;
 import org.mansumugang.mansumugang_service.domain.medicine.Medicine;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineInTakeTime;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeDay;
@@ -40,10 +41,25 @@ public class MedicineService {
     private final MedicineIntakeDayRepository medicineIntakeDayRepository;
     private final MedicineIntakeTimeRepository medicineIntakeTimeRepository;
     private final MedicineIntakeRecordRepository medicineIntakeRecordRepository;
+    private final HospitalRepository hospitalRepository;
     private final PatientRepository patientRepository;
 
     private final FileService fileService;
     private final MedicineCommonService medicineCommonService;
+
+    // 보호자가 환자에 대한 약 상세정보 조회
+    public MedicineDetailGet.Dto getMedicineById(User user, Long medicineId) {
+        Medicine foundMedicine = medicineRepository.findById(medicineId).orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
+
+        Protector validatedProtector = validateProtector(user);
+        Patient foundPatient = foundMedicine.getPatient();
+        checkUserIsProtectorOfPatient(validatedProtector, foundPatient);
+
+        List<MedicineIntakeDay> foundMedicineIntakeDays = medicineIntakeDayRepository.findAllByMedicine(foundMedicine);
+        List<MedicineInTakeTime> foundMedicineIntakeTimes = medicineIntakeTimeRepository.findAllByMedicine(foundMedicine);
+
+        return MedicineDetailGet.Dto.of(foundMedicine, foundMedicineIntakeDays, foundMedicineIntakeTimes);
+    }
 
     public MedicineSummaryInfo.Dto getMedicineSummaryInfoByDate(User user, Long patientId, String targetDateStr) {
         Protector validatedProtector = validateProtector(user);
@@ -84,20 +100,36 @@ public class MedicineService {
         Map<LocalTime, List<MedicineSummaryInfo.MedicineSummaryInfoElement>> medicineSummaryInfoByTime = medicineSummaryInfos.stream()
                 .collect(Collectors.groupingBy(MedicineSummaryInfo.MedicineSummaryInfoElement::getMedicineIntakeTime));
 
+        // 특정 환자가 금일 방문 해야 할 병원 일정 조회
+        List<Hospital> hospitalScheduleResult = hospitalRepository.findAllByPatientIdAndHospitalVisitingTimeBetween(patientId,
+                LocalDateTime.of(targetDate, LocalTime.of(0, 0)),
+                LocalDateTime.of(targetDate, LocalTime.of(23, 59)));
 
-        // LocalTime 기준으로 정렬
-        Map<LocalTime, List<MedicineSummaryInfo.MedicineSummaryInfoElement>> sortedMap = medicineSummaryInfoByTime.entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByKey())
+        // 같은 방문시간을 가진 병원끼리 그룹화
+        Map<LocalTime, Hospital> hospitalByTime = hospitalScheduleResult.stream()
                 .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (e1, e2) -> e1,
-                        LinkedHashMap::new
+                        hospital -> hospital.getHospitalVisitingTime().toLocalTime(), // Extract LocalTime
+                        hospital -> hospital // Hospital object itself
                 ));
 
 
-        return MedicineSummaryInfo.Dto.of(imageApiUrl, targetDate, MedicineSummaryInfo.TimeElement.convertTimeElements(sortedMap));
+        // 모든 LocalTime 키를 통합
+        Set<LocalTime> allTimes = new TreeSet<>();
+        allTimes.addAll(hospitalByTime.keySet());
+        allTimes.addAll(medicineSummaryInfoByTime.keySet());
+
+        // 결과를 저장할 TreeMap (자동으로 키 기준으로 정렬됨)
+        Map<LocalTime, MedicineSummaryInfo.ScheduleElement> scheduleMap = new TreeMap<>();
+
+        // 모든 LocalTime에 대해 CombinedInfo 생성
+        for (LocalTime time : allTimes) {
+            Hospital hospital = hospitalByTime.get(time);
+            List<MedicineSummaryInfo.MedicineSummaryInfoElement> medicines = medicineSummaryInfoByTime.getOrDefault(time, Collections.emptyList());
+            MedicineSummaryInfo.ScheduleElement combinedInfo = new MedicineSummaryInfo.ScheduleElement(medicines, hospital);
+            scheduleMap.put(time, combinedInfo);
+        }
+
+        return MedicineSummaryInfo.Dto.of(imageApiUrl, targetDate, MedicineSummaryInfo.TimeElement.convertTimeElements(scheduleMap), patientId);
     }
 
     public void saveMedicine(User user, MultipartFile medicineImage, MedicineSave.Request requestDto) {
@@ -133,12 +165,12 @@ public class MedicineService {
     public void updateMedicine(User user, Long medicineId, MultipartFile medicineImage, MedicineUpdate.Request requestDto) {
         MedicineIntakeDay passedTargetMedicineIntakeDay = null;
 
-        Protector validProtector = validateProtector(user);
-        Patient foundPatient = findPatient(requestDto.getPatientId());
-        checkUserIsProtectorOfPatient(validProtector, foundPatient);
-
         Medicine foundMedicine = medicineRepository.findById(medicineId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
+
+        Protector validProtector = validateProtector(user);
+        Patient foundPatient = findPatient(foundMedicine.getPatient().getId());
+        checkUserIsProtectorOfPatient(validProtector, foundPatient);
 
         List<MedicineInTakeTime> renewedMedicineIntakeTimes = medicineIntakeTimeRepository.findAllByMedicine(foundMedicine);
 
@@ -235,13 +267,13 @@ public class MedicineService {
         }
     }
 
-    public void deleteMedicine(User user, Long medicineId, MedicineDelete.Request requestDto) {
-        Protector validProtector = validateProtector(user);
-        Patient foundPatient = findPatient(requestDto.getPatientId());
-        checkUserIsProtectorOfPatient(validProtector, foundPatient);
-
+    public void deleteMedicine(User user, Long medicineId) {
         Medicine foundMedicine = medicineRepository.findById(medicineId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
+
+        Protector validProtector = validateProtector(user);
+        Patient foundPatient = findPatient(foundMedicine.getPatient().getId());
+        checkUserIsProtectorOfPatient(validProtector, foundPatient);
 
         try {
             String originalMedicineImageName = foundMedicine.getMedicineImageName();
@@ -310,7 +342,7 @@ public class MedicineService {
                                         nowDate
                                 );
 
-                        if(foundMedicineIntakeRecord.isEmpty()) {
+                        if (foundMedicineIntakeRecord.isEmpty()) {
                             medicineIntakeRecordRepository.save(
                                     MedicineIntakeRecord.createNewEntity(
                                             medicine,

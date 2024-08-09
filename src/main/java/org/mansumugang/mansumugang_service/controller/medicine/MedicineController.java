@@ -3,10 +3,7 @@ package org.mansumugang.mansumugang_service.controller.medicine;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.mansumugang.mansumugang_service.domain.user.User;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineSummaryInfo;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineUpdate;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineDelete;
-import org.mansumugang.mansumugang_service.dto.medicine.MedicineSave;
+import org.mansumugang.mansumugang_service.dto.medicine.*;
 import org.mansumugang.mansumugang_service.service.medicine.MedicineService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +16,13 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/medicine")
 public class MedicineController {
     private final MedicineService medicineService;
+
+    @GetMapping("/{medicineId}")
+    public ResponseEntity<MedicineDetailGet.Response> getMedicineById(@AuthenticationPrincipal User user,
+                                                                      @PathVariable Long medicineId) {
+        MedicineDetailGet.Dto dto = medicineService.getMedicineById(user, medicineId);
+        return new ResponseEntity<>(MedicineDetailGet.Response.fromDto(dto), HttpStatus.OK);
+    }
 
     @GetMapping("/protector")
     public ResponseEntity<MedicineSummaryInfo.Response> getMedicineSummaryInfoByDate(@AuthenticationPrincipal User user,
@@ -54,9 +58,8 @@ public class MedicineController {
 
     @DeleteMapping("/{medicineId}")
     public ResponseEntity<MedicineDelete.Response> deleteMedicine(@AuthenticationPrincipal User user,
-                                                                    @PathVariable Long medicineId,
-                                                                    @Valid @RequestBody MedicineDelete.Request requestDto) {
-        medicineService.deleteMedicine(user, medicineId, requestDto);
+                                                                  @PathVariable Long medicineId) {
+        medicineService.deleteMedicine(user, medicineId);
         return new ResponseEntity<>(MedicineDelete.Response.createNewResponse(), HttpStatus.CREATED);
     }
 }
