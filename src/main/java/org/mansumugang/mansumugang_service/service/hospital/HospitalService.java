@@ -7,6 +7,7 @@ import org.mansumugang.mansumugang_service.domain.hospital.Hospital;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.dto.hospital.HospitalDetailGet;
 import org.mansumugang.mansumugang_service.dto.hospital.HospitalSave;
 import org.mansumugang.mansumugang_service.dto.hospital.HospitalUpdate;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
@@ -23,6 +24,16 @@ import static org.mansumugang.mansumugang_service.constant.LocationBoundary.EXTR
 public class HospitalService {
     private final HospitalRepository hospitalRepository;
     private final PatientRepository patientRepository;
+
+    public HospitalDetailGet.Dto getHospitalDetail(User user, Long hospitalId) {
+        Hospital foundHospital = hospitalRepository.findById(hospitalId).orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchHospitalError));
+
+        Protector validProtector = validateProtector(user);
+        Patient foundPatient = findPatient(foundHospital.getPatient().getId());
+        checkUserIsProtectorOfPatient(validProtector, foundPatient);
+
+        return HospitalDetailGet.Dto.fromEntity(foundHospital);
+    }
 
     public void saveHospital(User user, HospitalSave.Request requestDto) {
         Protector validProtector = validateProtector(user);

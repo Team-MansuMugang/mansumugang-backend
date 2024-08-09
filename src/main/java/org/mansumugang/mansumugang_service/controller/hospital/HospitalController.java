@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.hospital.HospitalDelete;
+import org.mansumugang.mansumugang_service.dto.hospital.HospitalDetailGet;
 import org.mansumugang.mansumugang_service.dto.hospital.HospitalSave;
 import org.mansumugang.mansumugang_service.dto.hospital.HospitalUpdate;
 import org.mansumugang.mansumugang_service.service.hospital.HospitalService;
@@ -17,6 +18,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/hospital")
 public class HospitalController {
     private final HospitalService hospitalService;
+
+    @GetMapping("/{hospitalId}")
+    public ResponseEntity<HospitalDetailGet.Response> getHospitalDetail(@AuthenticationPrincipal User user,
+                                                                        @PathVariable Long hospitalId) {
+        HospitalDetailGet.Dto dto = hospitalService.getHospitalDetail(user, hospitalId);
+        return new ResponseEntity<>(HospitalDetailGet.Response.fromDto(dto), HttpStatus.OK);
+    }
+
 
     @PostMapping()
     public ResponseEntity<HospitalSave.Response> saveHospital(@AuthenticationPrincipal User user,
