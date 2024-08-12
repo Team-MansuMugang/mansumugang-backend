@@ -50,6 +50,8 @@ public class Hospital {
 
     private LocalDateTime actualHospitalVisitingTime;
 
+    private Boolean isPushed;
+
 
     public static Hospital of(HospitalSave.Request requestDto, Patient patient, LocalDateTime filteredLocalDateTime){
         return Hospital.builder()
@@ -60,6 +62,7 @@ public class Hospital {
                 .longitude(requestDto.getLongitude())
                 .hospitalDescription(requestDto.getHospitalDescription())
                 .hospitalVisitingTime(filteredLocalDateTime)
+                .isPushed(false)
                 .build();
     }
 }
