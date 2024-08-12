@@ -8,6 +8,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.ResourceUtils;
 
 
@@ -26,13 +27,20 @@ public class FirebaseConfig {
 
     @Bean
     public FirebaseApp firebaseApp() throws IOException {
-        FileInputStream aboutFirebaseFile = new FileInputStream(String.valueOf(ResourceUtils.getFile("./src/main/resources/firebase/mansumugang-service-firebase-adminsdk-22kx1-d73706ff32.json")));
+        try {
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(
+                            GoogleCredentials.fromStream(new ClassPathResource("/firebase/mansumugang-service-firebase-adminsdk-22kx1-d73706ff32.json").getInputStream())
+                    )
+                    .build();
 
-        FirebaseOptions options = FirebaseOptions
-                .builder()
-                .setCredentials(GoogleCredentials.fromStream(aboutFirebaseFile))
-                .build();
-        return FirebaseApp.initializeApp(options);
+            log.info("Fcm 설정 성공");
+            return FirebaseApp.initializeApp(options);
+
+        } catch (IOException exception) {
+            log.error("Fcm 연결 오류 {}", exception.getMessage());
+            return null;
+        }
     }
 
     @Bean
