@@ -35,7 +35,7 @@ jobs:
         run: |
           mkdir -p src/main/resources/firebase
           cd src/main/resources/firebase  
-          echo "${{ secrets.FCM_JSON}}" > mansumugang-service-firebase-adminsdk-22kx1-d73706ff32.json
+          printf "%s" "${{ secrets.FCM_JSON }}" > mansumugang-service-firebase-adminsdk-22kx1-d73706ff32.json
           cd ../../../../
           ls -al
       - name: Transfer Fcm Json use SCP
