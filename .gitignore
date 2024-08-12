@@ -39,6 +39,9 @@ out/
 ### Static ###
 **/src/main/resources/static/
 
+### Friebase ###
+src/main/resources/firebase/mansumugang-service-firebase-adminsdk-22kx1-d73706ff32.json
+
 ### macOS ###
 # General
 .DS_Store
