@@ -41,15 +41,6 @@ jobs:
           name: "mansumugang-service-firebase-adminsdk-22kx1-d73706ff32.json"
           json: ${{ secrets.FCM_JSON }}
           dir: src/main/resources/firebase
-      - name: Transfer Fcm Json use SCP
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SHH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          source: "src/main/resources/firebase/mansumugang-service-firebase-adminsdk-22kx1-d73706ff32.json"
-          target: "~/Desktop/mansumugang-service"
       # gradle 캐싱
       - name: Gradle Caching
         uses: actions/cache@v3
