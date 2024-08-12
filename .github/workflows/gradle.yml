@@ -31,11 +31,18 @@ jobs:
           echo "${{ secrets.APPLICATION_TEST_YAML}}" > application-test.yaml
           cd ../../../
           ls -al
-      - name: Add Fcm Json
+      - name: Create firebase Folder
         run: |
           mkdir -p src/main/resources/firebase
-          cd src/main/resources/firebase  
-          printf "%s" "${{ secrets.FCM_JSON }}" > mansumugang-service-firebase-adminsdk-22kx1-d73706ff32.json
+          cd src/main/resources/firebase
+      - name: create-json
+        id: create-json
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: "mansumugang-service-firebase-adminsdk-22kx1-d73706ff32.json"
+          json: ${{ secrets.FCM_JSON }}
+      - name: Cd Root
+        run: |  
           cd ../../../../
           ls -al
       - name: Transfer Fcm Json use SCP
