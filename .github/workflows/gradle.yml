@@ -34,7 +34,7 @@ jobs:
       - name: Create Firebase Folder
         run: |
           mkdir -p src/main/resources/firebase
-      - name: create-json
+      - name: Create FCM Json File
         id: create-json
         uses: jsdaniell/create-json@1.1.2
         with:
