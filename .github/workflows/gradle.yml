@@ -31,6 +31,13 @@ jobs:
           echo "${{ secrets.APPLICATION_TEST_YAML}}" > application-test.yaml
           cd ../../../
           ls -al
+      - name: Add Fcm Json
+        run: |
+          mkdir -p src/main/resources/firebase
+          cd src/main/resources/firebase  
+          echo "${{ secrets.FCM_JSON}}" > mansumugang-service-firebase-adminsdk-22kx1-d73706ff32.json
+          cd ../../../../
+          ls -al
       # gradle 캐싱
       - name: Gradle Caching
         uses: actions/cache@v3
