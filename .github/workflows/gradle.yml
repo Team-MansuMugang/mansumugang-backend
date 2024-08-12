@@ -31,6 +31,16 @@ jobs:
           echo "${{ secrets.APPLICATION_TEST_YAML}}" > application-test.yaml
           cd ../../../
           ls -al
+      - name: Create Firebase Folder
+        run: |
+          mkdir -p src/main/resources/firebase
+      - name: Create FCM Json File
+        id: create-json
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: "mansumugang-service-firebase-adminsdk-22kx1-d73706ff32.json"
+          json: ${{ secrets.FCM_JSON }}
+          dir: src/main/resources/firebase
       # gradle 캐싱
       - name: Gradle Caching
         uses: actions/cache@v3

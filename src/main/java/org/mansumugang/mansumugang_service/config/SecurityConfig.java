@@ -34,7 +34,6 @@ public class SecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final RedisTemplate<String, String> redisTemplate;
 
-
     @Bean
     public LoginSuccessHandler loginSuccessHandler() {
         return new LoginSuccessHandler(redisTemplate, jwtTokenProvider);
