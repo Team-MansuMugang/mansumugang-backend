@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 
 @Entity
+@Getter
 @EntityListeners(AuditingEntityListener.class)
 @DiscriminatorValue("Protector")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
