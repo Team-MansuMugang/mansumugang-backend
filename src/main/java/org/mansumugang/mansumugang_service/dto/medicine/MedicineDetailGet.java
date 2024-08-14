@@ -9,7 +9,6 @@ import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeDay;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -18,11 +17,14 @@ public class MedicineDetailGet {
     @AllArgsConstructor
     @Builder
     public static class Dto {
+
         private Long patientId;
 
         private Long medicineId;
 
         private String medicineName;
+
+        private String medicineImage;
 
         private String hospitalName;
 
@@ -35,12 +37,13 @@ public class MedicineDetailGet {
         private LocalDate medicineIntakeStopDay;
 
 
-        public static Dto of(Medicine medicine, List<MedicineIntakeDay> medicineIntakeDays, List<MedicineInTakeTime> medicineInTakeTimes) {
+        public static Dto of(String imageApiUrl, Medicine medicine, List<MedicineIntakeDay> medicineIntakeDays, List<MedicineInTakeTime> medicineInTakeTimes) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
             return Dto.builder()
                     .patientId(medicine.getPatient().getId())
                     .medicineId(medicine.getId())
                     .medicineName(medicine.getMedicineName())
+                    .medicineImage(imageApiUrl + medicine.getMedicineImageName())
                     .hospitalName(medicine.getHospitalName())
                     .medicineDescription(medicine.getMedicineDescription())
                     .medicineIntakeTimes(medicineInTakeTimes.stream().map(medicine1 -> medicine1.getMedicineIntakeTime().format(formatter)).toList())
@@ -63,6 +66,8 @@ public class MedicineDetailGet {
 
         private String hospitalName;
 
+        private String medicineImage;
+
         private String medicineDescription;
 
         private List<String> medicineIntakeTimes;
@@ -76,6 +81,7 @@ public class MedicineDetailGet {
                     .patientId(dto.getPatientId())
                     .medicineId(dto.getMedicineId())
                     .medicineName(dto.getMedicineName())
+                    .medicineImage(dto.getMedicineImage())
                     .hospitalName(dto.getHospitalName())
                     .medicineDescription(dto.getMedicineDescription())
                     .medicineIntakeTimes(dto.getMedicineIntakeTimes())

@@ -58,7 +58,7 @@ public class MedicineService {
         List<MedicineIntakeDay> foundMedicineIntakeDays = medicineIntakeDayRepository.findAllByMedicine(foundMedicine);
         List<MedicineInTakeTime> foundMedicineIntakeTimes = medicineIntakeTimeRepository.findAllByMedicine(foundMedicine);
 
-        return MedicineDetailGet.Dto.of(foundMedicine, foundMedicineIntakeDays, foundMedicineIntakeTimes);
+        return MedicineDetailGet.Dto.of(imageApiUrl, foundMedicine, foundMedicineIntakeDays, foundMedicineIntakeTimes);
     }
 
     public MedicineSummaryInfo.Dto getMedicineSummaryInfoByDate(User user, Long patientId, String targetDateStr) {
