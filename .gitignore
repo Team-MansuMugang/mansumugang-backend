@@ -80,3 +80,6 @@ src/main/resources/application*.yaml
 
 ### redis & mysql ###
 /storage
+
+### aws code deploy ###
+deploy.sh
