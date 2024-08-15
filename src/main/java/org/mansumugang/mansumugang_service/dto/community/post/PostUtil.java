@@ -41,10 +41,9 @@ public class PostUtil {
         private String categoryCode; // 게시물 카테고리
         private LocalDateTime createdAt; // 게시물 작성 시간
         private LocalDateTime updatedAt; // 게시물 작성 시간
+//        private Long likeCount; // 게시물 좋아요 수
+//        private Long bookmarkCount; // 게시물 스크랩 수
 
-        // 추후 추가
-        // private int postLikes;
-        // private int postBookmarks; 등등
 
 
         public static  PostSummaryData fromEntity(Post post){

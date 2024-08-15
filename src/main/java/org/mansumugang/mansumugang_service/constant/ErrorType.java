@@ -74,7 +74,7 @@ public enum ErrorType {
 
     // ----- Post -----
     NoSuchPostError(
-            HttpStatus.NOT_FOUND, "존재하지 않은 배달 게시물입니다."
+            HttpStatus.NOT_FOUND, "존재하지 않은 게시물입니다."
     ),
 
     NoRequestBodyError(
@@ -90,6 +90,17 @@ public enum ErrorType {
     // ----- Image ------
     NoImageFileError(
             HttpStatus.BAD_REQUEST, "유효하지 않은 이미지 파일입니다."
+    ),
+
+    // ---- Comment ----
+    NoSuchCommentError(
+            HttpStatus.NOT_FOUND, "존재하지 않는 댓글입니다."
+    ),
+    NotTheAuthorOfTheComment(
+            HttpStatus.UNAUTHORIZED, "댓글의 작성자가 아닙니다."
+    ),
+    DeletedCommentError(
+            HttpStatus.NOT_FOUND, "삭제된 댓글입니다"
     ),
 
     // ----- Token ------

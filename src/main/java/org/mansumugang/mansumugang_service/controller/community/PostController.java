@@ -32,7 +32,7 @@ public class PostController {
     ){
         log.info("컨트롤러 호출");
 
-        PostSave.Dto dto = postService.savePost(user, request, imageFiles);
+        PostSave.Dto dto = postService.savePostImage(user, request, imageFiles);
 
         return new ResponseEntity<>(PostSave.Response.createNewResponse(dto), HttpStatus.CREATED);
 
@@ -48,6 +48,7 @@ public class PostController {
 
     }
 
+    // 게시물 상세정보 조회
     @GetMapping("/{id}")
     public ResponseEntity<PostInquiry.PostDetailResponse> getPost(@PathVariable(name = "id") Long id){
 
@@ -56,5 +57,9 @@ public class PostController {
         return new ResponseEntity<>(foundPostDetail, HttpStatus.OK);
 
     }
+
+    // 게시물 수정
+
+    // 게시물 삭제
 
 }

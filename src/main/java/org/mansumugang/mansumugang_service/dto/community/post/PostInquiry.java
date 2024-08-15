@@ -43,8 +43,11 @@ public class PostInquiry {
         private LocalDateTime createdAt; // 게시물 작성 시간
         private LocalDateTime updatedAt; // 게시물 업데이트 시간
         private List<PostUtil.PostImageSummaryData> images; // 게시물 이미지들
+        private Long likeCount; // 게시물 좋아요 수
+        private Long bookmarkCount; // 게시물 스크랩 수
+        private Long commentCount; // 게시물 댓글 수
 
-        public static PostDetailResponse fromEntity(Post foundPost, List<PostImage> foundImages){
+        public static PostDetailResponse fromEntity(Post foundPost, List<PostImage> foundImages, Long likeCount, Long bookmarkCount, Long commentCount){
             return PostDetailResponse.builder()
                     .id(foundPost.getId())
                     .title(foundPost.getTitle())
@@ -54,6 +57,9 @@ public class PostInquiry {
                     .createdAt(foundPost.getCreatedAt())
                     .updatedAt(foundPost.getUpdatedAt())
                     .images(foundImages.stream().map(PostUtil.PostImageSummaryData::fromEntity).toList())
+                    .likeCount(likeCount)
+                    .bookmarkCount(bookmarkCount)
+                    .commentCount(commentCount)
                     .build();
         }
     }

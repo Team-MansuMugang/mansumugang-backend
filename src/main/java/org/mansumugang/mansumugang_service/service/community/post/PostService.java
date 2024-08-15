@@ -24,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -36,11 +35,14 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostCategoryRepository postCategoryRepository;
     private final PostImageRepository postImageRepository;
+    private final PostLikeRepository postLikeRepository;
+    private final PostBookmarkRepository postBookmarkRepository;
+    private final CommentRepository commentRepository;
 
     private final int PAGE_SIZE = 10; // 한 페이지에 보여줄 게시물 개수 -> 한 페이지당 10개.
 
     @Transactional
-    public PostSave.Dto savePost(User user, PostSave.Request request, List<MultipartFile> imageFiles){
+    public PostSave.Dto savePostImage(User user, PostSave.Request request, List<MultipartFile> imageFiles){
 
         log.info("서비스 호출");
 
@@ -58,7 +60,7 @@ public class PostService {
         Post savedPost = postRepository.save(Post.of(request, foundPostCategory ,validProtector));
 
         // 4. 이미지 파일 저장.
-        savePost(imageFiles, addedImages, savedPost, postImages);
+        savePostImage(imageFiles, addedImages, savedPost, postImages);
 
         return PostSave.Dto.fromEntity(savedPost);
     }
@@ -82,7 +84,19 @@ public class PostService {
         // 2. 찾아진 게시물로 게시물 이미지 조회 -> 게시물 저장시 이미지 저장이 필수가 아니기 때문에 빈 리스트일 수 있음.
         List<PostImage> foundPostImages = postImageRepository.findPostImageByPostId(foundPost.getId());
 
-        return PostInquiry.PostDetailResponse.fromEntity(foundPost, foundPostImages);
+        // 3. 찾아진 게시물로 좋아요 수 카운트 -> 최솟값 : 0
+        Long likeCount = postLikeRepository.countByPostId(foundPost.getId());
+
+        // 4.찾아진 게시물로 북마크 수 카운트 -> 최솟값 : 0
+        Long bookmarkCount = postBookmarkRepository.countByPostId(foundPost.getId());
+
+        // 5. 찾아진 게시물로 댓글 수 카운트 -> 최솟값 : 0
+        Long commentCount = commentRepository.countByPostId(foundPost.getId());
+
+        // 6. 찾아진 게시물에서 나온 모든 댓글들
+//        commentRepository.findByPostId
+
+        return PostInquiry.PostDetailResponse.fromEntity(foundPost, foundPostImages, likeCount, bookmarkCount, commentCount);
     }
 
 
@@ -103,7 +117,7 @@ public class PostService {
         throw new CustomErrorException(ErrorType.AccessDeniedError);
     }
 
-    private void savePost(List<MultipartFile> imageFiles, List<String> addedImages, Post savedPost, List<PostImage> postImages) {
+    private void savePostImage(List<MultipartFile> imageFiles, List<String> addedImages, Post savedPost, List<PostImage> postImages) {
         if (imageFiles != null){
 
             for (MultipartFile imageFile : imageFiles) {
