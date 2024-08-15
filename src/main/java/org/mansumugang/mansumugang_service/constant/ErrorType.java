@@ -103,6 +103,17 @@ public enum ErrorType {
             HttpStatus.NOT_FOUND, "삭제된 댓글입니다"
     ),
 
+    // ---- Reply ----
+    NoSuchReplyError(
+            HttpStatus.NOT_FOUND, "존재하지 않는 답글입니다."
+    ),
+    NotTheAuthorOfTheReply(
+            HttpStatus.UNAUTHORIZED, "답글의 작성자가 아닙니다."
+    ),
+    DeletedReplyError(
+            HttpStatus.NOT_FOUND, "삭제된 답글입니다"
+    ),
+
     // ----- Token ------
     NotValidAccessTokenError(
             HttpStatus.UNAUTHORIZED, "유효하지 않은 AccessToken입니다."

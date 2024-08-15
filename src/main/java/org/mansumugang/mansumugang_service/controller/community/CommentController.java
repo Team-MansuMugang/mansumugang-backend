@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.dto.community.comment.CommentInquiry;
 import org.mansumugang.mansumugang_service.dto.community.comment.CommentSave;
 import org.mansumugang.mansumugang_service.service.community.CommentService;
 import org.springframework.http.HttpStatus;
@@ -32,6 +33,17 @@ public class CommentController {
         CommentSave.Dto dto = commentService.saveComment(user, request);
 
         return new ResponseEntity<>(CommentSave.Response.createNewResponse(dto), HttpStatus.CREATED);
+    }
+
+    @GetMapping()
+    public ResponseEntity<CommentInquiry.Response> getCommentList(@RequestParam(value = "cursor", required = false) Long cursor,
+                                                                  @RequestParam(value = "postId") Long postId
+    ){
+
+        CommentInquiry.Response commentListResponse = commentService.getCommentList(cursor, postId);
+
+        return new ResponseEntity<>(commentListResponse, HttpStatus.OK);
+
     }
 
 }

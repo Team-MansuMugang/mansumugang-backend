@@ -6,16 +6,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
 import org.mansumugang.mansumugang_service.domain.community.Comment;
-import org.mansumugang.mansumugang_service.domain.community.Post;
 import org.mansumugang.mansumugang_service.domain.community.Reply;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
-import org.mansumugang.mansumugang_service.dto.community.comment.CommentSave;
+import org.mansumugang.mansumugang_service.dto.community.reply.ReplyInquiry;
 import org.mansumugang.mansumugang_service.dto.community.reply.ReplySave;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.CommentRepository;
-import org.mansumugang.mansumugang_service.repository.PostRepository;
 import org.mansumugang.mansumugang_service.repository.ReplyRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,6 +27,8 @@ public class ReplyService {
 
     private final CommentRepository commentRepository;
     private final ReplyRepository replyRepository;
+
+    private final int REPLY_PAGE_SIZE = 5; // 한페이지당 대댓글 수 : 5
 
     @Transactional
     public ReplySave.Dto saveReply(User user, ReplySave.Request request){
@@ -39,6 +43,30 @@ public class ReplyService {
         Reply savedReply = replyRepository.save(Reply.of(request, foundComment, validProtector));
 
         return ReplySave.Dto.fromEntity(savedReply);
+
+    }
+
+    public ReplyInquiry.Response getReplyList(Long cursor, Long commentId){
+
+        // 1. 넘겨받은 댓글고유번호로 댓글 찾기.
+        Comment foundComment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchCommentError));
+
+        // 2. cursor가 값이 존재하면 그 값 이후의 id를 갖는 대댓글들을 출력함. -> EX) cursor == 3 -> id가 4인 대댓글 부터 보여줌.
+        if (cursor != null){
+            Reply foundReply = replyRepository.findById(cursor)
+                    .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchReplyError));
+
+            Pageable replyPageable = PageRequest.of(0, REPLY_PAGE_SIZE);
+            Page<Reply> replyPage = replyRepository.getRepliesByCursor(foundComment, foundReply.getId(), foundReply.getCreatedAt(), replyPageable);
+
+            return ReplyInquiry.Response.fromPage(replyPage);
+        }else{
+            Pageable replyPageable = PageRequest.of(0, REPLY_PAGE_SIZE, Sort.by(Sort.Direction.ASC, "createdAt"));
+            Page<Reply> replyPage = replyRepository.findAllByComment(foundComment, replyPageable);
+
+            return ReplyInquiry.Response.fromPage(replyPage);
+        }
 
     }
 

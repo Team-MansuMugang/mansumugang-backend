@@ -9,12 +9,19 @@ import org.mansumugang.mansumugang_service.domain.community.Comment;
 import org.mansumugang.mansumugang_service.domain.community.Post;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.dto.community.comment.CommentInquiry;
 import org.mansumugang.mansumugang_service.dto.community.comment.CommentSave;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.CommentRepository;
 import org.mansumugang.mansumugang_service.repository.PostRepository;
+import org.mansumugang.mansumugang_service.repository.ReplyRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -24,6 +31,10 @@ public class CommentService {
 
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final ReplyRepository replyRepository;
+
+    private final int COMMENT_PAGE_SIZE = 10; // 한페이지 당 최대 댓글수 : 10개
+    private final int REPLY_PAGE_SIZE = 5; //  한페이지 당 최대 대댓글수 : 5개
 
     @Transactional
     public CommentSave.Dto saveComment(User user, CommentSave.Request request){
@@ -40,6 +51,29 @@ public class CommentService {
         return CommentSave.Dto.fromEntity(savedComment);
 
     }
+
+    public CommentInquiry.Response getCommentList(Long cursor, Long postId){
+
+        Page<Comment> commentPage;
+
+        Post foundPost = postRepository.findById(postId).orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchPostError));
+
+        Pageable commentPageable = PageRequest.of(0, COMMENT_PAGE_SIZE);
+
+        if(cursor != null){
+            Comment foundComment = commentRepository.findById(cursor)
+                    .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchCommentError));
+            commentPage = commentRepository.getCommentsByCursor(foundPost, foundComment.getId(), foundComment.getCreatedAt(), commentPageable);
+        }else {
+            commentPage =commentRepository.findAllByPost(foundPost, commentPageable);
+        }
+
+        Pageable replyPageable = PageRequest.of(0, REPLY_PAGE_SIZE, Sort.by(Sort.Direction.ASC, "createdAt"));
+        List<CommentInquiry.CommentDto> commentList = commentPage.map(comment1 -> CommentInquiry.CommentDto.of(comment1, replyRepository.findAllByComment(comment1, replyPageable))).toList();
+
+        return CommentInquiry.Response.of(commentList);
+    }
+
 
 
 
