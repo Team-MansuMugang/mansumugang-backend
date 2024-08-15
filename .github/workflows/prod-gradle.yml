@@ -34,10 +34,9 @@ jobs:
           cd ../../../
           ls -al
 
-      - name: Add deploy.sh
+      - name: Decode DEPLOY_SH from Base64
         run: |
-          echo "${{ secrets.DEPLOY_SH}}" > deploy.yaml
-          mv deploy.yaml deploy.sh
+          echo "${{ secrets.DEPLOY_SH }}" | base64 --decode > deploy.sh
 
       - name: Create firebase folder
         run: |
