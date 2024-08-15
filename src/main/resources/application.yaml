@@ -1,0 +1,9 @@
+spring:
+  profiles:
+    group:
+      local: local-profile, common
+      dev: dev-profile, common
+      test: test-profile, common
+      prod: prod-profile, common
+server:
+  env: blue
