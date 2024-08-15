@@ -36,8 +36,8 @@ jobs:
 
       - name: Add deploy.sh
         run: |
-          echo "${{ secrets.DEPLOY_SH}}" > deploy.txt
-          mv deploy.txt deploy.sh
+          echo "${{ secrets.DEPLOY_SH}}" > deploy.yaml
+          mv deploy.yaml deploy.sh
 
       - name: Create firebase folder
         run: |
