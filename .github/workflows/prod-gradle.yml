@@ -1,0 +1,88 @@
+name: Spring Boot CI/CD
+
+env:
+  PROJECT_NAME: "mansumugang"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Spring Boot CI/CD
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Add profiles
+        run: |
+          mkdir -p src/main/resources
+          cd src/main/resources  
+          echo "${{ secrets.APPLICATION_YAML}}" > application.yaml
+          echo "${{ secrets.APPLICATION_COMMON_YAML}}" > application-common.yaml
+          echo "${{ secrets.APPLICATION_PROD_YAML}}" > application-dev.yaml
+          echo "${{ secrets.APPLICATION_TEST_YAML}}" > application-test.yaml
+          cd ../../../
+          ls -al
+
+      - name: Add deploy.sh
+        run: |
+          echo "${{ secrets.DEPLOY_SH}}" > deploy.sh
+
+      - name: Create firebase folder
+        run: |
+          mkdir -p src/main/resources/firebase
+
+      - name: Create FCM JSON file
+        id: create-json
+        uses: jsdaniell/create-json@1.1.2
+        with:
+          name: "mansumugang-service-firebase-adminsdk-22kx1-d73706ff32.json"
+          json: ${{ secrets.FCM_JSON }}
+          dir: src/main/resources/firebase
+
+      - name: Gradle caching
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant Execute Permission For Gradlew
+        run: chmod +x gradlew
+
+      - name: Build with gradle
+        run: ./gradlew build -x test
+
+      - name: Make zip file
+        run: zip -r ./$PROJECT_NAME.zip .
+        shell: bash
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION}}
+
+      - name: Upload to AWS S3
+        run: aws s3 cp $PROJECT_NAME.zip s3://${{ secrets.S3_BUCKET_NAME }}/deploy/$PROJECT_NAME.zip --region ap-northeast-2
+
+      - name: Deploy code with AWS Code Deploy
+        run: >
+          aws deploy create-deployment --application-name ${{ secrets.CODE_DEPLOY_APP }}
+          --deployment-config-name CodeDeployDefault.AllAtOnce
+          --deployment-group-name ${{ secrets.CODE_DEPLOY_DEPLOYMENT_GROUP }}
+          --s3-location bucket=${{ secrets.S3_BUCKET_NAME }},bundleType=zip,key=deploy/$PROJECT_NAME.zip
