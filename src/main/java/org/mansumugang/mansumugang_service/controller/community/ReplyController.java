@@ -7,6 +7,7 @@ import org.apache.http.protocol.HTTP;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.community.reply.ReplyInquiry;
 import org.mansumugang.mansumugang_service.dto.community.reply.ReplySave;
+import org.mansumugang.mansumugang_service.dto.community.reply.ReplyUpdate;
 import org.mansumugang.mansumugang_service.service.community.ReplyService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,5 +39,14 @@ public class ReplyController {
         ReplyInquiry.Response replyListResponse = replyService.getReplyList(cursor, commentId);
 
         return new ResponseEntity<>(replyListResponse, HttpStatus.OK);
+    }
+
+    @PatchMapping()
+    public ResponseEntity<ReplyUpdate.Response> updateReply(@AuthenticationPrincipal User user,
+                                                            @Valid @RequestBody ReplyUpdate.Request request
+    ){
+        ReplyUpdate.Dto dto = replyService.updateReply(user, request);
+
+        return new ResponseEntity<>(ReplyUpdate.Response.createNewResponse(dto), HttpStatus.CREATED);
     }
 }
