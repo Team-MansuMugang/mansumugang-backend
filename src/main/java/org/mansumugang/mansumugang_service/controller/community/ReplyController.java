@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.protocol.HTTP;
 import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.dto.community.reply.ReplyDelete;
 import org.mansumugang.mansumugang_service.dto.community.reply.ReplyInquiry;
 import org.mansumugang.mansumugang_service.dto.community.reply.ReplySave;
 import org.mansumugang.mansumugang_service.dto.community.reply.ReplyUpdate;
@@ -49,4 +50,14 @@ public class ReplyController {
 
         return new ResponseEntity<>(ReplyUpdate.Response.createNewResponse(dto), HttpStatus.CREATED);
     }
+
+    @DeleteMapping("/{id}/delete")
+    public ResponseEntity<ReplyDelete.Response> deleteReply(@AuthenticationPrincipal User user,
+                                                            @PathVariable(name = "id") Long replyId
+    ){
+        ReplyDelete.Dto dto = replyService.deleteReply(user, replyId);
+
+        return new ResponseEntity<>(ReplyDelete.Response.createNewResponse(dto), HttpStatus.CREATED);
+    }
+
 }

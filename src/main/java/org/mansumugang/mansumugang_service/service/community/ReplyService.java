@@ -9,6 +9,7 @@ import org.mansumugang.mansumugang_service.domain.community.Comment;
 import org.mansumugang.mansumugang_service.domain.community.Reply;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.dto.community.reply.ReplyDelete;
 import org.mansumugang.mansumugang_service.dto.community.reply.ReplyInquiry;
 import org.mansumugang.mansumugang_service.dto.community.reply.ReplySave;
 import org.mansumugang.mansumugang_service.dto.community.reply.ReplyUpdate;
@@ -97,6 +98,34 @@ public class ReplyService {
         foundReply.update(request.getContent());
 
         return ReplyUpdate.Dto.of(beforeUpdateContent, foundReply);
+    }
+
+    @Transactional
+    public ReplyDelete.Dto deleteReply(User user, Long replyId){
+
+        // 1. 넘겨받은 user가 보호자 객체인지 검증
+        Protector validProtector = validateProtector(user);
+
+        // 2. 경로변수로 받은 아이디로 대댓글 조회 없으면 예외 처리.
+        Reply foundReply = replyRepository.findById(replyId)
+                .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchReplyError));
+
+        log.info("foundReply: {}, {}, {}", foundReply.getId(), foundReply.getProtector().getNickname(), foundReply.getContent());
+
+        // 3. deleteAt이 null이 아니라면 이미 삭제된 대댓글임.
+        if (foundReply.getDeletedAt() != null){
+            throw new CustomErrorException(ErrorType.DeletedReplyError);
+        }
+
+        // 4. 삭제할 대댓글의 작성자(아이디)와 넘겨받은 user(아이디) 가 일치 하지 않으면 예외 처리.
+        if (!foundReply.getProtector().getUsername().equals(validProtector.getUsername())){
+            throw new CustomErrorException(ErrorType.NotTheAuthorOfTheReply);
+        }
+
+        // 5. 검증이 완료되었다면 대댓글 삭제 진행.
+        foundReply.delete();
+
+        return ReplyDelete.Dto.fromEntity(foundReply);
     }
 
 
