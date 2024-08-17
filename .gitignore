@@ -77,8 +77,12 @@ Temporary Items
 
 # End of https://www.toptal.com/developers/gitignore/api/macos
 
-## application.yaml ###
+### application.yaml ###
 src/main/resources/application.yaml
 src/main/resources/application*.yaml
 
+### redis & mysql ###
 /storage
+
+### aws code deploy ###
+deploy.sh
