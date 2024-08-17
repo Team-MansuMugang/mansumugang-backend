@@ -62,7 +62,7 @@ public class SecurityConfig {
                 "http://minnnisu.iptime.org",
                 "https://mansumugang.kr")
         );
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowCredentials(true);
         config.setAllowedHeaders(Collections.singletonList("*"));
         config.setMaxAge(3600L); // 1시간
