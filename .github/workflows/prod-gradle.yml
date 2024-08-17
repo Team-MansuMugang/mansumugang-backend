@@ -29,7 +29,7 @@ jobs:
           cd src/main/resources  
           echo "${{ secrets.APPLICATION_YAML}}" > application.yaml
           echo "${{ secrets.APPLICATION_COMMON_YAML}}" > application-common.yaml
-          echo "${{ secrets.APPLICATION_PROD_YAML}}" > application-dev.yaml
+          echo "${{ secrets.APPLICATION_PROD_YAML}}" > application-prod.yaml
           echo "${{ secrets.APPLICATION_TEST_YAML}}" > application-test.yaml
           cd ../../../
           ls -al
