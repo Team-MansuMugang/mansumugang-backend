@@ -2,7 +2,9 @@ package org.mansumugang.mansumugang_service.service.medicine;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
+import org.mansumugang.mansumugang_service.constant.FileType;
 import org.mansumugang.mansumugang_service.constant.MedicineRecordStatusType;
 import org.mansumugang.mansumugang_service.domain.hospital.Hospital;
 import org.mansumugang.mansumugang_service.domain.medicine.Medicine;
@@ -17,11 +19,16 @@ import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.exception.CustomNotValidErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
 import org.mansumugang.mansumugang_service.service.fileService.FileService;
+import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
 import org.mansumugang.mansumugang_service.utils.DateParser;
+import org.mansumugang.mansumugang_service.utils.ProfileChecker;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,10 +39,13 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class MedicineService {
     @Value("${file.upload.image.api}")
     private String imageApiUrl;
+
     private final DateParser dateParser;
+    private final ProfileChecker profileChecker;
 
     private final MedicineRepository medicineRepository;
     private final MedicineIntakeDayRepository medicineIntakeDayRepository;
@@ -45,6 +55,7 @@ public class MedicineService {
     private final PatientRepository patientRepository;
 
     private final FileService fileService;
+    private final S3FileService s3FileService;
     private final MedicineCommonService medicineCommonService;
 
     // 보호자가 환자에 대한 약 상세정보 조회
@@ -145,10 +156,18 @@ public class MedicineService {
 
         String medicineImageName = null;
         if (medicineImage != null) {
-            try {
-                medicineImageName = fileService.saveImageFiles(medicineImage);
-            } catch (Exception e) {
-                throw new CustomErrorException(ErrorType.InternalServerError);
+            if (profileChecker.checkActiveProfile("prod")) {
+                try {
+                    medicineImageName = s3FileService.saveImageFile(medicineImage);
+                } catch (IOException e) {
+                    throw new CustomErrorException(ErrorType.InternalServerError);
+                }
+            } else {
+                try {
+                    medicineImageName = fileService.saveImageFiles(medicineImage);
+                } catch (Exception e) {
+                    throw new CustomErrorException(ErrorType.InternalServerError);
+                }
             }
 
         }
@@ -158,8 +177,6 @@ public class MedicineService {
         List<MedicineInTakeTime> newMedicineInTakeTimes = saveMedicineIntakeTimes(newMedicine, requestDto.getMedicineIntakeTimes());
 
         savePassedMedicineRecord(newMedicine, newMedicineIntakeDays, newMedicineInTakeTimes);
-
-
     }
 
     public void updateMedicine(User user, Long medicineId, MultipartFile medicineImage, MedicineUpdate.Request requestDto) {
@@ -254,9 +271,16 @@ public class MedicineService {
 
         if (medicineImage != null) {
             try {
-                String originalMedicineImageName = foundMedicine.getMedicineImageName();
-                foundMedicine.setMedicineImageName(fileService.saveImageFiles(medicineImage));
-                fileService.deleteImageFile(originalMedicineImageName);
+                if (profileChecker.checkActiveProfile("prod")) {
+                    String originalMedicineImageName = foundMedicine.getMedicineImageName();
+                    foundMedicine.setMedicineImageName(s3FileService.saveImageFile(medicineImage));
+                    s3FileService.deleteFileFromS3(originalMedicineImageName, FileType.IMAGE);
+
+                } else {
+                    String originalMedicineImageName = foundMedicine.getMedicineImageName();
+                    foundMedicine.setMedicineImageName(fileService.saveImageFiles(medicineImage));
+                    fileService.deleteImageFile(originalMedicineImageName);
+                }
             } catch (Exception e) {
                 throw new CustomErrorException(ErrorType.InternalServerError);
             }
@@ -271,21 +295,27 @@ public class MedicineService {
         Medicine foundMedicine = medicineRepository.findById(medicineId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
 
+        String originalMedicineImageName = foundMedicine.getMedicineImageName();
         Protector validProtector = validateProtector(user);
         Patient foundPatient = findPatient(foundMedicine.getPatient().getId());
         checkUserIsProtectorOfPatient(validProtector, foundPatient);
-
-        try {
-            String originalMedicineImageName = foundMedicine.getMedicineImageName();
-            fileService.deleteImageFile(originalMedicineImageName);
-        } catch (Exception e) {
-            throw new CustomErrorException(ErrorType.InternalServerError);
-        }
 
         medicineIntakeRecordRepository.deleteAllByMedicine(foundMedicine);
         medicineIntakeTimeRepository.deleteAllByMedicine(foundMedicine);
         medicineIntakeDayRepository.deleteAllByMedicine(foundMedicine);
         medicineRepository.delete(foundMedicine);
+
+
+        try {
+            if (profileChecker.checkActiveProfile("prod")) {
+                s3FileService.deleteFileFromS3(originalMedicineImageName, FileType.IMAGE);
+            } else {
+                fileService.deleteImageFile(originalMedicineImageName);
+            }
+        } catch (Exception e) {
+            throw new CustomErrorException(ErrorType.InternalServerError);
+        }
+
     }
 
     private List<MedicineIntakeDay> saveMedicineIntakeDays(Medicine medicine, Patient patient, List<DayOfWeek> medicineIntakeDay) {
