@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
+import org.mansumugang.mansumugang_service.constant.FileType;
 import org.mansumugang.mansumugang_service.domain.record.Record;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
@@ -16,6 +17,8 @@ import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.PatientRepository;
 import org.mansumugang.mansumugang_service.repository.RecordRepository;
 import org.mansumugang.mansumugang_service.service.fileService.FileService;
+import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
+import org.mansumugang.mansumugang_service.utils.ProfileChecker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,6 +37,8 @@ public class RecordService {
     private final PatientRepository patientRepository;
 
     private final FileService fileService;
+    private final S3FileService s3FileService;
+    private final ProfileChecker profileChecker;
 
     @Value("${file.upload.audio.api}")
     private String audioApiUrlPrefix;
@@ -50,22 +55,17 @@ public class RecordService {
         if (recordFile == null){
             throw new CustomErrorException(ErrorType.RecordFileNotFound);
         }
-
             try{
-
-                log.info("audios 파일내에 녹음파일 저장 시작");
                 String recordFileName = fileService.saveRecordFile(recordFile);
-                log.info("audios 파일내에 녹음파일 저장 완료");
 
-                log.info("녹음파일 재생 시간 가져오기 시작");
                 Long recordDuration = fileService.getRecordDuration(recordFileName);
-                log.info("녹음파일 재생 시간 가져오기 완료");
 
+                if(profileChecker.checkActiveProfile("prod")) {
+                    fileService.deleteRecordFile(recordFileName);
+                    recordFileName = s3FileService.saveRecordFile(recordFile);
+                }
 
-                log.info("녹음파일 정보 DB에 저장 시작");
                 Record newRecord = recordRepository.save(Record.of(validPatient, recordFileName, recordDuration));
-                log.info("녹음파일 정보 DB에 저장 완료");
-
 
                 return RecordSave.Dto.getInfo(newRecord);
 
@@ -73,8 +73,6 @@ public class RecordService {
             } catch (Exception e) {
                 throw new CustomErrorException(ErrorType.InternalServerError);
             }
-
-
     }
 
     public RecordInquiry.Dto getAllPatientsRecords(User user){
@@ -124,16 +122,21 @@ public class RecordService {
         // 3. 보호자와 녹음파일의 소유자(환자) 간 관계 검증
         checkUserIsProtectorOfPatient(validProtector, foundRecord.getPatient());
 
-        // 4. 서버에서 녹음파일 삭제 진행
+        // 4. DB에 저장된 녹음파일 정보 삭제
+        recordRepository.delete(foundRecord);
+
+        // 5. 서버에서 녹음파일 삭제 진행
         try {
-            String originalRecordFileName = foundRecord.getFilename();
-            fileService.deleteRecordFile(originalRecordFileName);
+            if(profileChecker.checkActiveProfile("prod")) {
+                s3FileService.deleteFileFromS3(foundRecordFileName, FileType.AUDIO);
+            }else{
+                fileService.deleteRecordFile(foundRecordFileName);
+            }
         } catch (Exception e) {
             throw new CustomErrorException(ErrorType.InternalServerError);
         }
 
-        // 5. DB에 저장된 녹음파일 정보 삭제
-        recordRepository.delete(foundRecord);
+
 
         return RecordDelete.Dto.fromEntity(foundRecordFileName);
     }
