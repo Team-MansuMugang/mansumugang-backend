@@ -9,8 +9,10 @@ import org.mansumugang.mansumugang_service.domain.community.Comment;
 import org.mansumugang.mansumugang_service.domain.community.Post;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.dto.community.comment.CommentDelete;
 import org.mansumugang.mansumugang_service.dto.community.comment.CommentInquiry;
 import org.mansumugang.mansumugang_service.dto.community.comment.CommentSave;
+import org.mansumugang.mansumugang_service.dto.community.comment.CommentUpdate;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.CommentRepository;
 import org.mansumugang.mansumugang_service.repository.PostRepository;
@@ -74,7 +76,60 @@ public class CommentService {
         return CommentInquiry.Response.of(commentList);
     }
 
+    @Transactional
+    public CommentUpdate.Dto updateComment(User user, CommentUpdate.Request request){
+        // 1. 넘겨받은 user 가 보호자 객체인지 검증
+        Protector validProtector = validateProtector(user);
 
+        // 2. request의 commentId로 댓글 찾기 -> 없으면 예외 처리
+        Comment foundComment = commentRepository.findById(request.getCommentId())
+                .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchCommentError));
+
+        // 2-1. 수정전 댓글 내용
+        String before = foundComment.getContent();
+
+        // 3. comment 의 deletedAt이 null이 아니면 삭제된 댓글 -> 예외 처리
+        if (foundComment.getDeletedAt() != null){
+            throw new CustomErrorException(ErrorType.DeletedCommentError);
+        }
+
+        // 4. 댓글을 수정하려는 유저와 해당 댓글의 작성자를 검증.
+        if (!foundComment.getProtector().getUsername().equals(validProtector.getUsername())){
+            throw new CustomErrorException(ErrorType.NotTheAuthorOfTheComment);
+        }
+
+        // 5. 댓글 수정 시작.
+        foundComment.update(request.getContent());
+
+        return CommentUpdate.Dto.fromEntity(before, foundComment);
+    }
+
+    @Transactional
+    public CommentDelete.Dto deleteComment(User user, Long commentId){
+
+        // 1. 넘겨받은 user가 보호자 인스턴스인지 검증
+        Protector validProtector = validateProtector(user);
+
+        // 2. 경로변수로 받은 댓글아이디로 댓글 찾기 -> 없으면 예외처리.
+        Comment foundComment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchCommentError));
+
+        // 3. foundComment의 deletedAt이 null 이 아니라면 이미 삭제된 댓글임(예외처리)
+        if (foundComment.getDeletedAt() != null){
+            throw new CustomErrorException(ErrorType.DeletedCommentError);
+        }
+
+        // 4. 댓글의 삭제하려는 유저와 댓글의 작성자가 같은지 검증 -> 틀리면 예외 처리
+        if (!foundComment.getProtector().getUsername().equals(user.getUsername())){
+            throw new CustomErrorException(ErrorType.NotTheAuthorOfTheComment);
+        }
+
+        // 5. 댓글 삭제
+        foundComment.delete();
+
+        return CommentDelete.Dto.fromEntity(foundComment);
+
+    }
 
 
     private Protector validateProtector(User user){

@@ -52,4 +52,16 @@ public class Comment {
                 .protector(protector)
                 .build();
     }
+
+    public void update(String content){
+        this.content = content;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void delete(){
+        this.protector = null;
+        this.content = "삭제된 댓글입니다.";
+        this.deletedAt = LocalDateTime.now();
+    }
+
 }

@@ -5,8 +5,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.dto.community.comment.CommentDelete;
 import org.mansumugang.mansumugang_service.dto.community.comment.CommentInquiry;
 import org.mansumugang.mansumugang_service.dto.community.comment.CommentSave;
+import org.mansumugang.mansumugang_service.dto.community.comment.CommentUpdate;
 import org.mansumugang.mansumugang_service.service.community.CommentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +46,24 @@ public class CommentController {
 
         return new ResponseEntity<>(commentListResponse, HttpStatus.OK);
 
+    }
+
+    @PatchMapping()
+    public ResponseEntity<CommentUpdate.Response> updateComment(@AuthenticationPrincipal User user,
+                                                                @Valid @RequestBody CommentUpdate.Request request
+    ){
+        CommentUpdate.Dto dto = commentService.updateComment(user, request);
+
+        return new ResponseEntity<>(CommentUpdate.Response.createNewResponse(dto), HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/{id}/delete")
+    public ResponseEntity<CommentDelete.Response> deleteComment(@AuthenticationPrincipal User user,
+                                                                @PathVariable(name = "id") Long commentId){
+
+        CommentDelete.Dto dto = commentService.deleteComment(user, commentId);
+
+        return new ResponseEntity<>(CommentDelete.Response.CreateNewResponse(dto),HttpStatus.CREATED);
     }
 
 }
