@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.dto.community.post.PostSave;
+import org.mansumugang.mansumugang_service.dto.community.post.PostUpdate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -36,8 +37,6 @@ public class Post {
     @LastModifiedDate
     private LocalDateTime updatedAt; // 업데이트 시간
 
-    private LocalDateTime deletedAt; // 삭제 시간
-
     // 다른테이블과의 연관 관계
 
     // 0. 유저
@@ -48,11 +47,6 @@ public class Post {
     @ManyToOne(fetch = FetchType.LAZY)
     private PostCategory postCategory;
 
-    // 2. 댓글
-
-    // 3. 좋아요
-
-    // 5. 북마크
 
     public static Post of(PostSave.Request request, PostCategory category ,Protector protector){
 
@@ -62,6 +56,13 @@ public class Post {
                 .postCategory(category)
                 .protector(protector)
                 .build();
+    }
+
+    public void update(PostUpdate.Request request, PostCategory postCategory){
+        this.title = request.getTitle();
+        this.content = request.getContent();
+        this.updatedAt = LocalDateTime.now();
+        this.postCategory = postCategory;
     }
 
 

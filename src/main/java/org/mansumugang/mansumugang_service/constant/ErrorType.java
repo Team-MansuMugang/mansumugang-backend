@@ -76,6 +76,9 @@ public enum ErrorType {
     NoSuchPostError(
             HttpStatus.NOT_FOUND, "존재하지 않은 게시물입니다."
     ),
+    NotTheAuthorOfThePost(
+            HttpStatus.UNAUTHORIZED, "게시물의 작성자가 아닙니다."
+    ),
 
     NoRequestBodyError(
             HttpStatus.BAD_REQUEST, "request body가 전달되지 않았습니다."

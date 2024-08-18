@@ -3,6 +3,7 @@ package org.mansumugang.mansumugang_service.domain.community;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.mansumugang.mansumugang_service.dto.community.post.PostUpdate;
 
 @Entity
 @Getter
@@ -28,5 +29,11 @@ public class PostCategory {
                 .categoryCode(categoryCode)
                 .categoryName(categoryName)
                 .build();
+    }
+
+    public void update(String categoryCode, String categoryName){
+        this.categoryCode = categoryCode;
+        this.categoryName = categoryName;
+
     }
 }

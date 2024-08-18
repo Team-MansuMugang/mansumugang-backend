@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.community.post.PostInquiry;
 import org.mansumugang.mansumugang_service.dto.community.post.PostSave;
+import org.mansumugang.mansumugang_service.dto.community.post.PostUpdate;
+import org.mansumugang.mansumugang_service.service.community.CommentService;
 import org.mansumugang.mansumugang_service.service.community.post.PostService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,7 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
+    private final CommentService commentService;
 
     @PostMapping("/save")
     public ResponseEntity<PostSave.Response> savePost(
@@ -59,6 +62,15 @@ public class PostController {
     }
 
     // 게시물 수정
+    @PatchMapping()
+    public ResponseEntity<PostUpdate.Response> updatePost(@AuthenticationPrincipal User user,
+                                                          @Valid @RequestBody PostUpdate.Request request
+    ){
+
+        PostUpdate.Dto dto = postService.updatePost(user, request);
+
+        return new ResponseEntity<>(PostUpdate.Response.createNewResponse(dto), HttpStatus.CREATED);
+    }
 
     // 게시물 삭제
 

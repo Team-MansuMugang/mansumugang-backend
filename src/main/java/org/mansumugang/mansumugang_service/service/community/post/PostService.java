@@ -12,6 +12,7 @@ import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.community.post.PostInquiry;
 import org.mansumugang.mansumugang_service.dto.community.post.PostSave;
+import org.mansumugang.mansumugang_service.dto.community.post.PostUpdate;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
 import org.mansumugang.mansumugang_service.service.fileService.FileService;
@@ -97,6 +98,32 @@ public class PostService {
 //        commentRepository.findByPostId
 
         return PostInquiry.PostDetailResponse.fromEntity(foundPost, foundPostImages, likeCount, bookmarkCount, commentCount);
+    }
+
+    @Transactional
+    public PostUpdate.Dto updatePost(User user, PostUpdate.Request request){
+
+        // 1. 넘겨받은 user객체가 보호자 객체인지 검증
+        Protector validProtector = validateProtector(user);
+
+        // 2. request에서 postId->게시물 조회 없으면 예외처리.
+        Post foundPost = postRepository.findById(request.getPostId())
+                .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchPostError));
+
+        // 3. request 에서 categoryCode 로 카테고리 검색 없으면 예외처리.
+        PostCategory foundPostCategory = postCategoryRepository.findByCategoryCode(request.getCategoryCode())
+                .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchCategoryError));
+
+        // 3. user.getUsername 과 게시물 작성자의 아이디가 같은지 검증
+        if (!validProtector.getUsername().equals(user.getUsername())){
+            throw new CustomErrorException(ErrorType.NotTheAuthorOfThePost);
+        }
+
+        // 4. 게시물 수정 시작
+        foundPost.update(request, foundPostCategory);
+
+
+        return PostUpdate.Dto.fromEntity(foundPost);
     }
 
 
