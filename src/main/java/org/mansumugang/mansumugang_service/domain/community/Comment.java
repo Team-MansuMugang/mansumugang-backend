@@ -2,6 +2,8 @@ package org.mansumugang.mansumugang_service.domain.community;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.dto.community.comment.CommentSave;
 import org.springframework.data.annotation.CreatedDate;
@@ -39,6 +41,7 @@ public class Comment {
 
     // 1. 게시물
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.dto.community.post.PostDelete;
 import org.mansumugang.mansumugang_service.dto.community.post.PostInquiry;
 import org.mansumugang.mansumugang_service.dto.community.post.PostSave;
 import org.mansumugang.mansumugang_service.dto.community.post.PostUpdate;
@@ -73,5 +74,13 @@ public class PostController {
     }
 
     // 게시물 삭제
+    @DeleteMapping("/{id}/delete")
+    public ResponseEntity<PostDelete.Response> deletePost(@AuthenticationPrincipal User user,
+                                                          @PathVariable(name = "id") Long postId){
+
+        PostDelete.Dto dto = postService.deletePost(user, postId);
+
+        return new ResponseEntity<>(PostDelete.Response.createNewResponse(dto), HttpStatus.CREATED);
+    }
 
 }

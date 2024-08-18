@@ -10,6 +10,7 @@ import org.mansumugang.mansumugang_service.domain.community.PostCategory;
 import org.mansumugang.mansumugang_service.domain.community.PostImage;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.dto.community.post.PostDelete;
 import org.mansumugang.mansumugang_service.dto.community.post.PostInquiry;
 import org.mansumugang.mansumugang_service.dto.community.post.PostSave;
 import org.mansumugang.mansumugang_service.dto.community.post.PostUpdate;
@@ -126,7 +127,29 @@ public class PostService {
         return PostUpdate.Dto.fromEntity(foundPost);
     }
 
+    @Transactional
+    public PostDelete.Dto deletePost(User user, Long postId){
 
+        // 1. 넘겨받은 user객체가 보호자 객체인지 검증
+        Protector validProtector = validateProtector(user);
+
+        // 2. postId->게시물 조회 없으면 예외처리.
+        Post foundPost = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchPostError));
+
+        Long foundPostId = foundPost.getId();
+        String foundPostTitle = foundPost.getTitle();
+
+        // 3. user.getUsername 과 게시물 작성자의 아이디가 같은지 검증
+        if (!validProtector.getUsername().equals(user.getUsername())){
+            throw new CustomErrorException(ErrorType.NotTheAuthorOfThePost);
+        }
+
+        // 5. 게시물 삭제
+        postRepository.delete(foundPost);
+
+        return PostDelete.Dto.fromEntity(foundPostId, foundPostTitle);
+    }
 
 
     private Protector validateProtector(User user){
