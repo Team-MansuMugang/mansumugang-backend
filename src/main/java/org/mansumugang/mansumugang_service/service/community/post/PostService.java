@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -102,7 +103,10 @@ public class PostService {
     }
 
     @Transactional
-    public PostUpdate.Dto updatePost(User user, PostUpdate.Request request){
+    public PostUpdate.Dto updatePost(User user, List<MultipartFile> imageFiles, PostUpdate.Request request){
+
+        List<String> addedImages = new ArrayList<>();
+        List<PostImage> postImages = new ArrayList<>();
 
         // 1. 넘겨받은 user객체가 보호자 객체인지 검증
         Protector validProtector = validateProtector(user);
@@ -119,6 +123,13 @@ public class PostService {
         if (!validProtector.getUsername().equals(foundPost.getProtector().getUsername())){
             throw new CustomErrorException(ErrorType.NotTheAuthorOfThePost);
         }
+
+        // 이미지 파일 추가, 삭제를 위한 추가 로직 구현.
+        // 이미지 추가.
+        savePostImage(imageFiles, addedImages, foundPost, postImages );
+
+        // 이미지 제거 로직.
+        deletePostImage(request.getImageFilesToDelete());
 
         // 4. 게시물 수정 시작
         foundPost.update(request, foundPostCategory);
@@ -193,5 +204,24 @@ public class PostService {
                 }
             }
         }
+    }
+
+    public void deletePostImage(List<String> imageFilesToDelete){
+        if(!imageFilesToDelete.isEmpty()){
+
+            for (String imageFileName : imageFilesToDelete) {
+
+                PostImage foundPostImage = postImageRepository.findByImageName(imageFileName)
+                        .orElseThrow(()->new CustomErrorException(ErrorType.NoImageFileError));
+
+                // 업로드된 이미지 파일 제거
+                fileService.deletePostImageFile(foundPostImage.getImageName());
+
+                // DB에 저장된 이미지 파일 정보 제거
+                postImageRepository.delete(foundPostImage);
+
+            }
+        }
+
     }
 }

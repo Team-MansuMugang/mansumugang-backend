@@ -65,10 +65,11 @@ public class PostController {
     // 게시물 수정
     @PatchMapping()
     public ResponseEntity<PostUpdate.Response> updatePost(@AuthenticationPrincipal User user,
-                                                          @Valid @RequestBody PostUpdate.Request request
+                                                          @RequestPart(name = "imageFiles", required = false) List<MultipartFile> imageFiles,
+                                                          @Valid @RequestPart(name = "post") PostUpdate.Request request
     ){
 
-        PostUpdate.Dto dto = postService.updatePost(user, request);
+        PostUpdate.Dto dto = postService.updatePost(user, imageFiles, request);
 
         return new ResponseEntity<>(PostUpdate.Response.createNewResponse(dto), HttpStatus.CREATED);
     }

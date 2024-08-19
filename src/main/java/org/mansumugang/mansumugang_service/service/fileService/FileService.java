@@ -102,6 +102,19 @@ public class FileService {
         }
     }
 
+    public void deletePostImageFile(String postImageFileName) throws InternalErrorException {
+        try {
+            String filePath = postImageUploadPath + "/" + postImageFileName;
+            File file = new File(filePath);
+            if (!file.delete()) {
+                log.error("파일 삭제를 실패했습니다.");
+                log.error("파일 위치: {}", filePath);
+            }
+        } catch (Exception e) {
+            throw new InternalErrorException(InternalErrorType.ImageDeleteError);
+        }
+    }
+
     public void deleteRecordFile(String fileName) throws InternalErrorException {
         try {
             String filePath = audioUploadPath + "/" + fileName;

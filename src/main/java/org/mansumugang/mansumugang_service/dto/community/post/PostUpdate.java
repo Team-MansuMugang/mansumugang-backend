@@ -8,8 +8,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.mansumugang.mansumugang_service.domain.community.Post;
+import org.mansumugang.mansumugang_service.domain.community.PostImage;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class PostUpdate {
 
@@ -32,6 +34,8 @@ public class PostUpdate {
 
         @NotNull(message = "값이 null이면 안됩니다.")
         private String categoryCode; // 수정할 게시물 카테고리코드
+
+        private List<String> imageFilesToDelete; // 제거할 이미지 파일들
 
     }
 
