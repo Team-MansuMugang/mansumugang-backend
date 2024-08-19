@@ -116,7 +116,7 @@ public class PostService {
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchCategoryError));
 
         // 3. user.getUsername 과 게시물 작성자의 아이디가 같은지 검증
-        if (!validProtector.getUsername().equals(user.getUsername())){
+        if (!validProtector.getUsername().equals(foundPost.getProtector().getUsername())){
             throw new CustomErrorException(ErrorType.NotTheAuthorOfThePost);
         }
 

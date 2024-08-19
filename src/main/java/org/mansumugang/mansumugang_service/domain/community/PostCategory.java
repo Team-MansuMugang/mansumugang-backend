@@ -31,9 +31,4 @@ public class PostCategory {
                 .build();
     }
 
-    public void update(String categoryCode, String categoryName){
-        this.categoryCode = categoryCode;
-        this.categoryName = categoryName;
-
-    }
 }

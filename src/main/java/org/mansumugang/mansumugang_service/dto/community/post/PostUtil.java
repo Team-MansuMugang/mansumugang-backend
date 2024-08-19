@@ -22,7 +22,7 @@ public class PostUtil {
         public static PostListMetaData of(int totalPage, int currentPage){
             return PostListMetaData.builder()
                     .totalPage(totalPage)
-                    .currentPage(currentPage)
+                    .currentPage(currentPage + 1)
                     .build();
         }
 

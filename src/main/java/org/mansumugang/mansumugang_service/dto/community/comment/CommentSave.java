@@ -20,11 +20,11 @@ public class CommentSave {
     public static class Request{
 
         @Valid
-        @NotNull
+        @NotNull(message = "값이 널이면 안됩니다.")
         private  Long postId;
 
         @Valid
-        @NotNull
+        @NotBlank(message = "댓글은 한글자 이상이어야합니다.")
         private String content;
 
     }

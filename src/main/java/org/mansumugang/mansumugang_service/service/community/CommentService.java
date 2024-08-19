@@ -65,6 +65,7 @@ public class CommentService {
         if(cursor != null){
             Comment foundComment = commentRepository.findById(cursor)
                     .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchCommentError));
+
             commentPage = commentRepository.getCommentsByCursor(foundPost, foundComment.getId(), foundComment.getCreatedAt(), commentPageable);
         }else {
             commentPage =commentRepository.findAllByPost(foundPost, commentPageable);

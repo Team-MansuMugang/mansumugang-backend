@@ -1,5 +1,6 @@
 package org.mansumugang.mansumugang_service.dto.community.comment;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,7 +21,7 @@ public class CommentUpdate {
         @NotNull
         private Long commentId;
 
-        @NotNull
+        @NotBlank(message = "댓글은 한글자 이상이어야합니다.")
         private String content;
     }
 

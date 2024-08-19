@@ -1,5 +1,6 @@
 package org.mansumugang.mansumugang_service.dto.community.reply;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,10 +19,10 @@ public class ReplySave {
     @Builder
     public static class Request{
 
-        @NotNull
+        @NotNull(message = "값이 널이어선 안됩니다.")
         private Long commentId; // 대댓글 고유번호
 
-        @NotNull
+        @NotBlank(message = "대댓글은 공백일 수 없습니다.")
         private String content; // 대댓글 내용
     }
 

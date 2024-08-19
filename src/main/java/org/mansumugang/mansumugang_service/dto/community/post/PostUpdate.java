@@ -19,22 +19,19 @@ public class PostUpdate {
     @Builder
     public static class Request{
 
-        @NotNull
+        @NotNull(message = "값이 null이면 안됩니다.")
         private Long postId; // 수정할 게시물 아이디
 
         @NotBlank
-        @Size(min = 2)
+        @Size(min = 2, message = "제목은 2글자 이상이어야 합니다!")
         private String title; // 수정할 게시물 제목
 
         @NotBlank
-        @Size(min = 2)
+        @Size(min = 2, message = "내용은 2글자 이상이어야 합니다!")
         private String content; // 수정할 게시물 내용
 
-        @NotNull
+        @NotNull(message = "값이 null이면 안됩니다.")
         private String categoryCode; // 수정할 게시물 카테고리코드
-
-        @NotNull
-        private String categoryName; // 수정할 게시물 카테고리이름
 
     }
 
