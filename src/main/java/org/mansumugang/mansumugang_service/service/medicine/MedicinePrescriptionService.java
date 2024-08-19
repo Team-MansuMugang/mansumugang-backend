@@ -37,6 +37,16 @@ public class MedicinePrescriptionService {
     private final S3FileService s3FileService;
     private final FileService fileService;
 
+    public MedicinePrescriptionListGet.Dto getMedicinePrescriptions(User user, Long patientId) {
+        Protector validatedProtector = validateProtector(user);
+        Patient foundPatient = findPatient(patientId);
+        checkUserIsProtectorOfPatient(validatedProtector, foundPatient);
+
+        List<MedicinePrescription> foundMedicinePrescriptions = medicinePrescriptionRepository.findByPatientOrderByCreatedAtDesc(foundPatient);
+
+        return MedicinePrescriptionListGet.Dto.fromEntity(foundMedicinePrescriptions, imageApiUrl);
+    }
+
     public void saveMedicinePrescription(User user, MultipartFile medicinePrescriptionImage) {
         Patient validatedPatient = validatePatient(user);
 
@@ -79,16 +89,6 @@ public class MedicinePrescriptionService {
         } catch (Exception e) {
             throw new CustomErrorException(ErrorType.InternalServerError);
         }
-    }
-
-    public MedicinePrescriptionListGet.Dto getMedicinePrescriptions(User user, Long patientId) {
-        Protector validatedProtector = validateProtector(user);
-        Patient foundPatient = findPatient(patientId);
-        checkUserIsProtectorOfPatient(validatedProtector, foundPatient);
-
-        List<MedicinePrescription> foundMedicinePrescriptions = medicinePrescriptionRepository.findByPatient(foundPatient);
-
-        return MedicinePrescriptionListGet.Dto.fromEntity(foundMedicinePrescriptions, imageApiUrl);
     }
 
     private Patient findPatient(Long patientId) {
