@@ -138,8 +138,10 @@ public enum ErrorType {
     ),
     DuplicatedHospitalVisitingTimeError(
             HttpStatus.CONFLICT, "병원 방문 시간은 중복될 수 없습니다."
-    )
-    ;
+    ),
+    NoSuchMedicinePrescriptionError(
+            HttpStatus.NOT_FOUND, "존재하지 않은 처방전 이미지 입니다."
+    );
 
     private final HttpStatus httpStatus;
     private final String message;
