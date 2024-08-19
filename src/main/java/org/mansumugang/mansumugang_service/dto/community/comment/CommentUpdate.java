@@ -32,15 +32,13 @@ public class CommentUpdate {
     public static class Dto{
         private Long commentId;
         private String nickname;
-        private String beforeContent;
         private String updatedContent;
         private LocalDateTime updatedAt;
 
-        public static Dto fromEntity(String beforeContent, Comment updatedComment){
+        public static Dto fromEntity(Comment updatedComment){
             return Dto.builder()
                     .commentId(updatedComment.getId())
                     .nickname(updatedComment.getProtector().getNickname())
-                    .beforeContent(beforeContent)
                     .updatedContent(updatedComment.getContent())
                     .updatedAt(updatedComment.getUpdatedAt())
                     .build();
@@ -55,7 +53,7 @@ public class CommentUpdate {
         private String message;
         private Long commentId;
         private String nickname;
-        private String updatedLog;
+        private String updatedContent;
         private LocalDateTime updatedAt;
 
         public static Response createNewResponse(Dto dto){
@@ -63,7 +61,7 @@ public class CommentUpdate {
                     .message("댓글이 정상적으로 수정되었습니다!")
                     .commentId(dto.getCommentId())
                     .nickname(dto.getNickname())
-                    .updatedLog(dto.getBeforeContent() +" -> " + dto.getUpdatedContent())
+                    .updatedContent(dto.getUpdatedContent())
                     .updatedAt(dto.getUpdatedAt())
                     .build();
         }

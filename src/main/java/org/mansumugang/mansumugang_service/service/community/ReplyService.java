@@ -82,8 +82,6 @@ public class ReplyService {
         Reply foundReply = replyRepository.findById(request.getReplyId())
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchReplyError));
 
-        String beforeUpdateContent = foundReply.getContent();
-
         // 3. 찾은 대댓글의 deletedAt 이 null 이 아니라면 예외처리(null 이면 삭제된 대댓글임.)
         if (foundReply.getDeletedAt() != null){
             throw new CustomErrorException(ErrorType.DeletedReplyError);
@@ -97,7 +95,7 @@ public class ReplyService {
         // 5. 모든 검증을 마쳤다면 댓글 업데이트.
         foundReply.update(request.getContent());
 
-        return ReplyUpdate.Dto.of(beforeUpdateContent, foundReply);
+        return ReplyUpdate.Dto.of(foundReply);
     }
 
     @Transactional
@@ -109,8 +107,6 @@ public class ReplyService {
         // 2. 경로변수로 받은 아이디로 대댓글 조회 없으면 예외 처리.
         Reply foundReply = replyRepository.findById(replyId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchReplyError));
-
-        log.info("foundReply: {}, {}, {}", foundReply.getId(), foundReply.getProtector().getNickname(), foundReply.getContent());
 
         // 3. deleteAt이 null이 아니라면 이미 삭제된 대댓글임.
         if (foundReply.getDeletedAt() != null){

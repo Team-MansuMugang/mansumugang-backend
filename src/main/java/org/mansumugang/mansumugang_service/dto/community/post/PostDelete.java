@@ -3,11 +3,13 @@ package org.mansumugang.mansumugang_service.dto.community.post;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import org.mansumugang.mansumugang_service.domain.community.Post;
 
 public class PostDelete {
 
     @Getter
+    @Setter
     @AllArgsConstructor
     @Builder
     public static class Dto{

@@ -86,9 +86,6 @@ public class CommentService {
         Comment foundComment = commentRepository.findById(request.getCommentId())
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchCommentError));
 
-        // 2-1. 수정전 댓글 내용
-        String before = foundComment.getContent();
-
         // 3. comment 의 deletedAt이 null이 아니면 삭제된 댓글 -> 예외 처리
         if (foundComment.getDeletedAt() != null){
             throw new CustomErrorException(ErrorType.DeletedCommentError);
@@ -102,7 +99,7 @@ public class CommentService {
         // 5. 댓글 수정 시작.
         foundComment.update(request.getContent());
 
-        return CommentUpdate.Dto.fromEntity(before, foundComment);
+        return CommentUpdate.Dto.fromEntity(foundComment);
     }
 
     @Transactional
@@ -121,7 +118,7 @@ public class CommentService {
         }
 
         // 4. 댓글의 삭제하려는 유저와 댓글의 작성자가 같은지 검증 -> 틀리면 예외 처리
-        if (!foundComment.getProtector().getUsername().equals(user.getUsername())){
+        if (!foundComment.getProtector().getUsername().equals(validProtector.getUsername())){
             throw new CustomErrorException(ErrorType.NotTheAuthorOfTheComment);
         }
 

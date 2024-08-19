@@ -2,7 +2,9 @@ package org.mansumugang.mansumugang_service.dto.community.reply;
 
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,11 +22,11 @@ public class ReplyUpdate {
     public static class Request{
 
         @Valid
-        @NotNull
+        @NotNull(message = "값이 null이면 안됩니다.")
         private Long replyId; // 수정할 대댓글의 고유번호
 
         @Valid
-        @NotNull
+        @NotBlank(message = "대댓글은 한글자 이상이어야합니다.")
         private String content; // 수정할 내용
 
 
@@ -37,15 +39,13 @@ public class ReplyUpdate {
 
         private Long replyId;
         private String nickname; // 대댓글 수정자(닉네임)
-        private String beforeContent; // 수정전 대댓글 내용
         private String updatedContent; // 수정된 대댓글 내용
         private LocalDateTime updatedAt; // 대댓글 수정된 시간
 
-        public static Dto of(String beforeContent, Reply updatedReply){
+        public static Dto of(Reply updatedReply){
             return Dto.builder()
                     .replyId(updatedReply.getId())
                     .nickname(updatedReply.getProtector().getNickname())
-                    .beforeContent(beforeContent)
                     .updatedContent(updatedReply.getContent())
                     .updatedAt(updatedReply.getUpdatedAt())
                     .build();
@@ -60,7 +60,7 @@ public class ReplyUpdate {
         private String message;
         private Long replyId;
         private String nickname; // 대댓글 수정자(닉네임)
-        private String updatedLog;
+        private String updatedContent;
         private LocalDateTime updatedAt; // 대댓글 수정된 시간
 
         public static Response createNewResponse(Dto dto){
@@ -68,7 +68,7 @@ public class ReplyUpdate {
                     .message("대댓글이 정상적으로 수정되었습니다!")
                     .replyId(dto.getReplyId())
                     .nickname(dto.getNickname())
-                    .updatedLog(dto.getBeforeContent() + " -> " + dto.getUpdatedContent())
+                    .updatedContent(dto.getUpdatedContent())
                     .updatedAt(dto.getUpdatedAt())
                     .build();
         }

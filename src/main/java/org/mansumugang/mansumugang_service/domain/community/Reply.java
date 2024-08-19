@@ -62,7 +62,7 @@ public class Reply {
 
     public void delete(){
         this.protector = null;
-        this.content = "삭제된 대댓글 입니다.";
+        this.content = "삭제된 답글 입니다.";
         this.deletedAt = LocalDateTime.now();
     }
 }
