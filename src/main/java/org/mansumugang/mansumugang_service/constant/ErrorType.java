@@ -72,9 +72,49 @@ public enum ErrorType {
             HttpStatus.NOT_FOUND, "유저는 존재하지만, 유저의 음성녹음 정보가 존재하지 않습니다."
     ),
 
+    // ----- Post -----
+    NoSuchPostError(
+            HttpStatus.NOT_FOUND, "존재하지 않은 게시물입니다."
+    ),
+    NotTheAuthorOfThePost(
+            HttpStatus.UNAUTHORIZED, "게시물의 작성자가 아닙니다."
+    ),
+
+    NoRequestBodyError(
+            HttpStatus.BAD_REQUEST, "request body가 전달되지 않았습니다."
+    ),
+
+
+    // ----- Category ------
+    NoSuchCategoryError(
+            HttpStatus.BAD_REQUEST, "존재하지 않은 카테고리입니다."
+    ),
+
     // ----- Image ------
     NoImageFileError(
             HttpStatus.BAD_REQUEST, "유효하지 않은 이미지 파일입니다."
+    ),
+
+    // ---- Comment ----
+    NoSuchCommentError(
+            HttpStatus.NOT_FOUND, "존재하지 않는 댓글입니다."
+    ),
+    NotTheAuthorOfTheComment(
+            HttpStatus.UNAUTHORIZED, "댓글의 작성자가 아닙니다."
+    ),
+    DeletedCommentError(
+            HttpStatus.NOT_FOUND, "삭제된 댓글입니다"
+    ),
+
+    // ---- Reply ----
+    NoSuchReplyError(
+            HttpStatus.NOT_FOUND, "존재하지 않는 답글입니다."
+    ),
+    NotTheAuthorOfTheReply(
+            HttpStatus.UNAUTHORIZED, "답글의 작성자가 아닙니다."
+    ),
+    DeletedReplyError(
+            HttpStatus.NOT_FOUND, "삭제된 답글입니다"
     ),
 
     // ----- Token ------

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -23,6 +24,10 @@ import java.util.UUID;
 public class FileService {
     @Value("${file.upload.image.path}")
     private String imageUploadPath;
+
+    @Value("${file.upload.postImage.path}")
+    private String postImageUploadPath;
+
     @Value("${file.upload.audio.path}")
     private String audioUploadPath;
 
@@ -38,6 +43,17 @@ public class FileService {
         try {
             String uniqueFileName = generateUniqueFileName(Objects.requireNonNull(file.getOriginalFilename()));
             Path filePath = Paths.get(imageUploadPath + "/" + uniqueFileName);
+            Files.copy(file.getInputStream(), filePath);
+            return uniqueFileName;
+        } catch (Exception e) {
+            throw new InternalErrorException(InternalErrorType.ImageSaveError);
+        }
+    }
+
+    public String savePostImageFiles(MultipartFile file) throws InternalErrorException {
+        try {
+            String uniqueFileName = generateUniqueFileName(Objects.requireNonNull(file.getOriginalFilename()));
+            Path filePath = Paths.get(postImageUploadPath + "/" + uniqueFileName);
             Files.copy(file.getInputStream(), filePath);
             return uniqueFileName;
         } catch (Exception e) {
@@ -63,6 +79,32 @@ public class FileService {
     public void deleteImageFile(String fileName) throws InternalErrorException {
         try {
             String filePath = imageUploadPath + "/" + fileName;
+            File file = new File(filePath);
+            if (!file.delete()) {
+                log.error("파일 삭제를 실패했습니다.");
+                log.error("파일 위치: {}", filePath);
+            }
+        } catch (Exception e) {
+            throw new InternalErrorException(InternalErrorType.ImageDeleteError);
+        }
+    }
+
+    public void deleteImageFiles(List<String> fileNames){
+        if (fileNames != null){
+            for (String fileName : fileNames) {
+                String filePath = imageUploadPath + "/" + fileName;
+                File file = new File(filePath);
+                if(!file.delete()){
+                    log.info("파일 삭제에 실패하였습니다.");
+                    log.info("파일위치 : " + filePath);
+                }
+            }
+        }
+    }
+
+    public void deletePostImageFile(String postImageFileName) throws InternalErrorException {
+        try {
+            String filePath = postImageUploadPath + "/" + postImageFileName;
             File file = new File(filePath);
             if (!file.delete()) {
                 log.error("파일 삭제를 실패했습니다.");
