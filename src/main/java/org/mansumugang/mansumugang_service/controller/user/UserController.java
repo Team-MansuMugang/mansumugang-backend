@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.user.PatientInquiry;
+import org.mansumugang.mansumugang_service.dto.user.ProtectorInquiry;
 import org.mansumugang.mansumugang_service.service.user.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,6 +27,14 @@ public class UserController {
         PatientInquiry.Dto foundAllPatients = userService.getPatientsByProtector(user);
 
         return ResponseEntity.ok(PatientInquiry.Response.createNewResponse(foundAllPatients));
+    }
+
+    @GetMapping("/inquiry/protectorInfo")
+    public ResponseEntity<ProtectorInquiry.Response> getProtectorOwnInfo(@AuthenticationPrincipal User user){
+
+        ProtectorInquiry.Dto foundOwnInfo = userService.getProtectorOwnInfo(user);
+
+        return ResponseEntity.ok(ProtectorInquiry.Response.createNewResponse(foundOwnInfo));
     }
 
 
