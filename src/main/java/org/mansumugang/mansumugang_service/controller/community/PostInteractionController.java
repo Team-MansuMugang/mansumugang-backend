@@ -25,9 +25,9 @@ public class PostInteractionController {
     public ResponseEntity<PostInteraction.PostLikeResponse> postLikeToggle(@AuthenticationPrincipal User user,
                                                           @PathVariable(name = "id")Long id
     ){
-        String message = postInteractionService.postLikeToggle(user, id);
+        String responseMessage = postInteractionService.postLikeToggle(user, id);
 
-        return ResponseEntity.ok(PostInteraction.PostLikeResponse.createNewResponse(message));
+        return ResponseEntity.ok(PostInteraction.PostLikeResponse.createNewResponse(responseMessage));
     }
 
     @PostMapping("/bookmark")

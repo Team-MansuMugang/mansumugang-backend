@@ -14,9 +14,9 @@ public class PostInteraction {
     public static class PostLikeResponse{
         private String message;
 
-        public static PostLikeResponse createNewResponse(String message){
+        public static PostLikeResponse createNewResponse(String responseMessage){
             return PostLikeResponse.builder()
-                    .message(message)
+                    .message(responseMessage)
                     .build();
         }
     }

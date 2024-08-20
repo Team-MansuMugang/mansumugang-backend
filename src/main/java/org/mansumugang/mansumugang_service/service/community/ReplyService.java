@@ -1,12 +1,15 @@
 package org.mansumugang.mansumugang_service.service.community;
 
 
+import com.google.firebase.messaging.Message;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
 import org.mansumugang.mansumugang_service.domain.community.Comment;
+import org.mansumugang.mansumugang_service.domain.community.Post;
 import org.mansumugang.mansumugang_service.domain.community.Reply;
+import org.mansumugang.mansumugang_service.domain.fcm.FcmToken;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.community.reply.ReplyDelete;
@@ -15,12 +18,17 @@ import org.mansumugang.mansumugang_service.dto.community.reply.ReplySave;
 import org.mansumugang.mansumugang_service.dto.community.reply.ReplyUpdate;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.CommentRepository;
+import org.mansumugang.mansumugang_service.repository.FcmTokenRepository;
+import org.mansumugang.mansumugang_service.repository.PostRepository;
 import org.mansumugang.mansumugang_service.repository.ReplyRepository;
+import org.mansumugang.mansumugang_service.service.fcm.FcmService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -29,6 +37,9 @@ public class ReplyService {
 
     private final CommentRepository commentRepository;
     private final ReplyRepository replyRepository;
+    private final FcmTokenRepository fcmTokenRepository;
+
+    private final FcmService fcmService;
 
     private final int REPLY_PAGE_SIZE = 5; // 한페이지당 대댓글 수 : 5
 
@@ -43,6 +54,9 @@ public class ReplyService {
 
         // 3. 찾은 게시물에 댓글 저장.
         Reply savedReply = replyRepository.save(Reply.of(request, foundComment, validProtector));
+
+        // TODO : 댓글 및 게시물 작성자에게 알림 전송
+        sendMessageToPostAndCommentCreator(foundComment, validProtector);
 
         return ReplySave.Dto.fromEntity(savedReply);
 
@@ -139,6 +153,41 @@ public class ReplyService {
         }
 
         throw new CustomErrorException(ErrorType.AccessDeniedError);
+    }
+
+    private void sendMessageToPostAndCommentCreator(Comment foundComment, Protector validProtector) {
+        String commentCreatorUsername = foundComment.getProtector().getUsername(); // 댓글 작성자
+        Long commentCreatorUserId = foundComment.getProtector().getId();
+
+        String postCreatorUsername = foundComment.getPost().getProtector().getUsername(); // 게시물 작성
+        Long postCreatorUserId = foundComment.getPost().getProtector().getId();
+
+        if (!validProtector.getUsername().equals(commentCreatorUsername) && !validProtector.getUsername().equals(postCreatorUsername)){
+
+            List<FcmToken> foundCommentCreatorFcmTokens = fcmTokenRepository.findByProtectorId(commentCreatorUserId);
+            List<FcmToken> foundPostCreatorFcmTokens = fcmTokenRepository.findByProtectorId(postCreatorUserId);
+
+            for (FcmToken fcmToken : foundPostCreatorFcmTokens) {
+                Message message = Message.builder()
+                        .putData("title", "만수무강")
+                        .putData("body", "회원님께서 작성하신 게시물에 대댓글이 달렸어요!")
+                        .setToken(fcmToken.getFcmToken())
+                        .build();
+
+                fcmService.sendMessage(message);
+            }
+
+            for (FcmToken fcmToken : foundCommentCreatorFcmTokens) {
+                Message message = Message.builder()
+                        .putData("title", "만수무강")
+                        .putData("body", "회원님의 댓글에 대댓글이 달렸어요!")
+                        .setToken(fcmToken.getFcmToken())
+                        .build();
+
+                fcmService.sendMessage(message);
+            }
+
+        }
     }
 
 }

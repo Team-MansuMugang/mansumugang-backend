@@ -1,12 +1,14 @@
 package org.mansumugang.mansumugang_service.service.community;
 
 
+import com.google.firebase.messaging.Message;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
 import org.mansumugang.mansumugang_service.domain.community.Comment;
 import org.mansumugang.mansumugang_service.domain.community.Post;
+import org.mansumugang.mansumugang_service.domain.fcm.FcmToken;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.community.comment.CommentDelete;
@@ -15,8 +17,10 @@ import org.mansumugang.mansumugang_service.dto.community.comment.CommentSave;
 import org.mansumugang.mansumugang_service.dto.community.comment.CommentUpdate;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.CommentRepository;
+import org.mansumugang.mansumugang_service.repository.FcmTokenRepository;
 import org.mansumugang.mansumugang_service.repository.PostRepository;
 import org.mansumugang.mansumugang_service.repository.ReplyRepository;
+import org.mansumugang.mansumugang_service.service.fcm.FcmService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,9 +38,13 @@ public class CommentService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final ReplyRepository replyRepository;
+    private final FcmTokenRepository fcmTokenRepository;
+
+    private final FcmService fcmService;
 
     private final int COMMENT_PAGE_SIZE = 10; // 한페이지 당 최대 댓글수 : 10개
     private final int REPLY_PAGE_SIZE = 5; //  한페이지 당 최대 대댓글수 : 5개
+
 
     @Transactional
     public CommentSave.Dto saveComment(User user, CommentSave.Request request){
@@ -50,9 +58,13 @@ public class CommentService {
         // 3. 찾은 게시물에 댓글 저장.
         Comment savedComment = commentRepository.save(Comment.of(request, foundPost, validProtector));
 
+        // 4. 댓글 등록시 게시물 작성자에게 메시지 전송.(게시물 작성자 본인이 본인의 게시물의 댓글을 등록할 경우 제외.)
+        sendMessageToPostCreator(validProtector, foundPost);
+
         return CommentSave.Dto.fromEntity(savedComment);
 
     }
+
 
     public CommentInquiry.Response getCommentList(Long cursor, Long postId){
 
@@ -143,5 +155,20 @@ public class CommentService {
         }
 
         throw new CustomErrorException(ErrorType.AccessDeniedError);
+    }
+
+    private void sendMessageToPostCreator(Protector validProtector, Post foundPost) {
+        if (!validProtector.getUsername().equals(foundPost.getProtector().getUsername())) {
+            List<FcmToken> foundFcmTokens = fcmTokenRepository.findByProtectorId(foundPost.getProtector().getId());
+            for (FcmToken fcmToken : foundFcmTokens) {
+                Message message = Message.builder()
+                        .putData("title", "만수무강")
+                        .putData("body", "회원님께서 작성하신 게시물에 댓글이 달렸어요!")
+                        .setToken(fcmToken.getFcmToken())
+                        .build();
+
+                fcmService.sendMessage(message);
+            }
+        }
     }
 }
