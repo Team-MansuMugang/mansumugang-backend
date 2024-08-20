@@ -68,12 +68,25 @@ public class PostService {
         return PostSave.Dto.fromEntity(savedPost);
     }
 
-    public PostInquiry.PostListResponse getPosts(int pageNo){
+    public PostInquiry.PostListResponse getPosts(String categoryCode, int pageNo){
 
         // 1번 페이지에서 최신 작성 게시물 순으로 정렬한다는 의미
         Pageable pageable = PageRequest.of(pageNo - 1, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Post> postPage = postRepository.findAll(pageable);
+        Page<Post> postPage;
+
+        if (categoryCode != null && !categoryCode.isEmpty()){
+
+            // 1. 쿼리파라미터로 받은 카테고리가 존재하는지 검증
+            PostCategory foundPostCategory = postCategoryRepository.findByCategoryCode(categoryCode)
+                    .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchCategoryError));
+
+            // 2. 카테고리로 게시물들 조회
+            postPage = postRepository.findAllByPostCategoryId(foundPostCategory.getId(), pageable);
+
+        } else{
+            postPage = postRepository.findAll(pageable);
+        }
 
 
         return PostInquiry.PostListResponse.fromPage(postPage);
@@ -129,7 +142,9 @@ public class PostService {
         savePostImage(imageFiles, addedImages, foundPost, postImages );
 
         // 이미지 제거 로직.
-        deletePostImage(request.getImageFilesToDelete());
+        if (request.getImageFilesToDelete() != null) {
+            deletePostImages(request.getImageFilesToDelete());
+        }
 
         // 4. 게시물 수정 시작
         foundPost.update(request, foundPostCategory);
@@ -156,12 +171,14 @@ public class PostService {
             throw new CustomErrorException(ErrorType.NotTheAuthorOfThePost);
         }
 
+        // 4. foundPostId로 게시물의 이미지들 조회 -> postImages에서 삭제, DB에서도 삭제
+        deletePostImageFiles(foundPostId);
+
         // 5. 게시물 삭제
         postRepository.delete(foundPost);
 
         return PostDelete.Dto.fromEntity(foundPostId, foundPostTitle);
     }
-
 
     private Protector validateProtector(User user){
         log.info("AuthenticationPrincipal 로 받은 유저 객체가 보호자 객체인지 검증 시작");
@@ -206,7 +223,7 @@ public class PostService {
         }
     }
 
-    public void deletePostImage(List<String> imageFilesToDelete){
+    public void deletePostImages(List<String> imageFilesToDelete){
         if(!imageFilesToDelete.isEmpty()){
 
             for (String imageFileName : imageFilesToDelete) {
@@ -224,4 +241,17 @@ public class PostService {
         }
 
     }
+
+    private void deletePostImageFiles(Long foundPostId) {
+        List<PostImage> foundPostImages = postImageRepository.findPostImageByPostId(foundPostId);
+
+        // 5. 이미지 파일 postImages에서 삭제
+        for (PostImage foundPostImage : foundPostImages) {
+
+            fileService.deletePostImageFile(foundPostImage.getImageName());
+
+        }
+    }
+
+
 }

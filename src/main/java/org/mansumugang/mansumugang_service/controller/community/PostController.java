@@ -43,10 +43,12 @@ public class PostController {
     }
 
     // 게시물 미리보기
+    // 쿼리파라미터 -> 게시물 리스트 조회(추가됨.)
     @GetMapping()
-    public ResponseEntity<PostInquiry.PostListResponse> getPost(@RequestParam(required = false, defaultValue = "1") int page){
+    public ResponseEntity<PostInquiry.PostListResponse> getPost(@RequestParam(required = false) String categoryCode,
+                                                                @RequestParam(required = false, defaultValue = "1") int page){
 
-        PostInquiry.PostListResponse foundPosts = postService.getPosts(page);
+        PostInquiry.PostListResponse foundPosts = postService.getPosts(categoryCode, page);
 
         return new ResponseEntity<>(foundPosts, HttpStatus.OK);
 

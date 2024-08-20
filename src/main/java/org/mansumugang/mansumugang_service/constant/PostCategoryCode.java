@@ -11,9 +11,14 @@ public enum PostCategoryCode {
 
     // 추후 추가 예정.
 
-    QUESTION("질문"),
-    PROMOTION("홍보"),
-    ETC("기타");
+    FREE("자유"),
+    HYPERTENSION("고혈압"),
+    HYPOTENSION("저혈압"),
+    DIABETES("당뇨"),
+    DEMENTIA("치매"),
+    CANCER("암"),
+    ETC("기타 질병"),
+    PROMOTION("홍보");
 
     private String categoryName;
 
