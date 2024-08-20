@@ -8,8 +8,10 @@ import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.user.PatientInquiry;
+import org.mansumugang.mansumugang_service.dto.user.ProtectorInquiry;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.PatientRepository;
+import org.mansumugang.mansumugang_service.repository.ProtectorRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.List;
 public class UserService {
 
     private final PatientRepository patientRepository;
+    private final ProtectorRepository protectorRepository;
 
     public PatientInquiry.Dto getPatientsByProtector(User user){
 
@@ -31,6 +34,18 @@ public class UserService {
         List<Patient> foundPatients = getAllPatientsByProtectorId(validProtector);
 
         return PatientInquiry.Dto.fromEntity(foundPatients);
+
+    }
+
+    public ProtectorInquiry.Dto getProtectorOwnInfo(User user){
+
+        // 1. AuthenticationPrincipal 로 넘겨받은 user 가 보호자 객체인지 검증
+        Protector validProtector = validateProtector(user);
+
+        Protector foundOwnInfo = protectorRepository.findById(validProtector.getId())
+                .orElseThrow(()->new CustomErrorException(ErrorType.UserNotFoundError));
+
+        return ProtectorInquiry.Dto.fromEntity(foundOwnInfo);
 
     }
 
