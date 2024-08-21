@@ -62,7 +62,9 @@ public class ReplyService {
 
     }
 
-    public ReplyInquiry.Response getReplyList(Long cursor, Long commentId){
+    public ReplyInquiry.Response getReplyList(User user, Long cursor, Long commentId){
+
+        validateProtector(user);
 
         // 1. 넘겨받은 댓글고유번호로 댓글 찾기.
         Comment foundComment = commentRepository.findById(commentId)

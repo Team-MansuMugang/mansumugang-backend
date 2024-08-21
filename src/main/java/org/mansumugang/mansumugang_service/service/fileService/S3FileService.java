@@ -34,6 +34,13 @@ public class S3FileService {
         return uploadFileToS3("image/" + extension, "images/", image);
     }
 
+    public String savePostImageFile(MultipartFile image) throws IOException {
+        checkImageFileValid(image);
+
+        String extension = getFileExtension(image);
+        return uploadFileToS3("image/" + extension, "postImages/", image);
+    }
+
     public String saveRecordFile(MultipartFile audio) throws InternalErrorException, IOException {
         checkAudioFileValid(audio);
 

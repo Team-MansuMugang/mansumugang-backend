@@ -66,7 +66,9 @@ public class CommentService {
     }
 
 
-    public CommentInquiry.Response getCommentList(Long cursor, Long postId){
+    public CommentInquiry.Response getCommentList(User user, Long cursor, Long postId){
+
+        validateProtector(user);
 
         Page<Comment> commentPage;
 
