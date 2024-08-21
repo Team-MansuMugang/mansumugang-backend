@@ -25,7 +25,7 @@ public class FileService {
     @Value("${file.upload.image.path}")
     private String imageUploadPath;
 
-    @Value("${file.upload.postImage.path}")
+    @Value("${file.upload.postImages.path}")
     private String postImageUploadPath;
 
     @Value("${file.upload.audio.path}")
