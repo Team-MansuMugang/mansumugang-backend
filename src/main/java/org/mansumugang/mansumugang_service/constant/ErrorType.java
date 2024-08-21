@@ -84,6 +84,11 @@ public enum ErrorType {
             HttpStatus.BAD_REQUEST, "request body가 전달되지 않았습니다."
     ),
 
+    // ----- Search ------
+    InvalidQueryError(
+            HttpStatus.BAD_REQUEST, "두 글자 이상(공백 포함 X)으로 검색해주세요!"
+    ),
+
 
     // ----- Category ------
     NoSuchCategoryError(
