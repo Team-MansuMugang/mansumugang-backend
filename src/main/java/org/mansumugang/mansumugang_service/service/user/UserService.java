@@ -42,10 +42,7 @@ public class UserService {
         // 1. AuthenticationPrincipal 로 넘겨받은 user 가 보호자 객체인지 검증
         Protector validProtector = validateProtector(user);
 
-        Protector foundOwnInfo = protectorRepository.findById(validProtector.getId())
-                .orElseThrow(()->new CustomErrorException(ErrorType.UserNotFoundError));
-
-        return ProtectorInquiry.Dto.fromEntity(foundOwnInfo);
+        return ProtectorInquiry.Dto.fromEntity(validProtector);
 
     }
 
