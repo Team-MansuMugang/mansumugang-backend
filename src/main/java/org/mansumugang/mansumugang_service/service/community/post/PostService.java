@@ -20,6 +20,7 @@ import org.mansumugang.mansumugang_service.repository.*;
 import org.mansumugang.mansumugang_service.service.fileService.FileService;
 import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
 import org.mansumugang.mansumugang_service.utils.ProfileChecker;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -50,6 +51,9 @@ public class PostService {
     private final CommentRepository commentRepository;
 
     private final int PAGE_SIZE = 10; // 한 페이지에 보여줄 게시물 개수 -> 한 페이지당 10개.
+
+    @Value("${file.upload.postImages.api}")
+    private String postImageApiUrlPrefix;
 
     @Transactional
     public PostSave.Dto savePostImage(User user, PostSave.Request request, List<MultipartFile> imageFiles){
@@ -123,7 +127,7 @@ public class PostService {
         // 6. 찾아진 게시물에서 나온 모든 댓글들
 //        commentRepository.findByPostId
 
-        return PostInquiry.PostDetailResponse.fromEntity(foundPost, foundPostImages, likeCount, bookmarkCount, commentCount);
+        return PostInquiry.PostDetailResponse.fromEntity(foundPost, foundPostImages, postImageApiUrlPrefix ,likeCount, bookmarkCount, commentCount);
     }
 
     @Transactional
