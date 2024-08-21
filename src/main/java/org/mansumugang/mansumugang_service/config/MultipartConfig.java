@@ -12,10 +12,10 @@ import org.springframework.web.multipart.support.StandardServletMultipartResolve
 @Configuration
 public class MultipartConfig {
 
-    @Value("${file.multipart.maxUploadSize:10485760}") // 전체 업로드 최대 크기 : 10MB
+    @Value("${file.multipart.maxUploadSize:104857600}") // 전체 업로드 최대 크기 : 10MB
     private long maxUploadSize;
 
-    @Value("${file.multipart.maxUploadSizePerFile:10485760}") // 업로드 할 하나의 파일 최대 크기 : 10MB
+    @Value("${file.multipart.maxUploadSizePerFile:104857600}") // 업로드 할 하나의 파일 최대 크기 : 10MB
     private long maxUploadSizePerFile;
 
     @Bean
