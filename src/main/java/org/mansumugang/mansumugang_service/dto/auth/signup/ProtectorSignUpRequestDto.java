@@ -37,6 +37,10 @@ public class ProtectorSignUpRequestDto {
     @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "올바른 생년월일 형식은 yyyy-MM-dd 입니다.")
     private String birthdate; // 생년월일
 
+    @NotBlank(message = "전화번호는 공백일 수 없습니다.")
+    @Pattern(regexp = "^01[016789]-\\d{3,4}-\\d{4}$", message = "유효한 형식의 휴대폰 번호를 입력해 주세요. 예: 010-1234-5678")
+    private String telephone; // 전화번호
+
     @Email(message = "유효하지 않은 이메일입니다.")
     @NotBlank(message = "이메일은 공백일 수 없습니다.")
     @Size(max = 30, message = "이메일은 최대 30자리까지 입력 가능합니다.")

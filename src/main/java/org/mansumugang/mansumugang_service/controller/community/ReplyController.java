@@ -34,10 +34,11 @@ public class ReplyController {
     }
 
     @GetMapping()
-    public ResponseEntity<ReplyInquiry.Response> getReplyList(@RequestParam(value = "cursor", required = false)Long cursor,
+    public ResponseEntity<ReplyInquiry.Response> getReplyList(@AuthenticationPrincipal User user,
+                                                              @RequestParam(value = "cursor", required = false)Long cursor,
                                                               @RequestParam(value = "commentId")Long commentId
     ){
-        ReplyInquiry.Response replyListResponse = replyService.getReplyList(cursor, commentId);
+        ReplyInquiry.Response replyListResponse = replyService.getReplyList(user, cursor, commentId);
 
         return new ResponseEntity<>(replyListResponse, HttpStatus.OK);
     }
