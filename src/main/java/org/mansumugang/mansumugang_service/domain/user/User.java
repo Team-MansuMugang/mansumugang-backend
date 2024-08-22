@@ -3,7 +3,9 @@ package org.mansumugang.mansumugang_service.domain.user;
 import jakarta.persistence.*;
 import lombok.*;
 
+import org.mansumugang.mansumugang_service.dto.user.ProtectorInfoUpdate;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -38,6 +40,8 @@ public abstract class User implements UserDetails {
 
     private String birthdate; // 사용자 생년월일
 
+    private String telephone; // 사용자 전화번호
+
     private String usertype; // 환자, 보호자 구분
 
     private String authority; // 사용자 권한 : User / Admin
@@ -45,12 +49,16 @@ public abstract class User implements UserDetails {
     @CreatedDate
     private LocalDateTime createdAt;
 
+    @LastModifiedDate
+    private LocalDateTime updatedAt; // 유저 정보 업데이트 시간
+
 
     public User(
             String username,
             String password,
             String name,
             String birthdate,
+            String telephone,
             String usertype,
             String authority
     ) {
@@ -58,6 +66,7 @@ public abstract class User implements UserDetails {
         this.password = password;
         this.name = name;
         this.birthdate = birthdate;
+        this.telephone = telephone;
         this.authority = authority;
         this.usertype = usertype;
     }

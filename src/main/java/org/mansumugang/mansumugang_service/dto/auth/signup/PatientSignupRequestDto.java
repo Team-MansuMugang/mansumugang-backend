@@ -36,6 +36,10 @@ public class PatientSignupRequestDto {
     @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "올바른 생년월일 형식은 yyyy-MM-dd 입니다.")
     private String birthdate; // 생년월일
 
+    @NotBlank(message = "전화번호는 공백일 수 없습니다.")
+    @Pattern(regexp = "^01[016789]-\\d{3,4}-\\d{4}$", message = "유효한 형식의 휴대폰 번호를 입력해 주세요. 예: 010-1234-5678")
+    private String telephone; // 전화번호
+
     /**
      * 환자와 보호자 사이의 관계를 정립하기 위해 회원가입시에 보호자 아이디 넘겨받음.
      */

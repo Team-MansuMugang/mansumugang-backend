@@ -3,15 +3,18 @@ package org.mansumugang.mansumugang_service.domain.user;
 import jakarta.persistence.*;
 import lombok.*;
 import org.mansumugang.mansumugang_service.dto.auth.signup.ProtectorSignUpRequestDto;
+import org.mansumugang.mansumugang_service.dto.user.ProtectorInfoUpdate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 
 
 @Entity
 @Getter
 @EntityListeners(AuditingEntityListener.class)
+@AllArgsConstructor
 @DiscriminatorValue("Protector")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Protector extends User {
@@ -26,12 +29,13 @@ public class Protector extends User {
             String password,
             String name,
             String birthdate,
+            String telephone,
             String usertype,
             String authority,
             String nickname,
             String email
     ) {
-        super(username, password, name, birthdate, usertype, authority);
+        super(username, password, name, birthdate, telephone, usertype, authority);
         this.nickname = nickname;
         this.email = email;
     }
@@ -46,6 +50,7 @@ public class Protector extends User {
                 .password(passwordEncoder.encode(protectorSignUpRequestDto.getPassword()))
                 .name(protectorSignUpRequestDto.getName())
                 .birthdate(protectorSignUpRequestDto.getBirthdate())
+                .telephone(protectorSignUpRequestDto.getTelephone())
                 .email(protectorSignUpRequestDto.getEmail())
                 .nickname(protectorSignUpRequestDto.getNickname())
                 .usertype(protectorSignUpRequestDto.getUsertype())
@@ -53,4 +58,12 @@ public class Protector extends User {
                 .build();
     }
 
+    public void update(ProtectorInfoUpdate.Request request ,String newNickname){
+        super.setName(request.getName());
+        super.setBirthdate(request.getBirthdate());
+        super.setTelephone(request.getTelephone());
+        this.nickname = newNickname;
+        this.email = request.getEmail();
+        super.setUpdatedAt(LocalDateTime.now());
+    }
 }
