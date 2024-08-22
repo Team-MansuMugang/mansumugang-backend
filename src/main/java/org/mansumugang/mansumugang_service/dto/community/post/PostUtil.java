@@ -8,6 +8,7 @@ import org.mansumugang.mansumugang_service.domain.community.Post;
 import org.mansumugang.mansumugang_service.domain.community.PostImage;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class PostUtil {
 
@@ -58,6 +59,29 @@ public class PostUtil {
                     .build();
         }
     }
+    @Getter
+    @AllArgsConstructor
+    @Builder
+    public static class PostImagesSummaryData{
+        private String postImageApiUrlPrefix;
+        private List<PostImageSummaryData> images;
+
+        public static PostImagesSummaryData fromEntity(List<PostImage> foundPostImages, String postImageApiUrlPrefix){
+            // PostImage 리스트를 PostImageSummaryData 리스트로 변환
+            List<PostImageSummaryData> summaryDataList = foundPostImages.stream()
+                    .map(PostImageSummaryData::fromEntity)
+                    .toList();
+
+            // PostImagesSummaryData 객체 생성
+            return PostImagesSummaryData.builder()
+                    .postImageApiUrlPrefix(postImageApiUrlPrefix)
+                    .images(summaryDataList)
+                    .build();
+        }
+
+
+    }
+
 
     @Getter
     @Setter

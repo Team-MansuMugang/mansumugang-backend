@@ -45,10 +45,11 @@ public class PostController {
     // 게시물 미리보기
     // 쿼리파라미터 -> 게시물 리스트 조회(추가됨.)
     @GetMapping()
-    public ResponseEntity<PostInquiry.PostListResponse> getPost(@RequestParam(required = false) String categoryCode,
+    public ResponseEntity<PostInquiry.PostListResponse> getPost(@AuthenticationPrincipal User user,
+                                                                @RequestParam(required = false) String categoryCode,
                                                                 @RequestParam(required = false, defaultValue = "1") int page){
 
-        PostInquiry.PostListResponse foundPosts = postService.getPosts(categoryCode, page);
+        PostInquiry.PostListResponse foundPosts = postService.getPosts(user, categoryCode, page);
 
         return new ResponseEntity<>(foundPosts, HttpStatus.OK);
 
@@ -56,9 +57,10 @@ public class PostController {
 
     // 게시물 상세정보 조회
     @GetMapping("/{id}")
-    public ResponseEntity<PostInquiry.PostDetailResponse> getPost(@PathVariable(name = "id") Long id){
+    public ResponseEntity<PostInquiry.PostDetailResponse> getPost(@AuthenticationPrincipal User user,
+                                                                  @PathVariable(name = "id") Long id){
 
-        PostInquiry.PostDetailResponse foundPostDetail = postService.getPostDetail(id);
+        PostInquiry.PostDetailResponse foundPostDetail = postService.getPostDetail(user, id);
 
         return new ResponseEntity<>(foundPostDetail, HttpStatus.OK);
 

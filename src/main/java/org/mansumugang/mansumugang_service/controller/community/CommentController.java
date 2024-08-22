@@ -38,11 +38,12 @@ public class CommentController {
     }
 
     @GetMapping()
-    public ResponseEntity<CommentInquiry.Response> getCommentList(@RequestParam(value = "cursor", required = false) Long cursor,
+    public ResponseEntity<CommentInquiry.Response> getCommentList(@AuthenticationPrincipal User user,
+                                                                  @RequestParam(value = "cursor", required = false) Long cursor,
                                                                   @RequestParam(value = "postId") Long postId
     ){
 
-        CommentInquiry.Response commentListResponse = commentService.getCommentList(cursor, postId);
+        CommentInquiry.Response commentListResponse = commentService.getCommentList(user,cursor, postId);
 
         return new ResponseEntity<>(commentListResponse, HttpStatus.OK);
 

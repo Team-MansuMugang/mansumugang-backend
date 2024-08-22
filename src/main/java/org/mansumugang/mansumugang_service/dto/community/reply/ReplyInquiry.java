@@ -35,10 +35,11 @@ public class ReplyInquiry {
             return ReplyElement.builder()
                     .replyId(reply.getId())
                     .commentId(reply.getComment().getId())
-                    .creator(reply.getDeletedAt() == null ? reply.getProtector().getNickname() : "알수 없음")
+                    .creator(reply.getDeletedAt() == null ? reply.getProtector().getNickname() : "알 수 없음")
                     .content(reply.getContent())
                     .createdAt(reply.getCreatedAt())
                     .updatedAt(reply.getUpdatedAt())
+                    .deletedAt(reply.getDeletedAt())
                     .build();
         }
     }

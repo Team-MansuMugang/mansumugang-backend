@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
+import org.mansumugang.mansumugang_service.constant.FileType;
 import org.mansumugang.mansumugang_service.domain.community.Post;
 import org.mansumugang.mansumugang_service.domain.community.PostCategory;
 import org.mansumugang.mansumugang_service.domain.community.PostImage;
@@ -17,6 +18,9 @@ import org.mansumugang.mansumugang_service.dto.community.post.PostUpdate;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
 import org.mansumugang.mansumugang_service.service.fileService.FileService;
+import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
+import org.mansumugang.mansumugang_service.utils.ProfileChecker;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +28,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +38,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class PostService {
 
+    private final ProfileChecker profileChecker;
+
     private final FileService fileService;
+    private final S3FileService s3FileService;
 
     private final PostRepository postRepository;
     private final PostCategoryRepository postCategoryRepository;
@@ -43,6 +51,9 @@ public class PostService {
     private final CommentRepository commentRepository;
 
     private final int PAGE_SIZE = 10; // 한 페이지에 보여줄 게시물 개수 -> 한 페이지당 10개.
+
+    @Value("${file.upload.postImages.api}")
+    private String postImageApiUrlPrefix;
 
     @Transactional
     public PostSave.Dto savePostImage(User user, PostSave.Request request, List<MultipartFile> imageFiles){
@@ -68,7 +79,9 @@ public class PostService {
         return PostSave.Dto.fromEntity(savedPost);
     }
 
-    public PostInquiry.PostListResponse getPosts(String categoryCode, int pageNo){
+    public PostInquiry.PostListResponse getPosts(User user,String categoryCode, int pageNo){
+
+        validateProtector(user);
 
         // 1번 페이지에서 최신 작성 게시물 순으로 정렬한다는 의미
         Pageable pageable = PageRequest.of(pageNo - 1, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -92,7 +105,9 @@ public class PostService {
         return PostInquiry.PostListResponse.fromPage(postPage);
     }
 
-    public PostInquiry.PostDetailResponse getPostDetail(Long id){
+    public PostInquiry.PostDetailResponse getPostDetail(User user, Long id){
+
+        validateProtector(user);
 
         // 1. 경로변수로 받은 id로 게시물 조회 -> 없으면 예외 처리
         Post foundPost = postRepository.findById(id).orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchPostError));
@@ -112,7 +127,7 @@ public class PostService {
         // 6. 찾아진 게시물에서 나온 모든 댓글들
 //        commentRepository.findByPostId
 
-        return PostInquiry.PostDetailResponse.fromEntity(foundPost, foundPostImages, likeCount, bookmarkCount, commentCount);
+        return PostInquiry.PostDetailResponse.fromEntity(foundPost, foundPostImages, postImageApiUrlPrefix ,likeCount, bookmarkCount, commentCount);
     }
 
     @Transactional
@@ -196,29 +211,49 @@ public class PostService {
     }
 
     private void savePostImage(List<MultipartFile> imageFiles, List<String> addedImages, Post savedPost, List<PostImage> postImages) {
+
         if (imageFiles != null){
+
+            String uniqueFileName = null;
 
             for (MultipartFile imageFile : imageFiles) {
                 if (!fileService.checkImageFile(imageFile)){ // 이미지 파일이 null 또는 content-type 이 image 로 시작하지 않으면.
                     fileService.deleteImageFiles(addedImages);
-                    throw  new CustomErrorException(ErrorType.NoImageFileError);
-                }
-
-                try {
-                    String uniqueFileName = fileService.savePostImageFiles(imageFile);
-                    PostImage savedPostImage = postImageRepository.save(PostImage.of(uniqueFileName, savedPost));
-                    addedImages.add(savedPostImage.getImageName());
-                    postImages.add(savedPostImage);
-
-                } catch (NullPointerException e) {
-                    fileService.deleteImageFiles(addedImages);
                     throw new CustomErrorException(ErrorType.NoImageFileError);
-
-                } catch (Exception e){
-                    log.error(e.getMessage());
-                    fileService.deleteImageFiles(addedImages);
-                    throw new CustomErrorException(ErrorType.InternalServerError);
                 }
+
+                if (profileChecker.checkActiveProfile("prod")) {
+                    try {
+                        uniqueFileName = s3FileService.savePostImageFile(imageFile);
+
+
+                    } catch (IOException e) {
+                        fileService.deleteImageFiles(addedImages);
+                        throw new CustomErrorException(ErrorType.NoImageFileError);
+
+                    } catch (Exception e) {
+                        log.error(e.getMessage());
+                        fileService.deleteImageFiles(addedImages);
+                        throw new CustomErrorException(ErrorType.InternalServerError);
+                    }
+                }else {
+                    try {
+                        uniqueFileName = fileService.savePostImageFiles(imageFile);
+
+                    } catch (NullPointerException e) {
+                        fileService.deleteImageFiles(addedImages);
+                        throw new CustomErrorException(ErrorType.NoImageFileError);
+
+                    } catch (Exception e) {
+                        log.error(e.getMessage());
+                        fileService.deleteImageFiles(addedImages);
+                        throw new CustomErrorException(ErrorType.InternalServerError);
+                    }
+                }
+
+                PostImage savedPostImage = postImageRepository.save(PostImage.of(uniqueFileName, savedPost));
+                addedImages.add(savedPostImage.getImageName());
+                postImages.add(savedPostImage);
             }
         }
     }
@@ -229,14 +264,19 @@ public class PostService {
             for (String imageFileName : imageFilesToDelete) {
 
                 PostImage foundPostImage = postImageRepository.findByImageName(imageFileName)
-                        .orElseThrow(()->new CustomErrorException(ErrorType.NoImageFileError));
+                        .orElseThrow(() -> new CustomErrorException(ErrorType.NoImageFileError));
 
-                // 업로드된 이미지 파일 제거
-                fileService.deletePostImageFile(foundPostImage.getImageName());
+                if (profileChecker.checkActiveProfile("prod")){
+                    // profile 이 prod 라면 S3에서 파일 찾아서 삭제
+                    s3FileService.deleteFileFromS3(imageFileName, FileType.POST_IMAGE);
+
+                }else {
+                    // 업로드된 이미지 파일 제거
+                    fileService.deletePostImageFile(foundPostImage.getImageName());
+                }
 
                 // DB에 저장된 이미지 파일 정보 제거
                 postImageRepository.delete(foundPostImage);
-
             }
         }
 
@@ -248,8 +288,13 @@ public class PostService {
         // 5. 이미지 파일 postImages에서 삭제
         for (PostImage foundPostImage : foundPostImages) {
 
-            fileService.deletePostImageFile(foundPostImage.getImageName());
+            if (profileChecker.checkActiveProfile("prod")){
 
+                s3FileService.deleteFileFromS3(foundPostImage.getImageName(), FileType.POST_IMAGE);
+
+            }else {
+                fileService.deletePostImageFile(foundPostImage.getImageName());
+            }
         }
     }
 
