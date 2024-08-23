@@ -42,6 +42,10 @@ public enum ErrorType {
     UserTypeDismatchError(
             HttpStatus.NOT_FOUND, "해당 유저는 보호자가 아닌 환자입니다."
     ),
+    ProtectorHasActivePatientsError(
+            HttpStatus.CONFLICT, "모든 환자가 탈퇴 되지 않았습니다."
+    ),
+
 
     // ----- Location ------
     OutOfBoundaryError(

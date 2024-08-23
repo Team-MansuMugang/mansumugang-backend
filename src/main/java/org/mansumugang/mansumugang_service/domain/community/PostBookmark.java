@@ -30,6 +30,7 @@ public class PostBookmark {
 
     // 2. 유저
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Protector protector;
 
     public static PostBookmark of(Post post, Protector protector){

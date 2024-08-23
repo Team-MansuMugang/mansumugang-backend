@@ -45,6 +45,7 @@ public class Reply {
 
     // 2. 유저
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     Protector protector;
 
     public static Reply of(ReplySave.Request request, Comment foundComment, Protector validProtector){
