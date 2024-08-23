@@ -15,4 +15,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Query("SELECT DISTINCT p FROM Post p WHERE p.title LIKE %:content% OR p.content LIKE %:content%")
     Page<Post> findByTitleOrContentContaining(@Param("content") String searchContent, Pageable pageable);
+
+    List<Post> findAllByProtectorId(Long protectorId);
 }

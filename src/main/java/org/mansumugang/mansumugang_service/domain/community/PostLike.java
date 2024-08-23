@@ -31,6 +31,7 @@ public class PostLike {
 
     // 2. 유저
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Protector protector;
 
     public static PostLike of(Post post, Protector protector){
