@@ -44,6 +44,16 @@ public class UserController {
         return ResponseEntity.ok(PatientInfoInquiry.Response.createNewResponse(foundOwnInfo));
     }
 
+    @GetMapping("/inquiry/familyMember")
+    public ResponseEntity<FamilyMemberInquiry.Response> getFamilyMember(@AuthenticationPrincipal User user){
+
+
+        FamilyMemberInquiry.Dto dto = userService.getFamilyMember(user);
+
+        return ResponseEntity.ok(FamilyMemberInquiry.Response.createNewResponse(dto));
+    }
+
+
     // 유저 정보 수정
     @PatchMapping("/protector/{id}")
     public ResponseEntity<ProtectorInfoUpdate.Response> updateProtectorInfo(@AuthenticationPrincipal User user,
