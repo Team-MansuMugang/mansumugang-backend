@@ -5,8 +5,10 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.mansumugang.mansumugang_service.domain.location.Location;
 import org.mansumugang.mansumugang_service.dto.auth.signup.PatientSignupRequestDto;
+import org.mansumugang.mansumugang_service.dto.user.PatientInfoUpdate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -30,11 +32,12 @@ public class Patient extends User {
             String password,
             String name,
             String birthdate,
+            String telephone,
             String usertype,
             String authority,
             Protector protector
     ) {
-        super(username, password, name, birthdate, usertype, authority);
+        super(username, password, name, birthdate, telephone, usertype, authority);
         this.protector = protector;
     }
 
@@ -48,10 +51,18 @@ public class Patient extends User {
                 .password(passwordEncoder.encode(patientSignupRequestDto.getPassword()))
                 .name(patientSignupRequestDto.getName())
                 .birthdate(patientSignupRequestDto.getBirthdate())
+                .telephone(patientSignupRequestDto.getTelephone())
                 .usertype(patientSignupRequestDto.getUsertype())
                 .authority("ROLE_USER")
                 .protector(foundProtector)
                 .build();
+    }
+
+    public void update(PatientInfoUpdate.Request request){
+        super.setName(request.getName());
+        super.setBirthdate(request.getBirthdate());
+        super.setTelephone(request.getTelephone());
+        super.setUpdatedAt(LocalDateTime.now());
     }
 
 }

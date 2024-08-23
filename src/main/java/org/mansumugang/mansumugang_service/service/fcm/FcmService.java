@@ -40,7 +40,6 @@ public class FcmService {
     }
 
     public void sendMessage(Message message){
-//        String userIIDToken = "fGng3MP7GbkP3YpWJDm_rV:APA91bGHkfOTeS5Nsuu2lCW0zt5F6cTN81VuFQoIxuK40EkVbkQE6tVqwUCAtJ73QF87XUM0QxjnvopVhETTtnfIMIoyio8u0ojRQ4mHONd8d7Q_XyJ1V8WgxwddOjgIkaypGIE1YuDX";
 
         try {
             String response = firebaseMessaging.send(message);
