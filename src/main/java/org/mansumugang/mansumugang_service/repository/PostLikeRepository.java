@@ -13,5 +13,7 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
 
     PostLike findByProtectorAndPost(Protector protector, Post post);
 
+    PostLike findByProtectorIdAndPostId(Long validProtectorId, Long postId);
+
 
 }
