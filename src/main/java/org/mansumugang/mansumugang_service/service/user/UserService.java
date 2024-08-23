@@ -5,17 +5,28 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
+import org.mansumugang.mansumugang_service.constant.FileType;
+import org.mansumugang.mansumugang_service.domain.medicine.Medicine;
+import org.mansumugang.mansumugang_service.domain.medicine.MedicinePrescription;
+import org.mansumugang.mansumugang_service.domain.record.Record;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
-import org.mansumugang.mansumugang_service.dto.user.*;
+import org.mansumugang.mansumugang_service.dto.user.familyMember.FamilyMemberInquiry;
+import org.mansumugang.mansumugang_service.dto.user.infoDelete.PatientInfoDelete;
+import org.mansumugang.mansumugang_service.dto.user.infoUpdate.PatientInfoUpdate;
+import org.mansumugang.mansumugang_service.dto.user.infoUpdate.ProtectorInfoUpdate;
+import org.mansumugang.mansumugang_service.dto.user.inquiry.PatientInfoInquiry;
+import org.mansumugang.mansumugang_service.dto.user.inquiry.PatientInquiry;
+import org.mansumugang.mansumugang_service.dto.user.inquiry.ProtectorInfoInquiry;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
-import org.mansumugang.mansumugang_service.repository.PatientRepository;
-import org.mansumugang.mansumugang_service.repository.ProtectorRepository;
+import org.mansumugang.mansumugang_service.repository.*;
+import org.mansumugang.mansumugang_service.service.fileService.FileService;
+import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
+import org.mansumugang.mansumugang_service.utils.ProfileChecker;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.*;
 
@@ -27,6 +38,14 @@ public class UserService {
 
     private final PatientRepository patientRepository;
     private final ProtectorRepository protectorRepository;
+
+    private final MedicineRepository medicineRepository;
+    private final MedicinePrescriptionRepository medicinePrescriptionRepository;
+    private final RecordRepository recordRepository;
+
+    private final S3FileService s3FileService;
+    private final ProfileChecker profileChecker;
+    private final FileService fileService;
 
     public PatientInquiry.Dto getPatientsByProtector(User user){
 
@@ -77,7 +96,7 @@ public class UserService {
 
 
     @Transactional
-    public ProtectorInfoUpdate.Dto updateProtectorInfo(User user, Long protectorId ,ProtectorInfoUpdate.Request request){
+    public ProtectorInfoUpdate.Dto updateProtectorInfo(User user, Long protectorId , ProtectorInfoUpdate.Request request){
 
         // 1.User 가 보호자 객체인지 검증
         Protector validProtector = validateProtector(user);
@@ -107,7 +126,7 @@ public class UserService {
     }
 
     @Transactional
-    public PatientInfoUpdate.Dto updatePatientInfo(User user, Long patientId ,PatientInfoUpdate.Request request){
+    public PatientInfoUpdate.Dto updatePatientInfo(User user, Long patientId , PatientInfoUpdate.Request request){
 
         // 1. User 가 환자 객체인지 검증
         Patient validPatient = validatePatient(user);
@@ -127,6 +146,86 @@ public class UserService {
         return PatientInfoUpdate.Dto.fromEntity(validPatient);
 
     }
+
+    @Transactional
+    public PatientInfoDelete.Dto deletePatientInfo(User user, Long patientId){
+
+        // 1. 환자 객체 검증
+        Patient validPatient = validatePatient(user);
+
+        // 2. 회원 탈퇴를 진행할 유저와 경로변수로 찾은 환자 정보가 같은지 검증
+        Patient foundPatient = patientRepository.findById(patientId)
+                .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
+
+        String username = foundPatient.getUsername();
+        String name = foundPatient.getName();
+        String usertype = foundPatient.getUsertype();
+
+        if (!validPatient.getId().equals(foundPatient.getId())){
+            throw new CustomErrorException(ErrorType.AccessDeniedError);
+        }
+
+        // 3. 약 이미지, 처방전, 음성녹음 삭제
+        // 3.1. 약이미지 이름 찾기 -> 약이미지 파일 삭제
+        List<Medicine> foundMedicines = medicineRepository.findAllByPatientId(validPatient.getId());
+        for (Medicine foundMedicine : foundMedicines) {
+
+            String medicineImageName = foundMedicine.getMedicineImageName();
+            if (medicineImageName != null){
+                try{
+                    if (profileChecker.checkActiveProfile("prod")){
+                        s3FileService.deleteFileFromS3(medicineImageName, FileType.IMAGE);
+                    } else {
+                        fileService.deleteImageFile(medicineImageName);
+                    }
+                }catch (Exception e){
+                    throw new CustomErrorException(ErrorType.InternalServerError);
+                }
+            }
+        }
+
+        // 3.2 처방전 이미지 이름 찾기 -> 이미지 파일 삭제
+        List<MedicinePrescription> foundPrescriptions = medicinePrescriptionRepository.findAllByPatientId(validPatient.getId());
+        for (MedicinePrescription foundPrescription : foundPrescriptions) {
+
+            String prescriptionImageName = foundPrescription.getMedicinePrescriptionImageName();
+            if(prescriptionImageName != null){
+                try {
+                    if (profileChecker.checkActiveProfile("prod")){
+                        s3FileService.deleteFileFromS3(prescriptionImageName, FileType.IMAGE);
+                    }else{
+                        fileService.deleteImageFile(prescriptionImageName);
+                    }
+                }catch (Exception e){
+                    throw new CustomErrorException(ErrorType.InternalServerError);
+                }
+            }
+        }
+
+        // 3.3 음성녹음 파일 이름 찾기 -> 음성녹음 파일 삭제
+        List<Record> foundRecords = recordRepository.findAllByPatientId(validPatient.getId());
+        for (Record foundRecord : foundRecords) {
+
+            String recordFileName = foundRecord.getFilename();
+            try {
+                if (profileChecker.checkActiveProfile("prod")){
+                    s3FileService.deleteFileFromS3(recordFileName, FileType.AUDIO);
+                }else {
+                    fileService.deleteRecordFile(recordFileName);
+                }
+            }catch (Exception e){
+                throw new CustomErrorException(ErrorType.InternalServerError);
+            }
+
+        }
+
+        // 4. 회원 정보와 관련된 모든 정보 삭제 진행
+        patientRepository.delete(foundPatient);
+
+        return PatientInfoDelete.Dto.fromEntity(username, name, usertype);
+
+    }
+
     private Protector validateProtector(User user) {
 
         if (user == null){

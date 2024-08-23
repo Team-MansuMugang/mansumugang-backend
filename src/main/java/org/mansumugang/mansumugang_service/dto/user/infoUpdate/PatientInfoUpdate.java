@@ -1,4 +1,4 @@
-package org.mansumugang.mansumugang_service.dto.user;
+package org.mansumugang.mansumugang_service.dto.user.infoUpdate;
 
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;

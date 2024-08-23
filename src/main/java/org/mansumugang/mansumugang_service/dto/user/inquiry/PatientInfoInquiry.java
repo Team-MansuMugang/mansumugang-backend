@@ -1,41 +1,37 @@
-package org.mansumugang.mansumugang_service.dto.user;
+package org.mansumugang.mansumugang_service.dto.user.inquiry;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.mansumugang.mansumugang_service.domain.user.Protector;
+import org.mansumugang.mansumugang_service.domain.user.Patient;
 
 import java.time.LocalDateTime;
 
-public class ProtectorInfoInquiry {
+public class PatientInfoInquiry {
 
     @Getter
     @AllArgsConstructor
     @Builder
     public static class Dto{
-        private Long protectorId;
+        private Long patientId;
         private String username;
-        private String name; // 유저 실명 추가
-        private String email;
-        private String nickname;
+        private String name; // 환자 이름 추가
         private String birthdate;
         private String telephone; // 전화번호 추가
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt; // 수정시간 추가
         private String usertype;
 
-        public static Dto fromEntity(Protector foundProtector){
+        public static Dto fromEntity(Patient foundPatient){
             return Dto.builder()
-                    .protectorId(foundProtector.getId())
-                    .username(foundProtector.getUsername())
-                    .name(foundProtector.getName())
-                    .email(foundProtector.getEmail())
-                    .nickname(foundProtector.getNickname())
-                    .birthdate(foundProtector.getBirthdate())
-                    .telephone(foundProtector.getTelephone())
-                    .createdAt(foundProtector.getCreatedAt())
-                    .updatedAt(foundProtector.getUpdatedAt())
-                    .usertype(foundProtector.getUsertype())
+                    .patientId(foundPatient.getId())
+                    .username(foundPatient.getUsername())
+                    .name(foundPatient.getName())
+                    .birthdate(foundPatient.getBirthdate())
+                    .telephone(foundPatient.getTelephone())
+                    .createdAt(foundPatient.getCreatedAt())
+                    .updatedAt(foundPatient.getUpdatedAt())
+                    .usertype(foundPatient.getUsertype())
                     .build();
         }
     }
@@ -45,11 +41,9 @@ public class ProtectorInfoInquiry {
     @Builder
     public static class Response{
         private String message;
-        private Long protectorId;
+        private Long patientId;
         private String username;
-        private String name; // 유저 실명 추가
-        private String email;
-        private String nickname;
+        private String name; // 환자 이름 추가
         private String birthdate;
         private String telephone; // 전화번호 추가.
         private LocalDateTime createdAt;
@@ -59,11 +53,9 @@ public class ProtectorInfoInquiry {
         public static Response createNewResponse(Dto dto){
             return Response.builder()
                     .message("유저 정보를 정상적으로 불러왔습니다.")
-                    .protectorId(dto.getProtectorId())
+                    .patientId(dto.getPatientId())
                     .username(dto.getUsername())
                     .name(dto.getName())
-                    .email(dto.getEmail())
-                    .nickname(dto.getNickname())
                     .birthdate(dto.getBirthdate())
                     .telephone(dto.getTelephone())
                     .createdAt(dto.getCreatedAt())

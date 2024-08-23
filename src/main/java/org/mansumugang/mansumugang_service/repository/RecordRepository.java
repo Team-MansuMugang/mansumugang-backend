@@ -12,4 +12,6 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
 
     @Query("SELECT r FROM Record r WHERE r.patient.id IN :patientIds ORDER BY r.createdAt DESC")
     List<Record> findAllByPatientIdsOrderByCreatedAtDesc(@Param("patientIds") List<Long> patientIds);
+
+    List<Record> findAllByPatientId(long patient_id);
 }
