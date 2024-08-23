@@ -44,7 +44,7 @@ public class MedicinePrescriptionService {
 
         List<MedicinePrescription> foundMedicinePrescriptions = medicinePrescriptionRepository.findByPatientOrderByCreatedAtDesc(foundPatient);
 
-        return MedicinePrescriptionListGet.Dto.fromEntity(foundMedicinePrescriptions, imageApiUrl);
+        return MedicinePrescriptionListGet.Dto.fromEntity(patientId, foundMedicinePrescriptions, imageApiUrl);
     }
 
     public void saveMedicinePrescription(User user, MultipartFile medicinePrescriptionImage) {

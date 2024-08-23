@@ -39,10 +39,10 @@ public class MedicinePrescriptionListGet {
 
         private List<MedicinePrescriptionListGetElement> medicinePrescriptions;
 
-        public static Dto fromEntity(List<MedicinePrescription> medicinePrescriptionEntity, String imageApiUrlPrefix){
+        public static Dto fromEntity(Long patientId, List<MedicinePrescription> medicinePrescriptionEntity, String imageApiUrlPrefix){
             return Dto.builder()
                     .imageApiUrlPrefix(imageApiUrlPrefix)
-                    .patientId(medicinePrescriptionEntity.get(0).getPatient().getId())
+                    .patientId(patientId)
                     .medicinePrescriptions(medicinePrescriptionEntity.stream().map(MedicinePrescriptionListGetElement::of).toList())
                     .build();
         }
