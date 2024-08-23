@@ -3,7 +3,7 @@ package org.mansumugang.mansumugang_service.domain.user;
 import jakarta.persistence.*;
 import lombok.*;
 import org.mansumugang.mansumugang_service.dto.auth.signup.ProtectorSignUpRequestDto;
-import org.mansumugang.mansumugang_service.dto.user.ProtectorInfoUpdate;
+import org.mansumugang.mansumugang_service.dto.user.infoUpdate.ProtectorInfoUpdate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import org.springframework.security.crypto.password.PasswordEncoder;

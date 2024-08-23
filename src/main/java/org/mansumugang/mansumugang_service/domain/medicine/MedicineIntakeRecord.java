@@ -2,6 +2,8 @@ package org.mansumugang.mansumugang_service.domain.medicine;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.mansumugang.mansumugang_service.constant.MedicineRecordStatusType;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -21,12 +23,15 @@ public class MedicineIntakeRecord {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Medicine medicine;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private MedicineIntakeDay medicineIntakeDay;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private MedicineInTakeTime medicineInTakeTime;
 
     @Column(nullable = false)

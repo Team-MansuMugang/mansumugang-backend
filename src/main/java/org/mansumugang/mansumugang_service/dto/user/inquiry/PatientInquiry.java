@@ -1,4 +1,4 @@
-package org.mansumugang.mansumugang_service.dto.user;
+package org.mansumugang.mansumugang_service.dto.user.inquiry;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
