@@ -12,10 +12,12 @@ import org.mansumugang.mansumugang_service.dto.user.*;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.PatientRepository;
 import org.mansumugang.mansumugang_service.repository.ProtectorRepository;
-import org.mansumugang.mansumugang_service.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
 
 
 @Slf4j
@@ -23,7 +25,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
     private final PatientRepository patientRepository;
     private final ProtectorRepository protectorRepository;
 
@@ -57,6 +58,24 @@ public class UserService {
 
     }
 
+    public FamilyMemberInquiry.Dto getFamilyMember(User user){
+
+        // 1. AuthenticationPrincipal 로 넘격받은 user 가 환자 객체인지 검증
+        Patient validPatient = validatePatient(user);
+
+        Protector foundProtector = protectorRepository.findById(validPatient.getProtector().getId())
+                .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
+
+        List<Patient> foundPatients = patientRepository.findByProtector_id(foundProtector.getId())
+                .stream()
+                .filter(patient -> !patient.getId().equals(validPatient.getId()))
+                .collect(toList());
+
+        return FamilyMemberInquiry.Dto.of(validPatient, foundProtector, foundPatients);
+
+    }
+
+
     @Transactional
     public ProtectorInfoUpdate.Dto updateProtectorInfo(User user, Long protectorId ,ProtectorInfoUpdate.Request request){
 
@@ -72,9 +91,6 @@ public class UserService {
         }
 
         // 3. 변경하려는 닉네임이 기존 본인의 닉네임과 동일하지 않거나 다른 닉네임이 존재한다면 => 예외 처리.
-
-        // 닉네임 변경 안함, 닉네임 변경함.
-        // 변경 안함 ->
         String newNickname = request.getNickname();
 
         if (!validProtector.getNickname().equals(newNickname)){
