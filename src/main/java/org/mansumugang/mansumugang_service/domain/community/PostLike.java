@@ -20,15 +20,17 @@ public class PostLike {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private boolean status;
+
     // 다른 테이블과의 관계
 
     // 1. 게시물
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Post post;
 
     // 2. 유저
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Protector protector;
 
     public static PostLike of(Post post, Protector protector){
@@ -36,6 +38,7 @@ public class PostLike {
         return PostLike.builder()
                 .post(post)
                 .protector(protector)
+                .status(true)
                 .build();
     }
 }

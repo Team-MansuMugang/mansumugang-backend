@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import org.mansumugang.mansumugang_service.domain.community.Post;
 import org.mansumugang.mansumugang_service.domain.community.PostImage;
+import org.mansumugang.mansumugang_service.domain.community.PostLike;
 import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
@@ -43,11 +44,12 @@ public class PostInquiry {
         private LocalDateTime createdAt; // 게시물 작성 시간
         private LocalDateTime updatedAt; // 게시물 업데이트 시간
         private List<PostUtil.PostImagesSummaryData> image; // 게시물 이미지들
+        private boolean isLiked;
         private Long likeCount; // 게시물 좋아요 수
         private Long bookmarkCount; // 게시물 스크랩 수
         private Long commentCount; // 게시물 댓글 수
 
-        public static PostDetailResponse fromEntity(Post foundPost, List<PostImage> foundImages, String postImageApiUrlPrefix  , Long likeCount, Long bookmarkCount, Long commentCount){
+        public static PostDetailResponse fromEntity(Post foundPost, List<PostImage> foundImages, String postImageApiUrlPrefix, boolean isLiked ,Long likeCount, Long bookmarkCount, Long commentCount){
             return PostDetailResponse.builder()
                     .id(foundPost.getId())
                     .title(foundPost.getTitle())
@@ -57,6 +59,7 @@ public class PostInquiry {
                     .createdAt(foundPost.getCreatedAt())
                     .updatedAt(foundPost.getUpdatedAt())
                     .image(List.of(PostUtil.PostImagesSummaryData.fromEntity(foundImages, postImageApiUrlPrefix)))
+                    .isLiked(isLiked)
                     .likeCount(likeCount)
                     .bookmarkCount(bookmarkCount)
                     .commentCount(commentCount)

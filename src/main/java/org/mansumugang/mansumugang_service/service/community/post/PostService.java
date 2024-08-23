@@ -9,6 +9,7 @@ import org.mansumugang.mansumugang_service.constant.FileType;
 import org.mansumugang.mansumugang_service.domain.community.Post;
 import org.mansumugang.mansumugang_service.domain.community.PostCategory;
 import org.mansumugang.mansumugang_service.domain.community.PostImage;
+import org.mansumugang.mansumugang_service.domain.community.PostLike;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.community.post.PostDelete;
@@ -107,7 +108,7 @@ public class PostService {
 
     public PostInquiry.PostDetailResponse getPostDetail(User user, Long id){
 
-        validateProtector(user);
+        Protector validProtector = validateProtector(user);
 
         // 1. 경로변수로 받은 id로 게시물 조회 -> 없으면 예외 처리
         Post foundPost = postRepository.findById(id).orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchPostError));
@@ -124,10 +125,15 @@ public class PostService {
         // 5. 찾아진 게시물로 댓글 수 카운트 -> 최솟값 : 0
         Long commentCount = commentRepository.countByPostId(foundPost.getId());
 
-        // 6. 찾아진 게시물에서 나온 모든 댓글들
-//        commentRepository.findByPostId
+        // 6. 현재 게시물 상세정보에 접근한 유저가 좋아요를 누른지 판단
+        boolean isLiked;
 
-        return PostInquiry.PostDetailResponse.fromEntity(foundPost, foundPostImages, postImageApiUrlPrefix ,likeCount, bookmarkCount, commentCount);
+        PostLike foundPostLike = postLikeRepository.findByProtectorIdAndPostId(validProtector.getId(), foundPost.getId());
+
+        isLiked = foundPostLike != null;
+
+
+        return PostInquiry.PostDetailResponse.fromEntity(foundPost, foundPostImages, postImageApiUrlPrefix, isLiked, likeCount, bookmarkCount, commentCount);
     }
 
     @Transactional
