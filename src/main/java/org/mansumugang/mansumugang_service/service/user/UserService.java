@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
 import org.mansumugang.mansumugang_service.constant.FileType;
+import org.mansumugang.mansumugang_service.domain.community.Post;
+import org.mansumugang.mansumugang_service.domain.community.PostImage;
 import org.mansumugang.mansumugang_service.domain.medicine.Medicine;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicinePrescription;
 import org.mansumugang.mansumugang_service.domain.record.Record;
@@ -14,6 +16,7 @@ import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.user.familyMember.FamilyMemberInquiry;
 import org.mansumugang.mansumugang_service.dto.user.infoDelete.PatientInfoDelete;
+import org.mansumugang.mansumugang_service.dto.user.infoDelete.ProtectorInfoDelete;
 import org.mansumugang.mansumugang_service.dto.user.infoUpdate.PatientInfoUpdate;
 import org.mansumugang.mansumugang_service.dto.user.infoUpdate.ProtectorInfoUpdate;
 import org.mansumugang.mansumugang_service.dto.user.inquiry.PatientInfoInquiry;
@@ -42,6 +45,9 @@ public class UserService {
     private final MedicineRepository medicineRepository;
     private final MedicinePrescriptionRepository medicinePrescriptionRepository;
     private final RecordRepository recordRepository;
+
+    private final PostRepository postRepository;
+    private final PostImageRepository postImageRepository;
 
     private final S3FileService s3FileService;
     private final ProfileChecker profileChecker;
@@ -224,6 +230,60 @@ public class UserService {
 
         return PatientInfoDelete.Dto.fromEntity(username, name, usertype);
 
+    }
+
+    @Transactional
+    public ProtectorInfoDelete.Dto deleteProtectorInfo(User user, Long protectorId){
+
+        // 1. user가 보호자 객체인지 검증
+        Protector validProtector = validateProtector(user);
+
+        // 2. 경로변수로 찾은 보호자 정보와 user의 보호자 정보가 일치하는지 검증
+        Protector foundProtector = protectorRepository.findById(protectorId)
+                .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
+
+        String username = validProtector.getUsername();
+        String name = validProtector.getName();
+        String usertype = validProtector.getUsertype();
+
+        if (!validProtector.getId().equals(foundProtector.getId())){
+            throw new CustomErrorException(ErrorType.AccessDeniedError);
+        }
+
+        // 3. 보호자의 환자가 전부 탈퇴가 진행되지 않았다면 보호자는 탈퇴 불가.
+        List<Patient> foundPatients = patientRepository.findByProtector_id(protectorId);
+        if (!foundPatients.isEmpty()){
+            throw new CustomErrorException(ErrorType.ProtectorHasActivePatientsError);
+        }
+
+        // 4. 전부 탈퇴 되었다면 삭제 진행. => 보호자는 게시물, 게시물 이미지, 댓글, 대댓글 등등 삭제
+        List<Post> foundPosts = postRepository.findAllByProtectorId(validProtector.getId());
+        for (Post foundPost : foundPosts) {
+
+            List<PostImage> foundPostImages = postImageRepository.findPostImageByPostId(foundPost.getId());
+            for (PostImage foundPostImage : foundPostImages) {
+
+                String postImageName = foundPostImage.getImageName();
+                if (postImageName!=null){
+                    try {
+                        if (profileChecker.checkActiveProfile("prod")){
+                            s3FileService.deleteFileFromS3(postImageName, FileType.IMAGE);
+                        }else {
+                            fileService.deletePostImageFile(postImageName);
+                        }
+
+                    }catch (Exception e){
+                        throw new CustomErrorException(ErrorType.InternalServerError);
+                    }
+                }
+
+            }
+        }
+
+        // 5. 보호자 정보 및 관련 정보들 DB에서 삭제
+        protectorRepository.delete(foundProtector);
+
+        return ProtectorInfoDelete.Dto.fromEntity(username, name, usertype);
     }
 
     private Protector validateProtector(User user) {

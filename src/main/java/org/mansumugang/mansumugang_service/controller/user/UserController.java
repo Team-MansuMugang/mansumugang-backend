@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.user.familyMember.FamilyMemberInquiry;
 import org.mansumugang.mansumugang_service.dto.user.infoDelete.PatientInfoDelete;
+import org.mansumugang.mansumugang_service.dto.user.infoDelete.ProtectorInfoDelete;
 import org.mansumugang.mansumugang_service.dto.user.infoUpdate.PatientInfoUpdate;
 import org.mansumugang.mansumugang_service.dto.user.infoUpdate.ProtectorInfoUpdate;
 import org.mansumugang.mansumugang_service.dto.user.inquiry.PatientInfoInquiry;
@@ -92,6 +93,15 @@ public class UserController {
         PatientInfoDelete.Dto dto = userService.deletePatientInfo(user, patientId);
 
         return new ResponseEntity<>(PatientInfoDelete.Response.createNewResponse(dto), HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/protector/{id}")
+    public ResponseEntity<ProtectorInfoDelete.Response> deleteProtectorInfo(@AuthenticationPrincipal User user,
+                                                                            @PathVariable(name = "id") Long protectorId
+    ){
+        ProtectorInfoDelete.Dto dto = userService.deleteProtectorInfo(user, protectorId);
+
+        return new ResponseEntity<>(ProtectorInfoDelete.Response.createNewResponse(dto), HttpStatus.CREATED);
     }
 
 

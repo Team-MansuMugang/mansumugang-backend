@@ -2,6 +2,8 @@ package org.mansumugang.mansumugang_service.domain.community;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.dto.community.post.PostSave;
 import org.mansumugang.mansumugang_service.dto.community.post.PostUpdate;
@@ -41,6 +43,7 @@ public class Post {
 
     // 0. 유저
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Protector protector;
 
     // 1. 카테고리

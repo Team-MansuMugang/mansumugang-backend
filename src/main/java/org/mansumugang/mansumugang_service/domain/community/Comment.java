@@ -45,6 +45,7 @@ public class Comment {
     Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     Protector protector;
 
 
