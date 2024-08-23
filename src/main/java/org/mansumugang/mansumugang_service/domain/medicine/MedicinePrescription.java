@@ -2,6 +2,8 @@ package org.mansumugang.mansumugang_service.domain.medicine;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicinePrescriptionSave;
 import org.springframework.data.annotation.CreatedDate;
@@ -22,6 +24,7 @@ public class MedicinePrescription {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Patient patient;
 
     private String medicinePrescriptionImageName;

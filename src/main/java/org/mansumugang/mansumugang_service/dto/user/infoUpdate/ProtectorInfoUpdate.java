@@ -1,4 +1,4 @@
-package org.mansumugang.mansumugang_service.dto.user;
+package org.mansumugang.mansumugang_service.dto.user.infoUpdate;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

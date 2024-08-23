@@ -2,6 +2,8 @@ package org.mansumugang.mansumugang_service.domain.location;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.dto.location.PatientLocationRequestDto;
 import org.springframework.data.annotation.CreatedDate;
@@ -35,6 +37,7 @@ public class Location {
 
     // Patient 와의 관계 정의
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 

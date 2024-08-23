@@ -5,7 +5,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.domain.user.User;
-import org.mansumugang.mansumugang_service.dto.user.*;
+import org.mansumugang.mansumugang_service.dto.user.familyMember.FamilyMemberInquiry;
+import org.mansumugang.mansumugang_service.dto.user.infoDelete.PatientInfoDelete;
+import org.mansumugang.mansumugang_service.dto.user.infoUpdate.PatientInfoUpdate;
+import org.mansumugang.mansumugang_service.dto.user.infoUpdate.ProtectorInfoUpdate;
+import org.mansumugang.mansumugang_service.dto.user.inquiry.PatientInfoInquiry;
+import org.mansumugang.mansumugang_service.dto.user.inquiry.PatientInquiry;
+import org.mansumugang.mansumugang_service.dto.user.inquiry.ProtectorInfoInquiry;
 import org.mansumugang.mansumugang_service.service.user.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -77,6 +83,15 @@ public class UserController {
 
         return new ResponseEntity<>(PatientInfoUpdate.Response.createNewResponse(dto), HttpStatus.CREATED);
 
+    }
+
+    @DeleteMapping("/patient/{id}")
+    public ResponseEntity<PatientInfoDelete.Response> deletePatientInfo(@AuthenticationPrincipal User user,
+                                                                        @PathVariable(name = "id") Long patientId){
+
+        PatientInfoDelete.Dto dto = userService.deletePatientInfo(user, patientId);
+
+        return new ResponseEntity<>(PatientInfoDelete.Response.createNewResponse(dto), HttpStatus.CREATED);
     }
 
 

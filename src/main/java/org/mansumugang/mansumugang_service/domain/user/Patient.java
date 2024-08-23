@@ -3,9 +3,11 @@ package org.mansumugang.mansumugang_service.domain.user;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.mansumugang.mansumugang_service.domain.location.Location;
 import org.mansumugang.mansumugang_service.dto.auth.signup.PatientSignupRequestDto;
-import org.mansumugang.mansumugang_service.dto.user.PatientInfoUpdate;
+import org.mansumugang.mansumugang_service.dto.user.infoUpdate.PatientInfoUpdate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
@@ -19,6 +21,7 @@ public class Patient extends User {
 
     // Protector 와의 관계 정의
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "protector_id", nullable = false)
     private Protector protector;
 
