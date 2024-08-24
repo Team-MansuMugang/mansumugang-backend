@@ -18,12 +18,14 @@ public class PatientInquiry {
         private Long patientId;
         private String patientUsername;
         private String patientName;
+        private String patientProfileImageName;
 
         public static PatientElement fromEntity(Patient patient){
             return PatientElement.builder()
                     .patientId(patient.getId())
                     .patientUsername(patient.getUsername())
                     .patientName(patient.getName())
+                    .patientProfileImageName(patient.getProfileImageName())
                     .build();
         }
     }
@@ -33,10 +35,12 @@ public class PatientInquiry {
     @Builder
     public static class Dto{
 
+        private String imageApiUrl;
         private List<PatientElement> patients;
 
-        public static Dto fromEntity(List<Patient> foundPatients){
+        public static Dto fromEntity(List<Patient> foundPatients, String imageApiUrl){
             return Dto.builder()
+                    .imageApiUrl(imageApiUrl)
                     .patients(foundPatients.stream()
                             .map(patient -> PatientElement.fromEntity(patient))
                             .collect(Collectors.toList()))
@@ -49,10 +53,12 @@ public class PatientInquiry {
     @Builder
     public static class Response{
 
+        private String imageApiUrl;
         private List<PatientElement> patients;
 
         public static Response createNewResponse(Dto dto){
             return Response.builder()
+                    .imageApiUrl(dto.getImageApiUrl())
                     .patients(dto.getPatients())
                     .build();
         }
