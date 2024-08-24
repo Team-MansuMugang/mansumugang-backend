@@ -42,6 +42,8 @@ public abstract class User implements UserDetails {
 
     private String usertype; // 환자, 보호자 구분
 
+    private String profileImageName; // 사용자 프로필 이미지
+
     private String authority; // 사용자 권한 : User / Admin
 
     @CreatedDate

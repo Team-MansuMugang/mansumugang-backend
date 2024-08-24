@@ -17,12 +17,14 @@ public class FamilyMember {
         private String name;
         private String telephone;
         private String usertype;
+        private String profileImageName;
 
         public static Self fromEntity(Patient validPatient){
             return Self.builder()
                     .name(validPatient.getName())
                     .telephone(validPatient.getTelephone())
                     .usertype(validPatient.getUsertype())
+                    .profileImageName(validPatient.getProfileImageName())
                     .build();
         }
     }
@@ -36,12 +38,14 @@ public class FamilyMember {
         private String name;
         private String telephone;
         private String usertype;
+        private String profileImageName;
 
         public static Nok fromEntity(Protector foundProtector){
             return Nok.builder()
                     .name(foundProtector.getName())
                     .telephone(foundProtector.getTelephone())
                     .usertype(foundProtector.getUsertype())
+                    .profileImageName(foundProtector.getProfileImageName())
                     .build();
         }
     }
@@ -54,12 +58,14 @@ public class FamilyMember {
         private String name;
         private String telephone;
         private String usertype;
+        private String profileImageName;
 
         public static OtherPatient fromEntity(Patient otherPatient){
             return OtherPatient.builder()
                     .name(otherPatient.getName())
                     .telephone(otherPatient.getTelephone())
                     .usertype(otherPatient.getUsertype())
+                    .profileImageName(otherPatient.getProfileImageName())
                     .build();
         }
     }

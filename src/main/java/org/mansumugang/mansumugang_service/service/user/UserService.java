@@ -23,12 +23,16 @@ import org.mansumugang.mansumugang_service.dto.user.inquiry.PatientInfoInquiry;
 import org.mansumugang.mansumugang_service.dto.user.inquiry.PatientInquiry;
 import org.mansumugang.mansumugang_service.dto.user.inquiry.ProtectorInfoInquiry;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
+import org.mansumugang.mansumugang_service.exception.InternalErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
 import org.mansumugang.mansumugang_service.service.fileService.FileService;
 import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
 import org.mansumugang.mansumugang_service.utils.ProfileChecker;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 import static java.util.stream.Collectors.*;
@@ -38,6 +42,8 @@ import static java.util.stream.Collectors.*;
 @Service
 @RequiredArgsConstructor
 public class UserService {
+    @Value("${file.upload.image.api}")
+    private String imageApiUrl;
 
     private final PatientRepository patientRepository;
     private final ProtectorRepository protectorRepository;
@@ -53,7 +59,7 @@ public class UserService {
     private final ProfileChecker profileChecker;
     private final FileService fileService;
 
-    public PatientInquiry.Dto getPatientsByProtector(User user){
+    public PatientInquiry.Dto getPatientsByProtector(User user) {
 
         // 1. AuthenticationPrincipal 로 넘겨받은 user 가 보호자 객체인지 검증
         Protector validProtector = validateProtector(user);
@@ -61,29 +67,29 @@ public class UserService {
         // 2. 검증된 보호자 객체로 보호자의 환자 찾기.
         List<Patient> foundPatients = getAllPatientsByProtectorId(validProtector);
 
-        return PatientInquiry.Dto.fromEntity(foundPatients);
+        return PatientInquiry.Dto.fromEntity(foundPatients, imageApiUrl);
 
     }
 
-    public ProtectorInfoInquiry.Dto getProtectorOwnInfo(User user){
+    public ProtectorInfoInquiry.Dto getProtectorOwnInfo(User user) {
 
         // 1. AuthenticationPrincipal 로 넘겨받은 user 가 보호자 객체인지 검증
         Protector validProtector = validateProtector(user);
 
-        return ProtectorInfoInquiry.Dto.fromEntity(validProtector);
+        return ProtectorInfoInquiry.Dto.fromEntity(validProtector, imageApiUrl);
 
     }
 
-    public PatientInfoInquiry.Dto getPatientOwnInfo(User user){
+    public PatientInfoInquiry.Dto getPatientOwnInfo(User user) {
 
         // 1. AuthenticationPrincipal 로 넘겨받은 user 가 보호자 객체인지 검증
         Patient validPatient = validatePatient(user);
 
-        return PatientInfoInquiry.Dto.fromEntity(validPatient);
+        return PatientInfoInquiry.Dto.fromEntity(validPatient, imageApiUrl);
 
     }
 
-    public FamilyMemberInquiry.Dto getFamilyMember(User user){
+    public FamilyMemberInquiry.Dto getFamilyMember(User user) {
 
         // 1. AuthenticationPrincipal 로 넘격받은 user 가 환자 객체인지 검증
         Patient validPatient = validatePatient(user);
@@ -96,13 +102,13 @@ public class UserService {
                 .filter(patient -> !patient.getId().equals(validPatient.getId()))
                 .collect(toList());
 
-        return FamilyMemberInquiry.Dto.of(validPatient, foundProtector, foundPatients);
+        return FamilyMemberInquiry.Dto.of(validPatient, foundProtector, foundPatients, imageApiUrl);
 
     }
 
 
     @Transactional
-    public ProtectorInfoUpdate.Dto updateProtectorInfo(User user, Long protectorId , ProtectorInfoUpdate.Request request){
+    public ProtectorInfoUpdate.Dto updateProtectorInfo(User user, Long protectorId, ProtectorInfoUpdate.Request request) {
 
         // 1.User 가 보호자 객체인지 검증
         Protector validProtector = validateProtector(user);
@@ -111,15 +117,15 @@ public class UserService {
                 .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
 
         // 2. 검증된 보호자 객체의 id와 경로변수의 protectorId가 동일한지 검증. => 아니면 예외 처리
-        if (!validProtector.getId().equals(foundProtector.getId())){
+        if (!validProtector.getId().equals(foundProtector.getId())) {
             throw new CustomErrorException(ErrorType.AccessDeniedError);
         }
 
         // 3. 변경하려는 닉네임이 기존 본인의 닉네임과 동일하지 않거나 다른 닉네임이 존재한다면 => 예외 처리.
         String newNickname = request.getNickname();
 
-        if (!validProtector.getNickname().equals(newNickname)){
-            if(protectorRepository.findByNickname(newNickname).isPresent()){
+        if (!validProtector.getNickname().equals(newNickname)) {
+            if (protectorRepository.findByNickname(newNickname).isPresent()) {
                 throw new CustomErrorException(ErrorType.DuplicatedNicknameError);
             }
         }
@@ -132,7 +138,7 @@ public class UserService {
     }
 
     @Transactional
-    public PatientInfoUpdate.Dto updatePatientInfo(User user, Long patientId , PatientInfoUpdate.Request request){
+    public PatientInfoUpdate.Dto updatePatientInfo(User user, Long patientId, PatientInfoUpdate.Request request) {
 
         // 1. User 가 환자 객체인지 검증
         Patient validPatient = validatePatient(user);
@@ -142,7 +148,7 @@ public class UserService {
                 .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
 
         // 3. validPatent와 foundPatent가 동일한 환자이어야함.
-        if (!validPatient.getId().equals(foundPatient.getId())){
+        if (!validPatient.getId().equals(foundPatient.getId())) {
             throw new CustomErrorException(ErrorType.AccessDeniedError);
         }
 
@@ -154,7 +160,7 @@ public class UserService {
     }
 
     @Transactional
-    public PatientInfoDelete.Dto deletePatientInfo(User user, Long patientId){
+    public PatientInfoDelete.Dto deletePatientInfo(User user, Long patientId) {
 
         // 1. 환자 객체 검증
         Patient validPatient = validatePatient(user);
@@ -167,7 +173,7 @@ public class UserService {
         String name = foundPatient.getName();
         String usertype = foundPatient.getUsertype();
 
-        if (!validPatient.getId().equals(foundPatient.getId())){
+        if (!validPatient.getId().equals(foundPatient.getId())) {
             throw new CustomErrorException(ErrorType.AccessDeniedError);
         }
 
@@ -177,14 +183,14 @@ public class UserService {
         for (Medicine foundMedicine : foundMedicines) {
 
             String medicineImageName = foundMedicine.getMedicineImageName();
-            if (medicineImageName != null){
-                try{
-                    if (profileChecker.checkActiveProfile("prod")){
+            if (medicineImageName != null) {
+                try {
+                    if (profileChecker.checkActiveProfile("prod")) {
                         s3FileService.deleteFileFromS3(medicineImageName, FileType.IMAGE);
                     } else {
                         fileService.deleteImageFile(medicineImageName);
                     }
-                }catch (Exception e){
+                } catch (Exception e) {
                     throw new CustomErrorException(ErrorType.InternalServerError);
                 }
             }
@@ -195,14 +201,14 @@ public class UserService {
         for (MedicinePrescription foundPrescription : foundPrescriptions) {
 
             String prescriptionImageName = foundPrescription.getMedicinePrescriptionImageName();
-            if(prescriptionImageName != null){
+            if (prescriptionImageName != null) {
                 try {
-                    if (profileChecker.checkActiveProfile("prod")){
+                    if (profileChecker.checkActiveProfile("prod")) {
                         s3FileService.deleteFileFromS3(prescriptionImageName, FileType.IMAGE);
-                    }else{
+                    } else {
                         fileService.deleteImageFile(prescriptionImageName);
                     }
-                }catch (Exception e){
+                } catch (Exception e) {
                     throw new CustomErrorException(ErrorType.InternalServerError);
                 }
             }
@@ -214,12 +220,12 @@ public class UserService {
 
             String recordFileName = foundRecord.getFilename();
             try {
-                if (profileChecker.checkActiveProfile("prod")){
+                if (profileChecker.checkActiveProfile("prod")) {
                     s3FileService.deleteFileFromS3(recordFileName, FileType.AUDIO);
-                }else {
+                } else {
                     fileService.deleteRecordFile(recordFileName);
                 }
-            }catch (Exception e){
+            } catch (Exception e) {
                 throw new CustomErrorException(ErrorType.InternalServerError);
             }
 
@@ -233,7 +239,7 @@ public class UserService {
     }
 
     @Transactional
-    public ProtectorInfoDelete.Dto deleteProtectorInfo(User user, Long protectorId){
+    public ProtectorInfoDelete.Dto deleteProtectorInfo(User user, Long protectorId) {
 
         // 1. user가 보호자 객체인지 검증
         Protector validProtector = validateProtector(user);
@@ -246,13 +252,13 @@ public class UserService {
         String name = validProtector.getName();
         String usertype = validProtector.getUsertype();
 
-        if (!validProtector.getId().equals(foundProtector.getId())){
+        if (!validProtector.getId().equals(foundProtector.getId())) {
             throw new CustomErrorException(ErrorType.AccessDeniedError);
         }
 
         // 3. 보호자의 환자가 전부 탈퇴가 진행되지 않았다면 보호자는 탈퇴 불가.
         List<Patient> foundPatients = patientRepository.findByProtector_id(protectorId);
-        if (!foundPatients.isEmpty()){
+        if (!foundPatients.isEmpty()) {
             throw new CustomErrorException(ErrorType.ProtectorHasActivePatientsError);
         }
 
@@ -264,15 +270,15 @@ public class UserService {
             for (PostImage foundPostImage : foundPostImages) {
 
                 String postImageName = foundPostImage.getImageName();
-                if (postImageName!=null){
+                if (postImageName != null) {
                     try {
-                        if (profileChecker.checkActiveProfile("prod")){
+                        if (profileChecker.checkActiveProfile("prod")) {
                             s3FileService.deleteFileFromS3(postImageName, FileType.IMAGE);
-                        }else {
+                        } else {
                             fileService.deletePostImageFile(postImageName);
                         }
 
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         throw new CustomErrorException(ErrorType.InternalServerError);
                     }
                 }
@@ -286,25 +292,124 @@ public class UserService {
         return ProtectorInfoDelete.Dto.fromEntity(username, name, usertype);
     }
 
+    @Transactional
+    public void updatePatientProfileImage(User user, MultipartFile userProfileImage) {
+        Patient validatedPatient = validatePatient(user);
+
+        Patient foundPatient = patientRepository.findById(validatedPatient.getId())
+                .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
+
+        // 새 프로필 이미지 저장
+        String newUserProfileImageName = saveProfileImage(userProfileImage);
+
+        // 프로필 이미지가 존재할 경우 삭제
+        if (foundPatient.getProfileImageName() != null) {
+            deleteProfileImage(foundPatient.getProfileImageName());
+        }
+
+        // 데이터베이스 내 프로필 이미지 이름 변경
+        foundPatient.setProfileImageName(newUserProfileImageName);
+    }
+
+    @Transactional
+    public void updateProtectorProfileImage(User user, MultipartFile userProfileImage) {
+        Protector validatedProtector = validateProtector(user);
+
+        Protector foundProtector = protectorRepository.findById(validatedProtector.getId())
+                .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
+
+        // 새 프로필 이미지 저장
+        String newUserProfileImageName = saveProfileImage(userProfileImage);
+
+        // 프로필 이미지가 존재할 경우 삭제
+        if (foundProtector.getProfileImageName() != null) {
+            deleteProfileImage(foundProtector.getProfileImageName());
+        }
+
+        // 데이터베이스 내 프로필 이미지 이름 변경
+        foundProtector.setProfileImageName(newUserProfileImageName);
+    }
+
+    @Transactional
+    public void deleteProtectorProfileImage(User user) {
+        Protector validatedProtector = validateProtector(user);
+
+        Protector foundProtector = protectorRepository.findById(validatedProtector.getId())
+                .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
+
+        // 프로필 이미지가 존재할 경우 삭제
+        if (foundProtector.getProfileImageName() != null) {
+            deleteProfileImage(foundProtector.getProfileImageName());
+            foundProtector.setProfileImageName(null);
+        } else {
+            throw new CustomErrorException(ErrorType.NoUserProfileImageError);
+        }
+
+    }
+
+    @Transactional
+    public void deletePatientProfileImage(User user) {
+        Patient validatedPatient = validatePatient(user);
+
+        Patient foundPatient = patientRepository.findById(validatedPatient.getId())
+                .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
+
+        // 프로필 이미지가 존재할 경우 삭제
+        if (foundPatient.getProfileImageName() != null) {
+            deleteProfileImage(foundPatient.getProfileImageName());
+            foundPatient.setProfileImageName(null);
+        } else {
+            throw new CustomErrorException(ErrorType.NoUserProfileImageError);
+        }
+    }
+
+    private String saveProfileImage(MultipartFile profileImage) {
+        if (profileChecker.checkActiveProfile("prod")) {
+            try {
+                return s3FileService.saveImageFile(profileImage);
+            } catch (IOException e) {
+                throw new CustomErrorException(ErrorType.InternalServerError);
+            }
+        } else {
+            try {
+                return fileService.saveImageFiles(profileImage);
+            } catch (Exception e) {
+                throw new CustomErrorException(ErrorType.InternalServerError);
+            }
+        }
+    }
+
+    private void deleteProfileImage(String imageName) {
+        try {
+            if (profileChecker.checkActiveProfile("prod")) {
+                s3FileService.deleteFileFromS3(imageName, FileType.IMAGE);
+            } else {
+                fileService.deleteImageFile(imageName);
+            }
+        } catch (Exception e) {
+            throw new CustomErrorException(ErrorType.InternalServerError);
+        }
+    }
+
     private Protector validateProtector(User user) {
 
-        if (user == null){
+        if (user == null) {
             throw new CustomErrorException(ErrorType.UserNotFoundError);
         }
 
-        if(user instanceof Protector){
+        if (user instanceof Protector) {
             return (Protector) user;
         }
 
         throw new CustomErrorException(ErrorType.AccessDeniedError);
     }
 
-    private Patient validatePatient(User user){
-        if (user == null){
+    private Patient validatePatient(User user) {
+        if (user == null) {
             throw new CustomErrorException(ErrorType.UserNotFoundError);
         }
 
-        if(user instanceof Patient){
+        if (user instanceof Patient) {
             return (Patient) user;
         }
 
@@ -315,10 +420,12 @@ public class UserService {
     private List<Patient> getAllPatientsByProtectorId(Protector validProtector) {
         List<Patient> foundPatients = patientRepository.findByProtector_id(validProtector.getId());
 
-        if (foundPatients.isEmpty()){
+        if (foundPatients.isEmpty()) {
             throw new CustomErrorException(ErrorType.UserNotFoundError);
         }
 
         return foundPatients;
     }
+
+
 }

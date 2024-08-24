@@ -45,6 +45,9 @@ public enum ErrorType {
     ProtectorHasActivePatientsError(
             HttpStatus.CONFLICT, "모든 환자가 탈퇴 되지 않았습니다."
     ),
+    NoUserProfileImageError(
+            HttpStatus.NOT_FOUND, "유저의 프로필 이미지가 존재하지 않습니다."
+    ),
 
 
     // ----- Location ------
@@ -190,7 +193,8 @@ public enum ErrorType {
     ),
     NoSuchMedicinePrescriptionError(
             HttpStatus.NOT_FOUND, "존재하지 않는 처방전 정보 입니다."
-    );
+    )
+    ;
 
     private final HttpStatus httpStatus;
     private final String message;
