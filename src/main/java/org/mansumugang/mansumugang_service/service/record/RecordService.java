@@ -21,6 +21,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -45,10 +48,13 @@ public class RecordService {
     @Transactional
     public RecordSave.Dto saveRecord(User user, Transcription.Request request){
 
-        log.info("RecordService -> saveRecord 메서드 호출");
-
         // 1. 음성녹음을 저장하려는 유저가 환자인지 검증
         Patient validPatient = validatePatient(user);
+
+        // 음성 파일 저장 기능을 하루 10회로 제한. -> 초과면 예외 처리.
+        checkRecordSaveLimit(validPatient);
+
+        log.info("RecordService -> saveRecord 메서드 호출");
 
         MultipartFile recordFile = request.getFile();
 
@@ -229,6 +235,20 @@ public class RecordService {
         }
 
         return  foundAllRecords;
+    }
+
+    private void checkRecordSaveLimit(Patient validPatient) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay(); // 자정 (00:00)
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX); // 23:59:59
+
+        int todayRecordCount = recordRepository.countByPatientIdAndCreatedAtBetween(validPatient.getId(), startOfDay, endOfDay);
+
+        log.info("횟수 : {} ", todayRecordCount);
+
+        if (todayRecordCount > 9){
+            throw new CustomErrorException(ErrorType.RecordLimitExceeded);
+        }
     }
 
 }

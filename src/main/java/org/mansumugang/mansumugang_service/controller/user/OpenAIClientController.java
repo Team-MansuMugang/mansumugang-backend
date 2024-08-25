@@ -3,7 +3,7 @@ package org.mansumugang.mansumugang_service.controller.user;
 import lombok.RequiredArgsConstructor;
 import org.mansumugang.mansumugang_service.dto.record.Transcription;
 import org.mansumugang.mansumugang_service.dto.record.WhisperTranscription;
-import org.mansumugang.mansumugang_service.service.user.OpenAIClientService;
+import org.mansumugang.mansumugang_service.service.record.OpenAIClientService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 

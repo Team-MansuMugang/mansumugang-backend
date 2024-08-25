@@ -32,8 +32,7 @@ public class Record {
     @Column(nullable = false)
     private Long duration;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content; // 녹음파일을 텍스트로 변환한 내용.
 
     @CreatedDate
