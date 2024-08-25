@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,7 +12,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Objects;
 
 
 @Entity
@@ -38,12 +38,19 @@ public abstract class User implements UserDetails {
 
     private String birthdate; // 사용자 생년월일
 
+    private String telephone; // 사용자 전화번호
+
     private String usertype; // 환자, 보호자 구분
+
+    private String profileImageName; // 사용자 프로필 이미지
 
     private String authority; // 사용자 권한 : User / Admin
 
     @CreatedDate
     private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt; // 유저 정보 업데이트 시간
 
 
     public User(
@@ -51,6 +58,7 @@ public abstract class User implements UserDetails {
             String password,
             String name,
             String birthdate,
+            String telephone,
             String usertype,
             String authority
     ) {
@@ -58,6 +66,7 @@ public abstract class User implements UserDetails {
         this.password = password;
         this.name = name;
         this.birthdate = birthdate;
+        this.telephone = telephone;
         this.authority = authority;
         this.usertype = usertype;
     }

@@ -42,6 +42,13 @@ public enum ErrorType {
     UserTypeDismatchError(
             HttpStatus.NOT_FOUND, "해당 유저는 보호자가 아닌 환자입니다."
     ),
+    ProtectorHasActivePatientsError(
+            HttpStatus.CONFLICT, "모든 환자가 탈퇴 되지 않았습니다."
+    ),
+    NoUserProfileImageError(
+            HttpStatus.NOT_FOUND, "유저의 프로필 이미지가 존재하지 않습니다."
+    ),
+
 
     // ----- Location ------
     OutOfBoundaryError(
@@ -72,9 +79,54 @@ public enum ErrorType {
             HttpStatus.NOT_FOUND, "유저는 존재하지만, 유저의 음성녹음 정보가 존재하지 않습니다."
     ),
 
+    // ----- Post -----
+    NoSuchPostError(
+            HttpStatus.NOT_FOUND, "존재하지 않은 게시물입니다."
+    ),
+    NotTheAuthorOfThePost(
+            HttpStatus.UNAUTHORIZED, "게시물의 작성자가 아닙니다."
+    ),
+
+    NoRequestBodyError(
+            HttpStatus.BAD_REQUEST, "request body가 전달되지 않았습니다."
+    ),
+
+    // ----- Search ------
+    InvalidQueryError(
+            HttpStatus.BAD_REQUEST, "두 글자 이상(공백 포함 X)으로 검색해주세요!"
+    ),
+
+
+    // ----- Category ------
+    NoSuchCategoryError(
+            HttpStatus.BAD_REQUEST, "존재하지 않은 카테고리입니다."
+    ),
+
     // ----- Image ------
     NoImageFileError(
             HttpStatus.BAD_REQUEST, "유효하지 않은 이미지 파일입니다."
+    ),
+
+    // ---- Comment ----
+    NoSuchCommentError(
+            HttpStatus.NOT_FOUND, "존재하지 않는 댓글입니다."
+    ),
+    NotTheAuthorOfTheComment(
+            HttpStatus.UNAUTHORIZED, "댓글의 작성자가 아닙니다."
+    ),
+    DeletedCommentError(
+            HttpStatus.NOT_FOUND, "삭제된 댓글입니다"
+    ),
+
+    // ---- Reply ----
+    NoSuchReplyError(
+            HttpStatus.NOT_FOUND, "존재하지 않는 답글입니다."
+    ),
+    NotTheAuthorOfTheReply(
+            HttpStatus.UNAUTHORIZED, "답글의 작성자가 아닙니다."
+    ),
+    DeletedReplyError(
+            HttpStatus.NOT_FOUND, "삭제된 답글입니다"
     ),
 
     // ----- Token ------
@@ -138,6 +190,9 @@ public enum ErrorType {
     ),
     DuplicatedHospitalVisitingTimeError(
             HttpStatus.CONFLICT, "병원 방문 시간은 중복될 수 없습니다."
+    ),
+    NoSuchMedicinePrescriptionError(
+            HttpStatus.NOT_FOUND, "존재하지 않는 처방전 정보 입니다."
     )
     ;
 

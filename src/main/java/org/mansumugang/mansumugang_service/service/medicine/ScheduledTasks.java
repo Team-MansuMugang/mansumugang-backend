@@ -43,7 +43,7 @@ public class ScheduledTasks {
     private final FcmTokenRepository fcmTokenRepository;
     private final HospitalRepository hospitalRepository;
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 600000)
     @Transactional
     protected void checkMedicineNoTakenPatient() {
         // 오늘과 어제 각각에 대해 먹어야하는 약의 리스트를 조회
@@ -96,7 +96,7 @@ public class ScheduledTasks {
         }
     }
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 600000)
     @Transactional
     protected void checkHospitalUnvisitedPatient(){
         // 병원 방문시간(HospitalVisitingTime) + 30분 시점부터 병원을 가지 않은 환자를 조회(핵심) status => false true

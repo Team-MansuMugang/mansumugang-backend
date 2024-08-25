@@ -2,6 +2,8 @@ package org.mansumugang.mansumugang_service.domain.medicine;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalTime;
 
@@ -17,6 +19,7 @@ public class MedicineInTakeTime {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Medicine medicine;
 
     @Column(nullable = false)
