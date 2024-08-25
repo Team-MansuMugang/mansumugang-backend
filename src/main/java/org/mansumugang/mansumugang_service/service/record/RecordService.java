@@ -10,9 +10,7 @@ import org.mansumugang.mansumugang_service.domain.record.Record;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
-import org.mansumugang.mansumugang_service.dto.record.RecordDelete;
-import org.mansumugang.mansumugang_service.dto.record.RecordInquiry;
-import org.mansumugang.mansumugang_service.dto.record.RecordSave;
+import org.mansumugang.mansumugang_service.dto.record.*;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.PatientRepository;
 import org.mansumugang.mansumugang_service.repository.RecordRepository;
@@ -39,18 +37,20 @@ public class RecordService {
     private final FileService fileService;
     private final S3FileService s3FileService;
     private final ProfileChecker profileChecker;
+    private final OpenAIClientService openAIClientService;
 
     @Value("${file.upload.audio.api}")
     private String audioApiUrlPrefix;
 
     @Transactional
-    public RecordSave.Dto saveRecord(User user, MultipartFile recordFile){
+    public RecordSave.Dto saveRecord(User user, Transcription.Request request){
 
         log.info("RecordService -> saveRecord 메서드 호출");
 
         // 1. 음성녹음을 저장하려는 유저가 환자인지 검증
         Patient validPatient = validatePatient(user);
 
+        MultipartFile recordFile = request.getFile();
 
         if (recordFile == null){
             throw new CustomErrorException(ErrorType.RecordFileNotFound);
@@ -65,7 +65,11 @@ public class RecordService {
                     recordFileName = s3FileService.saveRecordFile(recordFile);
                 }
 
-                Record newRecord = recordRepository.save(Record.of(validPatient, recordFileName, recordDuration));
+                // 음성파일 내용 텍스트로 변환 -> open AI 의 Whisper 사용.
+                WhisperTranscription.Response transcription = openAIClientService.createTranscription(request);
+                String transcriptionText = transcription.getText();
+
+                Record newRecord = recordRepository.save(Record.of(validPatient, recordFileName,  transcriptionText, recordDuration));
 
                 return RecordSave.Dto.getInfo(newRecord);
 
