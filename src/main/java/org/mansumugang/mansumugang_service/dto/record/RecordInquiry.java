@@ -17,6 +17,7 @@ public class RecordInquiry {
         private Long recordId;
         private String recordFileName;
         private Long recordDuration;
+        private String recordContent;
         private LocalDateTime uploadedTime;
         private String audioApiUrlPrefix;
 
@@ -26,6 +27,7 @@ public class RecordInquiry {
                     .recordId(record.getId())
                     .recordFileName(record.getFilename())
                     .recordDuration(record.getDuration())
+                    .recordContent(record.getContent())
                     .uploadedTime(record.getCreatedAt())
                     .audioApiUrlPrefix(audioApiUrlPrefix)
                     .build();

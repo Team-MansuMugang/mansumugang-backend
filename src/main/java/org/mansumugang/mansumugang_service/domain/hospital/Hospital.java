@@ -41,7 +41,7 @@ public class Hospital {
     @Column(nullable = false)
     private Double longitude;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String hospitalDescription;
 
     @Column(nullable = false)

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface RecordRepository extends JpaRepository<Record, Long> {
@@ -14,4 +15,7 @@ public interface RecordRepository extends JpaRepository<Record, Long> {
     List<Record> findAllByPatientIdsOrderByCreatedAtDesc(@Param("patientIds") List<Long> patientIds);
 
     List<Record> findAllByPatientId(long patient_id);
+
+    int countByPatientIdAndCreatedAtBetween(Long patientId, LocalDateTime start, LocalDateTime end);
+
 }

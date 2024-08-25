@@ -1,4 +1,4 @@
-package org.mansumugang.mansumugang_service.openaiclient;
+package org.mansumugang.mansumugang_service.config;
 
 import feign.Logger;
 import feign.Request;

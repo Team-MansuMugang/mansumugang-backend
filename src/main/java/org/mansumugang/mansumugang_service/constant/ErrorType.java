@@ -76,6 +76,10 @@ public enum ErrorType {
             HttpStatus.NOT_FOUND, "유저는 존재하지만, 유저의 음성녹음 정보가 존재하지 않습니다."
     ),
 
+    RecordLimitExceeded(
+            HttpStatus.TOO_MANY_REQUESTS, "음성녹음은 하루에 최대 10회까지 가능합니다!"
+    ),
+
     // ----- Post -----
     NoSuchPostError(
             HttpStatus.NOT_FOUND, "존재하지 않은 게시물입니다."
