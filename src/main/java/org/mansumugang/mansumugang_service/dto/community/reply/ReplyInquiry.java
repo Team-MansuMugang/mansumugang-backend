@@ -21,6 +21,8 @@ public class ReplyInquiry {
 
         private Long commentId; // 댓글 고유번호
 
+        private String profileImageName; // 대댓글 작성자 프로필 이미지 파일
+
         private String creator; // 대댓글 작성자(닉네임)
 
         private String content; // 대댓글 내용
@@ -35,6 +37,7 @@ public class ReplyInquiry {
             return ReplyElement.builder()
                     .replyId(reply.getId())
                     .commentId(reply.getComment().getId())
+                    .profileImageName(reply.getProtector().getProfileImageName() != null && reply.getDeletedAt() == null ? reply.getProtector().getProfileImageName() : null)
                     .creator(reply.getDeletedAt() == null ? reply.getProtector().getNickname() : "알 수 없음")
                     .content(reply.getContent())
                     .createdAt(reply.getCreatedAt())
@@ -50,10 +53,12 @@ public class ReplyInquiry {
     @Builder
     public static class Response{
 
+        private String imageApiUrl;
         private List<ReplyElement> replies;
 
-        public static Response fromPage(Page<Reply> page){
+        public static Response fromPage(Page<Reply> page, String imageApiUrl){
             return Response.builder()
+                    .imageApiUrl(imageApiUrl)
                     .replies(page.map(ReplyElement::fromEntity).toList())
 
                     .build();

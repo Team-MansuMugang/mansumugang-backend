@@ -43,6 +43,10 @@ public class RecordService {
     @Value("${file.upload.audio.api}")
     private String audioApiUrlPrefix;
 
+    // 프로필 이미지 경로 추가.
+    @Value("${file.upload.image.api}")
+    private String imageApiUrl;
+
     @Transactional
     public RecordSave.Dto saveRecord(User user, MultipartFile recordFile){
 
@@ -88,7 +92,7 @@ public class RecordService {
         // 3. 찾은 환자들의 녹음파일에 대한 정보들 조회
         List<Record> foundAllRecords = getAllPatientsRecords(foundPatients);
 
-        return RecordInquiry.Dto.fromEntity(foundAllRecords, audioApiUrlPrefix);
+        return RecordInquiry.Dto.fromEntity(foundAllRecords, audioApiUrlPrefix, imageApiUrl);
 
     }
 
@@ -106,7 +110,7 @@ public class RecordService {
         // 4.
         List<Record> foundAllRecords = getOnePatientRecords(patientId);
 
-        return RecordInquiry.Dto.fromEntity(foundAllRecords, audioApiUrlPrefix);
+        return RecordInquiry.Dto.fromEntity(foundAllRecords, audioApiUrlPrefix, imageApiUrl);
 
     }
 

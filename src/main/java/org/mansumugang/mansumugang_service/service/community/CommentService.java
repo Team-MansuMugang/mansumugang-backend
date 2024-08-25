@@ -21,6 +21,7 @@ import org.mansumugang.mansumugang_service.repository.FcmTokenRepository;
 import org.mansumugang.mansumugang_service.repository.PostRepository;
 import org.mansumugang.mansumugang_service.repository.ReplyRepository;
 import org.mansumugang.mansumugang_service.service.fcm.FcmService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -44,6 +45,9 @@ public class CommentService {
 
     private final int COMMENT_PAGE_SIZE = 10; // 한페이지 당 최대 댓글수 : 10개
     private final int REPLY_PAGE_SIZE = 5; //  한페이지 당 최대 대댓글수 : 5개
+
+    @Value("${file.upload.image.api}")
+    private String imageApiUrl;
 
 
     @Transactional
@@ -86,9 +90,9 @@ public class CommentService {
         }
 
         Pageable replyPageable = PageRequest.of(0, REPLY_PAGE_SIZE, Sort.by(Sort.Direction.ASC, "createdAt"));
-        List<CommentInquiry.CommentDto> commentList = commentPage.map(comment1 -> CommentInquiry.CommentDto.of(comment1, replyRepository.findAllByComment(comment1, replyPageable))).toList();
+        List<CommentInquiry.CommentDto> commentList = commentPage.map(comment1 -> CommentInquiry.CommentDto.of(comment1, replyRepository.findAllByComment(comment1, replyPageable),imageApiUrl)).toList();
 
-        return CommentInquiry.Response.of(commentList);
+        return CommentInquiry.Response.of(commentList, imageApiUrl);
     }
 
     @Transactional

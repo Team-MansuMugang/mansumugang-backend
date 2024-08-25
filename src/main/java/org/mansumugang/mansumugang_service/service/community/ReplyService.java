@@ -22,6 +22,7 @@ import org.mansumugang.mansumugang_service.repository.FcmTokenRepository;
 import org.mansumugang.mansumugang_service.repository.PostRepository;
 import org.mansumugang.mansumugang_service.repository.ReplyRepository;
 import org.mansumugang.mansumugang_service.service.fcm.FcmService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -42,6 +43,9 @@ public class ReplyService {
     private final FcmService fcmService;
 
     private final int REPLY_PAGE_SIZE = 5; // 한페이지당 대댓글 수 : 5
+
+    @Value("${file.upload.image.api}")
+    private String imageApiUrl;
 
     @Transactional
     public ReplySave.Dto saveReply(User user, ReplySave.Request request){
@@ -78,12 +82,12 @@ public class ReplyService {
             Pageable replyPageable = PageRequest.of(0, REPLY_PAGE_SIZE);
             Page<Reply> replyPage = replyRepository.getRepliesByCursor(foundComment, foundReply.getId(), foundReply.getCreatedAt(), replyPageable);
 
-            return ReplyInquiry.Response.fromPage(replyPage);
+            return ReplyInquiry.Response.fromPage(replyPage, imageApiUrl);
         }else{
             Pageable replyPageable = PageRequest.of(0, REPLY_PAGE_SIZE, Sort.by(Sort.Direction.ASC, "createdAt"));
             Page<Reply> replyPage = replyRepository.findAllByComment(foundComment, replyPageable);
 
-            return ReplyInquiry.Response.fromPage(replyPage);
+            return ReplyInquiry.Response.fromPage(replyPage, imageApiUrl);
         }
 
     }
