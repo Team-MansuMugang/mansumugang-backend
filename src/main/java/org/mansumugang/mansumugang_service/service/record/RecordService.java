@@ -62,6 +62,11 @@ public class RecordService {
             throw new CustomErrorException(ErrorType.RecordFileNotFound);
         }
             try{
+
+                // 음성파일 내용 텍스트로 변환 -> open AI 의 Whisper 사용.
+                WhisperTranscription.Response transcription = openAIClientService.createTranscription(request);
+                String transcriptionText = transcription.getText();
+
                 String recordFileName = fileService.saveRecordFile(recordFile);
 
                 Long recordDuration = fileService.getRecordDuration(recordFileName);
@@ -70,10 +75,6 @@ public class RecordService {
                     fileService.deleteRecordFile(recordFileName);
                     recordFileName = s3FileService.saveRecordFile(recordFile);
                 }
-
-                // 음성파일 내용 텍스트로 변환 -> open AI 의 Whisper 사용.
-                WhisperTranscription.Response transcription = openAIClientService.createTranscription(request);
-                String transcriptionText = transcription.getText();
 
                 Record newRecord = recordRepository.save(Record.of(validPatient, recordFileName,  transcriptionText, recordDuration));
 
