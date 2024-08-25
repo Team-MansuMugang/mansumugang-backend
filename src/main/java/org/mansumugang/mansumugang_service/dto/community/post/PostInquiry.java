@@ -38,6 +38,8 @@ public class PostInquiry {
 
         private Long id; // 게시물 고유번호
         private String title; // 게시물 제목
+        private String imageApiUrl; // 프로필 이미지 저장 경로
+        private String profileImageName; // 프로필 이미지 이름
         private String nickname; // 게시물 작성자 닉네임
         private String categoryCode; //게시물 카테고리 분류
         private String content; // 게시물 내용
@@ -49,10 +51,13 @@ public class PostInquiry {
         private Long bookmarkCount; // 게시물 스크랩 수
         private Long commentCount; // 게시물 댓글 수
 
-        public static PostDetailResponse fromEntity(Post foundPost, List<PostImage> foundImages, String postImageApiUrlPrefix, boolean isLiked ,Long likeCount, Long bookmarkCount, Long commentCount){
+        // 프로필 이미지 경로 및 이름 추가.
+        public static PostDetailResponse fromEntity(Post foundPost, List<PostImage> foundImages, String postImageApiUrlPrefix, String imageApiUrl ,boolean isLiked ,Long likeCount, Long bookmarkCount, Long commentCount){
             return PostDetailResponse.builder()
                     .id(foundPost.getId())
                     .title(foundPost.getTitle())
+                    .imageApiUrl((imageApiUrl))
+                    .profileImageName(foundPost.getProtector().getProfileImageName() != null ? foundPost.getProtector().getProfileImageName() : null)
                     .nickname(foundPost.getProtector().getNickname())
                     .categoryCode(foundPost.getPostCategory().getCategoryCode())
                     .content(foundPost.getContent())

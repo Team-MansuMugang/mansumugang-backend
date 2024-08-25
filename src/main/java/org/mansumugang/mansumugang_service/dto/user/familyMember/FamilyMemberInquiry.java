@@ -16,12 +16,14 @@ public class FamilyMemberInquiry {
     @AllArgsConstructor
     @Builder
     public static class Dto{
+        private String imageApiUrl;
         private FamilyMember.Self self;
         private FamilyMember.Nok protector;
         private List<FamilyMember.OtherPatient> otherPatients;
 
-        public static Dto of(Patient validPatient, Protector foundProtector, List<Patient> otherPatients){
+        public static Dto of(Patient validPatient, Protector foundProtector, List<Patient> otherPatients, String imageApiUrl){
             return Dto.builder()
+                    .imageApiUrl(imageApiUrl)
                     .self(FamilyMember.Self.fromEntity(validPatient))
                     .protector(FamilyMember.Nok.fromEntity(foundProtector))
                     .otherPatients((otherPatients.stream()
@@ -36,12 +38,14 @@ public class FamilyMemberInquiry {
     @AllArgsConstructor
     @Builder
     public static class Response{
+        private String imageApiUrl;
         private FamilyMember.Self self;
         private FamilyMember.Nok protector;
         private List<FamilyMember.OtherPatient> otherPatients;
 
         public static Response createNewResponse(Dto dto){
             return Response.builder()
+                    .imageApiUrl(dto.imageApiUrl)
                     .self(dto.getSelf())
                     .protector(dto.getProtector())
                     .otherPatients(dto.getOtherPatients())

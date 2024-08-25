@@ -56,6 +56,9 @@ public class PostService {
     @Value("${file.upload.postImages.api}")
     private String postImageApiUrlPrefix;
 
+    @Value("${file.upload.image.api}")
+    private String imageApiUrl;
+
     @Transactional
     public PostSave.Dto savePostImage(User user, PostSave.Request request, List<MultipartFile> imageFiles){
 
@@ -132,8 +135,8 @@ public class PostService {
 
         isLiked = foundPostLike != null;
 
-
-        return PostInquiry.PostDetailResponse.fromEntity(foundPost, foundPostImages, postImageApiUrlPrefix, isLiked, likeCount, bookmarkCount, commentCount);
+        // 보호자 프로필 이미지 저장경로 추가.
+        return PostInquiry.PostDetailResponse.fromEntity(foundPost, foundPostImages, postImageApiUrlPrefix, imageApiUrl ,isLiked, likeCount, bookmarkCount, commentCount);
     }
 
     @Transactional
