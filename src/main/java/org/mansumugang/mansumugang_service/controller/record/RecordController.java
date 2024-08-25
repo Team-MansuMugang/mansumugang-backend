@@ -6,8 +6,10 @@ import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.record.RecordDelete;
 import org.mansumugang.mansumugang_service.dto.record.RecordInquiry;
 import org.mansumugang.mansumugang_service.dto.record.RecordSave;
+import org.mansumugang.mansumugang_service.dto.record.Transcription;
 import org.mansumugang.mansumugang_service.service.record.RecordService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -24,11 +26,11 @@ public class RecordController {
     private final RecordService recordService;
 
     // 1. 음성녹음 저장 API
-    @PostMapping("/save")
+    @PostMapping(value = "/save", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RecordSave.Response> save(@AuthenticationPrincipal User user,
-                                                    @RequestPart(name = "audio", required = true) MultipartFile recordFile
+                                                    @ModelAttribute Transcription.Request request
     ){
-        RecordSave.Dto savedInfo = recordService.saveRecord(user, recordFile);
+        RecordSave.Dto savedInfo = recordService.saveRecord(user, request);
 
         log.info("녹음파일 저장완료 및 JSON 응답객체 전송 시작");
         return new ResponseEntity<>(RecordSave.Response.createNewResponse(savedInfo), HttpStatus.CREATED);

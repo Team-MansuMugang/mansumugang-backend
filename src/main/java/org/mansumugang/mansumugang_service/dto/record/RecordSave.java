@@ -15,6 +15,7 @@ public class RecordSave {
     public static class Dto{
         private String recordFileName;
         private Long recordDuration;
+        private String recordContent; // 음성파일 내용 텍스트 변환 결과 추가
         private String name;
 
         public static Dto getInfo(Record newRecord){
@@ -22,6 +23,7 @@ public class RecordSave {
                     .name(newRecord.getPatient().getName())
                     .recordFileName(newRecord.getFilename())
                     .recordDuration(newRecord.getDuration())
+                    .recordContent(newRecord.getContent())
                     .build();
         }
     }
@@ -34,6 +36,7 @@ public class RecordSave {
         private String message;
         private String recordFileName;
         private Long recordDuration;
+        private String recordContent;
         private String name;
 
         public static Response createNewResponse(Dto savedInfo) {
@@ -42,6 +45,7 @@ public class RecordSave {
                     .name(savedInfo.getName())
                     .recordFileName(savedInfo.getRecordFileName())
                     .recordDuration(savedInfo.getRecordDuration())
+                    .recordContent(savedInfo.getRecordContent())
                     .build();
         }
     }

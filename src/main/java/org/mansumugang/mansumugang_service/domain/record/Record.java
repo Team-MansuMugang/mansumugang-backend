@@ -32,6 +32,9 @@ public class Record {
     @Column(nullable = false)
     private Long duration;
 
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String content; // 녹음파일을 텍스트로 변환한 내용.
+
     @CreatedDate
     private LocalDateTime createdAt;
 
@@ -41,20 +44,23 @@ public class Record {
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 
-    private Record(String filename, Long duration, LocalDateTime createdAt, Patient patient) {
+    private Record(String filename, Long duration, String content ,LocalDateTime createdAt, Patient patient) {
         this.filename = filename;
         this.duration = duration;
+        this.content = content;
         this.createdAt = createdAt;
         this.patient = patient;
     }
 
     public static Record of(Patient validPatient,
                             String recordFileName,
+                            String transcriptionText,
                             Long recordDuration
     ){
         return Record.builder()
                 .patient(validPatient)
                 .filename(recordFileName)
+                .content(transcriptionText)
                 .duration(recordDuration)
                 .build();
     }

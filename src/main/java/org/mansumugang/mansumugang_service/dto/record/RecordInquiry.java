@@ -18,6 +18,7 @@ public class RecordInquiry {
         private Long recordId;
         private String recordFileName;
         private Long recordDuration;
+        private String recordContent;
         private LocalDateTime uploadedTime;
 
         // 환자의 프로필 이미지 이름이 존재하면 해당 값 사용, 아니라면 null 로 세팅.
@@ -28,6 +29,7 @@ public class RecordInquiry {
                     .recordId(record.getId())
                     .recordFileName(record.getFilename())
                     .recordDuration(record.getDuration())
+                    .recordContent(record.getContent())
                     .uploadedTime(record.getCreatedAt())
                     .build();
 
