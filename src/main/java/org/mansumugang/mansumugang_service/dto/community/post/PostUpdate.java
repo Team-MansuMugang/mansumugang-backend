@@ -35,7 +35,7 @@ public class PostUpdate {
         @NotNull(message = "값이 null이면 안됩니다.")
         private String categoryCode; // 수정할 게시물 카테고리코드
 
-        private List<String> imageFilesToDelete; // 제거할 이미지 파일들
+//        private List<String> imageFilesToDelete; // 제거할 이미지 파일들
 
     }
 

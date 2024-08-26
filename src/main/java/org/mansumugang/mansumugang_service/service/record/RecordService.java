@@ -156,6 +156,24 @@ public class RecordService {
         return RecordDelete.Dto.fromEntity(foundRecordFileName);
     }
 
+    public RecordSaveLimit.Dto getRecordSaveLimit(User user){
+
+        // 1. 환자 객체 검증
+        Patient validPatient = validatePatient(user);
+
+        // 2. 남은 횟수 추출.
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay(); // 자정 (00:00)
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX); // 23:59:59
+
+        int dailyRecordingLimit = 10;
+        int todayRecordCount = recordRepository.countByPatientIdAndCreatedAtBetween(validPatient.getId(), startOfDay, endOfDay);
+        int remainingRecordingCount = dailyRecordingLimit - todayRecordCount;
+
+        return RecordSaveLimit.Dto.fromEntity(dailyRecordingLimit, remainingRecordingCount);
+
+    }
+
 
     private Patient validatePatient(User user) {
         log.info("AuthenticationPrincipal 로 받은 유저 객체가 환자 객체인지 검증 시작");
@@ -247,11 +265,11 @@ public class RecordService {
         LocalDateTime startOfDay = today.atStartOfDay(); // 자정 (00:00)
         LocalDateTime endOfDay = today.atTime(LocalTime.MAX); // 23:59:59
 
-        int todayRecordCount = recordRepository.countByPatientIdAndCreatedAtBetween(validPatient.getId(), startOfDay, endOfDay);
+        int todayRecordCount = recordRepository.countByPatientIdAndCreatedAtBetween(validPatient.getId(), startOfDay, endOfDay) +1;
 
         log.info("횟수 : {} ", todayRecordCount);
 
-        if (todayRecordCount > 9){
+        if (todayRecordCount > 10){
             throw new CustomErrorException(ErrorType.RecordLimitExceeded);
         }
     }

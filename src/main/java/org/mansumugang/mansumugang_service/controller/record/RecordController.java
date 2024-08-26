@@ -3,10 +3,7 @@ package org.mansumugang.mansumugang_service.controller.record;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.domain.user.User;
-import org.mansumugang.mansumugang_service.dto.record.RecordDelete;
-import org.mansumugang.mansumugang_service.dto.record.RecordInquiry;
-import org.mansumugang.mansumugang_service.dto.record.RecordSave;
-import org.mansumugang.mansumugang_service.dto.record.Transcription;
+import org.mansumugang.mansumugang_service.dto.record.*;
 import org.mansumugang.mansumugang_service.service.record.RecordService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -53,10 +50,7 @@ public class RecordController {
         return ResponseEntity.ok(RecordInquiry.Response.createNewResponse(onePatientsRecords));
     }
 
-    // 4. 음성녹음 듣기 API
-//    @PostMapping("/download")
-
-    // 5. 음성녹음 삭제 API (전체 삭제, 녹음파일 고유번호로 하나만 삭제, 특정 환자 녹음파일 전체 삭제) -> 하나만 삭제 우선 구현
+    // 4. 음성녹음 삭제 API (전체 삭제, 녹음파일 고유번호로 하나만 삭제, 특정 환자 녹음파일 전체 삭제) -> 하나만 삭제 우선 구현
     @DeleteMapping("/delete/{record_id}")
     public ResponseEntity<RecordDelete.Response> deleteRecord(@AuthenticationPrincipal User user,
                                                               @PathVariable("record_id")Long recordId
@@ -64,5 +58,14 @@ public class RecordController {
         RecordDelete.Dto dto = recordService.deleteRecord(user, recordId);
 
         return ResponseEntity.ok(RecordDelete.Response.createNewResponse(dto));
+    }
+
+    // 5. 음성 녹음 저장 남은 횟수 남은 체크
+    @GetMapping("/check/saveLimit")
+    public ResponseEntity<RecordSaveLimit.Response> getRecordSaveLimit(@AuthenticationPrincipal User user){
+
+        RecordSaveLimit.Dto dto = recordService.getRecordSaveLimit(user);
+
+        return ResponseEntity.ok(RecordSaveLimit.Response.createNewResponse(dto));
     }
 }
