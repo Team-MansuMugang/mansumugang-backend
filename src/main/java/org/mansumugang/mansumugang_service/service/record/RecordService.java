@@ -10,9 +10,7 @@ import org.mansumugang.mansumugang_service.domain.record.Record;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
-import org.mansumugang.mansumugang_service.dto.record.RecordDelete;
-import org.mansumugang.mansumugang_service.dto.record.RecordInquiry;
-import org.mansumugang.mansumugang_service.dto.record.RecordSave;
+import org.mansumugang.mansumugang_service.dto.record.*;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.PatientRepository;
 import org.mansumugang.mansumugang_service.repository.RecordRepository;
@@ -23,6 +21,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +40,7 @@ public class RecordService {
     private final FileService fileService;
     private final S3FileService s3FileService;
     private final ProfileChecker profileChecker;
+    private final OpenAIClientService openAIClientService;
 
     @Value("${file.upload.audio.api}")
     private String audioApiUrlPrefix;
@@ -48,18 +50,27 @@ public class RecordService {
     private String imageApiUrl;
 
     @Transactional
-    public RecordSave.Dto saveRecord(User user, MultipartFile recordFile){
-
-        log.info("RecordService -> saveRecord 메서드 호출");
+    public RecordSave.Dto saveRecord(User user, Transcription.Request request){
 
         // 1. 음성녹음을 저장하려는 유저가 환자인지 검증
         Patient validPatient = validatePatient(user);
 
+        // 음성 파일 저장 기능을 하루 10회로 제한. -> 초과면 예외 처리.
+        checkRecordSaveLimit(validPatient);
+
+        log.info("RecordService -> saveRecord 메서드 호출");
+
+        MultipartFile recordFile = request.getFile();
 
         if (recordFile == null){
             throw new CustomErrorException(ErrorType.RecordFileNotFound);
         }
             try{
+
+                // 음성파일 내용 텍스트로 변환 -> open AI 의 Whisper 사용.
+                WhisperTranscription.Response transcription = openAIClientService.createTranscription(request);
+                String transcriptionText = transcription.getText();
+
                 String recordFileName = fileService.saveRecordFile(recordFile);
 
                 Long recordDuration = fileService.getRecordDuration(recordFileName);
@@ -69,7 +80,7 @@ public class RecordService {
                     recordFileName = s3FileService.saveRecordFile(recordFile);
                 }
 
-                Record newRecord = recordRepository.save(Record.of(validPatient, recordFileName, recordDuration));
+                Record newRecord = recordRepository.save(Record.of(validPatient, recordFileName,  transcriptionText, recordDuration));
 
                 return RecordSave.Dto.getInfo(newRecord);
 
@@ -143,6 +154,24 @@ public class RecordService {
 
 
         return RecordDelete.Dto.fromEntity(foundRecordFileName);
+    }
+
+    public RecordSaveLimit.Dto getRecordSaveLimit(User user){
+
+        // 1. 환자 객체 검증
+        Patient validPatient = validatePatient(user);
+
+        // 2. 남은 횟수 추출.
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay(); // 자정 (00:00)
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX); // 23:59:59
+
+        int dailyRecordingLimit = 10;
+        int todayRecordCount = recordRepository.countByPatientIdAndCreatedAtBetween(validPatient.getId(), startOfDay, endOfDay);
+        int remainingRecordingCount = dailyRecordingLimit - todayRecordCount;
+
+        return RecordSaveLimit.Dto.fromEntity(dailyRecordingLimit, remainingRecordingCount);
+
     }
 
 
@@ -229,6 +258,20 @@ public class RecordService {
         }
 
         return  foundAllRecords;
+    }
+
+    private void checkRecordSaveLimit(Patient validPatient) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime startOfDay = today.atStartOfDay(); // 자정 (00:00)
+        LocalDateTime endOfDay = today.atTime(LocalTime.MAX); // 23:59:59
+
+        int todayRecordCount = recordRepository.countByPatientIdAndCreatedAtBetween(validPatient.getId(), startOfDay, endOfDay) +1;
+
+        log.info("횟수 : {} ", todayRecordCount);
+
+        if (todayRecordCount > 10){
+            throw new CustomErrorException(ErrorType.RecordLimitExceeded);
+        }
     }
 
 }

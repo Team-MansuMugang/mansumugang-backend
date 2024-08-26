@@ -29,9 +29,9 @@ public class Post {
     @Column(nullable = false)
     private String title; // 제목
 
-    @Lob // 가변길이를 갖는 큰 데이터를 처리할 때 사용함.
-    @Column(nullable = false)
-    private String content; // 내용
+     // 가변길이를 갖는 큰 데이터를 처리할 때 사용함.
+     @Column(columnDefinition = "TEXT")
+     private String content; // 내용
 
     @CreatedDate
     private LocalDateTime createdAt; // 작성 시간

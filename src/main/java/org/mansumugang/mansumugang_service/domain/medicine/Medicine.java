@@ -36,6 +36,7 @@ public class Medicine {
 
     private String medicineImageName;
 
+    @Column(columnDefinition = "TEXT")
     private String medicineDescription;
 
     private LocalDate intakeStopDate;
