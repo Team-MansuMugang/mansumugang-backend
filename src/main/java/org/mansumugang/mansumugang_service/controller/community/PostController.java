@@ -26,8 +26,6 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
-    private final CommentService commentService;
-
     @PostMapping("/save")
     public ResponseEntity<PostSave.Response> savePost(
             @AuthenticationPrincipal User user,

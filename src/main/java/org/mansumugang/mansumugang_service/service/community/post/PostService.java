@@ -143,6 +143,7 @@ public class PostService {
     public PostUpdate.Dto updatePost(User user, List<MultipartFile> imageFiles, PostUpdate.Request request){
 
         List<String> addedImages = new ArrayList<>();
+        List<String> imageFilesToDelete = new ArrayList<>();
         List<PostImage> postImages = new ArrayList<>();
 
         // 1. 넘겨받은 user객체가 보호자 객체인지 검증
@@ -161,14 +162,18 @@ public class PostService {
             throw new CustomErrorException(ErrorType.NotTheAuthorOfThePost);
         }
 
-        // 이미지 파일 추가, 삭제를 위한 추가 로직 구현.
-        // 이미지 추가.
-        savePostImage(imageFiles, addedImages, foundPost, postImages );
-
+        // (수정사항 : 이미지 파일을 요청으로 받으면 기존의 이미지 삭제 및 요청에 담긴 이미지를 저장.)
         // 이미지 제거 로직.
-        if (request.getImageFilesToDelete() != null) {
-            deletePostImages(request.getImageFilesToDelete());
+        if (imageFiles != null){
+            List<PostImage> foundPostImages = postImageRepository.findPostImageByPostId(foundPost.getId());
+            for (PostImage foundPostImage : foundPostImages) {
+                imageFilesToDelete.add(foundPostImage.getImageName());
+            }
+            deletePostImages(imageFilesToDelete);
         }
+
+        // 이미지 파일 추가
+        savePostImage(imageFiles, addedImages, foundPost, postImages );
 
         // 4. 게시물 수정 시작
         foundPost.update(request, foundPostCategory);
