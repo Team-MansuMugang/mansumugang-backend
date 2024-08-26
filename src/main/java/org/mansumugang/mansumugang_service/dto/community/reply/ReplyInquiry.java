@@ -37,7 +37,7 @@ public class ReplyInquiry {
             return ReplyElement.builder()
                     .replyId(reply.getId())
                     .commentId(reply.getComment().getId())
-                    .profileImageName(reply.getProtector().getProfileImageName() != null && reply.getDeletedAt() == null ? reply.getProtector().getProfileImageName() : null)
+                    .profileImageName(reply.getProtector() != null && reply.getProtector().getProfileImageName() != null && reply.getDeletedAt() == null ? reply.getProtector().getProfileImageName() : null)
                     .creator(reply.getDeletedAt() == null ? reply.getProtector().getNickname() : "알 수 없음")
                     .content(reply.getContent())
                     .createdAt(reply.getCreatedAt())
