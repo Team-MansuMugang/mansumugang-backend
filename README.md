@@ -3,7 +3,16 @@
 
 __고령의 환자와 보호자 모두가 안심할 수 있는__ 공간을 만들기 위한 안심케어 및 커뮤니티 서비스 __만수무강 입니다.__
 
-## 기술 스택
+## 🌟 서비스 기능
+
+- __약 일정 관리 및 기록__: 약 복용 스케줄 설정 및 복약 기록을 통해 케어 맴버가 약을 놓치지 않고 복용할 수 있도록 지원합니다.
+- __병원 일정 관리 및 기록__: 케어 맴버의 병원 예약 일정 관리와 방문 기록을 한눈에 확인할 수 있는 기능을 제공합니다.
+- __음성 메시지 기능__: 케어 맴버와 음성 메시지를 통해 편리한 커뮤니케이션 할 수 있는 도구입니다.
+- __음성 메시지 텍스트 변환 (ASR)__: 녹음된 음성을 자동으로 텍스트로 변환하여 편리성을 높입니다.
+- __건강 커뮤니티__: 다양한 건강 관련 주제에 대해 다른 사용자들과 정보를 공유하고 소통할 수 있는 커뮤니티 기능입니다.
+- __사용자 계정 관리__: 보호자와 케어 멤버를 위한 손쉬운 회원가입, 계정 관리 및 탈퇴 기능을 제공합니다
+
+## 🛠️  기술 스택
 - __Java 17__
 - __Spring Boot 3.3.1__
 - __Gradle__
@@ -14,7 +23,7 @@ __고령의 환자와 보호자 모두가 안심할 수 있는__ 공간을 만�
 - __FCM__
 - __AWS__
 
-## 사전 요구사항
+## ✅ 사전 요구사항
 이 프로젝트를 실행하기 위해서는 아래의 환경이 필요합니다:
 
 ### 사전 설치
@@ -29,7 +38,7 @@ __고령의 환자와 보호자 모두가 안심할 수 있는__ 공간을 만�
 - FCM 기능을 사용하기 위한 Firebase Project 생성
 - AWS S3 사용을 위한 AccessKey 발급
 
-## 어플리케이션 실행
+## 🖥️  어플리케이션 실행
 ### 1. 프로젝트 Clone
 ```
 git clone https://github.com/Team-MansuMugang/mansumugang-backend.git
@@ -201,3 +210,12 @@ file:
 ```
 java -Duser.timezone=Asia/Seoul -Dspring.profiles.active=local -jar ./build/libs/mansumugang-service-0.0.1-SNAPSHOT.jar
 ```
+
+## 🎥 데모 영상
+
+[![Video Label](http://img.youtube.com/vi/6WP0Y-pIVe8/0.jpg)](https://youtu.be/6WP0Y-pIVe8?si=HEJ8IRgIGGOGIK5Q)
+
+## 🧑‍💻 개발자
+
+- [@JSH0905](https://github.com/JSH0905)
+- [@minnnisu](https://github.com/minnnisu)
