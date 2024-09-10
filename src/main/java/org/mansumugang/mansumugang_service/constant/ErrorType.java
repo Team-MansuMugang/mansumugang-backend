@@ -21,6 +21,9 @@ public enum ErrorType {
     AccessDeniedError(
             HttpStatus.FORBIDDEN, "접근할 수 없는 권한을 가진 사용자입니다."
     ),
+    NotValidRequestBodyError(
+            HttpStatus.BAD_REQUEST, "유효하지 않은 요청 본문입니다."
+    ),
     InternalServerError(
             HttpStatus.INTERNAL_SERVER_ERROR, "알 수 없는 오류가 발생하였습니다. 문제가 지속되면 관리자에게 문의하세요."
     ),
@@ -197,8 +200,7 @@ public enum ErrorType {
     ),
     NoSuchMedicinePrescriptionError(
             HttpStatus.NOT_FOUND, "존재하지 않는 처방전 정보 입니다."
-    )
-    ;
+    );
 
     private final HttpStatus httpStatus;
     private final String message;
