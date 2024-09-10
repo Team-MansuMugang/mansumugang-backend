@@ -40,7 +40,7 @@ public class CommentInquiry {
             return CommentElement.builder()
                     .commentId(comment.getId())
                     .postId(comment.getPost().getId())
-                    .profileImageName(comment.getProtector().getProfileImageName() != null && comment.getDeletedAt() == null ? comment.getProtector().getProfileImageName() : null)
+                    .profileImageName(comment.getProtector() != null && comment.getProtector().getProfileImageName() != null && comment.getDeletedAt() == null ? comment.getProtector().getProfileImageName() : null)
                     .creator(comment.getDeletedAt() == null ? comment.getProtector().getNickname() : "알 수 없음")
                     .content(comment.getContent())
                     .createdAt(comment.getCreatedAt())
