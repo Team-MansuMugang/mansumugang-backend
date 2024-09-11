@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import org.mansumugang.mansumugang_service.validation.ValidDate;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
@@ -38,7 +37,6 @@ public class MedicineSave{
         @NotNull(message = "약 복용요일이 필요합니다.")
         private List<DayOfWeek> medicineIntakeDays;
 
-        @ValidDate(message = "유효하지 않은 날짜 형식입니다.")
         @NotNull(message = "약 섭취 종료 일자가 필요합니다")
         private String medicineIntakeStopDay;
     }

@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.mansumugang.mansumugang_service.validation.location.Latitude;
+import org.mansumugang.mansumugang_service.validation.location.Longitude;
 
 import java.time.LocalDateTime;
 
@@ -24,11 +26,13 @@ public class HospitalSave {
         @NotNull(message = "병원 주소를 기입해주세요")
         private String hospitalAddress;
 
+        @Latitude
         @NotNull(message = "위도를 기입해주세요")
-        private Double latitude;
+        private double latitude;
 
+        @Longitude
         @NotNull(message = "경도를 기입해주세요")
-        private Double longitude;
+        private double longitude;
 
         @Size(min = 2, max = 200, message = "병원에 대한 설명은 2에서 200자 사이여야 합니다")
         private String hospitalDescription;

@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
 import org.mansumugang.mansumugang_service.constant.FileType;
 import org.mansumugang.mansumugang_service.constant.MedicineRecordStatusType;
-import org.mansumugang.mansumugang_service.domain.hospital.Hospital;
 import org.mansumugang.mansumugang_service.domain.medicine.Medicine;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineInTakeTime;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineIntakeDay;
@@ -20,14 +19,13 @@ import org.mansumugang.mansumugang_service.exception.CustomNotValidErrorExceptio
 import org.mansumugang.mansumugang_service.repository.*;
 import org.mansumugang.mansumugang_service.service.fileService.FileService;
 import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
+import org.mansumugang.mansumugang_service.service.user.UserCommonService;
 import org.mansumugang.mansumugang_service.utils.DateParser;
 import org.mansumugang.mansumugang_service.utils.ProfileChecker;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -51,20 +49,21 @@ public class MedicineService {
     private final MedicineIntakeDayRepository medicineIntakeDayRepository;
     private final MedicineIntakeTimeRepository medicineIntakeTimeRepository;
     private final MedicineIntakeRecordRepository medicineIntakeRecordRepository;
-    private final HospitalRepository hospitalRepository;
-    private final PatientRepository patientRepository;
+
+
 
     private final FileService fileService;
     private final S3FileService s3FileService;
-    private final MedicineCommonService medicineCommonService;
+
+    private final UserCommonService userCommonService;
 
     // 보호자가 환자에 대한 약 상세정보 조회
     public MedicineDetailGet.Dto getMedicineById(User user, Long medicineId) {
         Medicine foundMedicine = medicineRepository.findById(medicineId).orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
 
-        Protector validatedProtector = validateProtector(user);
+        Protector foundProtector = userCommonService.findProtector(user);
         Patient foundPatient = foundMedicine.getPatient();
-        checkUserIsProtectorOfPatient(validatedProtector, foundPatient);
+        userCommonService.checkUserIsProtectorOfPatient(foundProtector, foundPatient);
 
         List<MedicineIntakeDay> foundMedicineIntakeDays = medicineIntakeDayRepository.findAllByMedicine(foundMedicine);
         List<MedicineInTakeTime> foundMedicineIntakeTimes = medicineIntakeTimeRepository.findAllByMedicine(foundMedicine);
@@ -72,81 +71,12 @@ public class MedicineService {
         return MedicineDetailGet.Dto.of(imageApiUrl, foundMedicine, foundMedicineIntakeDays, foundMedicineIntakeTimes);
     }
 
-    public MedicineSummaryInfo.Dto getMedicineSummaryInfoByDate(User user, Long patientId, String targetDateStr) {
-        Protector validatedProtector = validateProtector(user);
-        Patient foundPatient = findPatient(patientId);
-        checkUserIsProtectorOfPatient(validatedProtector, foundPatient);
 
-        LocalDate parsedTargetDate = dateParser.parseDate(targetDateStr);
-
-        return getMedicineSummaryInfoByDate(parsedTargetDate, foundPatient.getId());
-    }
-
-    public MedicineSummaryInfo.Dto getMedicineSummaryInfoByDate(User user, String targetDateStr) {
-        Patient validatedPatient = validatePatient(user);
-
-        LocalDate parsedTargetDate = dateParser.parseDate(targetDateStr);
-
-        return getMedicineSummaryInfoByDate(parsedTargetDate, validatedPatient.getId());
-    }
-
-    // 특정일에 대한 환자의 약 정보 조회
-    public MedicineSummaryInfo.Dto getMedicineSummaryInfoByDate(LocalDate targetDate, Long patientId) {
-        // 테이터베이스로부터 특정일에 대한 환자의 약 정보 쿼리 결과
-        List<MedicineSummaryInfoResult> medicineDayInfoResult =
-                medicineIntakeRecordRepository.findMedicineScheduleByDate(targetDate, patientId, targetDate.getDayOfWeek());
-
-        // 각각의 약에 대해 상태를 정의함
-        List<MedicineSummaryInfo.MedicineSummaryInfoElement> medicineSummaryInfos = medicineDayInfoResult.stream().map(medicineSummaryInfoResult ->
-                MedicineSummaryInfo.MedicineSummaryInfoElement.of(
-                        medicineSummaryInfoResult,
-                        medicineCommonService.assignMedicineStatus(
-                                medicineSummaryInfoResult.getStatus(),
-                                LocalDateTime.of(targetDate, medicineSummaryInfoResult.getMedicineIntakeTime())
-                        )
-                )
-        ).toList();
-
-        // 같은 복용시간을 가진 약끼리 그룹화
-        Map<LocalTime, List<MedicineSummaryInfo.MedicineSummaryInfoElement>> medicineSummaryInfoByTime = medicineSummaryInfos.stream()
-                .collect(Collectors.groupingBy(MedicineSummaryInfo.MedicineSummaryInfoElement::getMedicineIntakeTime));
-
-        // 특정 환자가 금일 방문 해야 할 병원 일정 조회
-        List<Hospital> hospitalScheduleResult = hospitalRepository.findAllByPatientIdAndHospitalVisitingTimeBetween(patientId,
-                LocalDateTime.of(targetDate, LocalTime.of(0, 0)),
-                LocalDateTime.of(targetDate, LocalTime.of(23, 59)));
-
-        // 같은 방문시간을 가진 병원끼리 그룹화
-        Map<LocalTime, Hospital> hospitalByTime = hospitalScheduleResult.stream()
-                .collect(Collectors.toMap(
-                        hospital -> hospital.getHospitalVisitingTime().toLocalTime(), // Extract LocalTime
-                        hospital -> hospital // Hospital object itself
-                ));
-
-
-        // 모든 LocalTime 키를 통합
-        Set<LocalTime> allTimes = new TreeSet<>();
-        allTimes.addAll(hospitalByTime.keySet());
-        allTimes.addAll(medicineSummaryInfoByTime.keySet());
-
-        // 결과를 저장할 TreeMap (자동으로 키 기준으로 정렬됨)
-        Map<LocalTime, MedicineSummaryInfo.ScheduleElement> scheduleMap = new TreeMap<>();
-
-        // 모든 LocalTime에 대해 CombinedInfo 생성
-        for (LocalTime time : allTimes) {
-            Hospital hospital = hospitalByTime.get(time);
-            List<MedicineSummaryInfo.MedicineSummaryInfoElement> medicines = medicineSummaryInfoByTime.getOrDefault(time, Collections.emptyList());
-            MedicineSummaryInfo.ScheduleElement combinedInfo = new MedicineSummaryInfo.ScheduleElement(medicines, hospital);
-            scheduleMap.put(time, combinedInfo);
-        }
-
-        return MedicineSummaryInfo.Dto.of(imageApiUrl, targetDate, MedicineSummaryInfo.TimeElement.convertTimeElements(scheduleMap), patientId);
-    }
 
     public void saveMedicine(User user, MultipartFile medicineImage, MedicineSave.Request requestDto) {
-        Protector validProtector = validateProtector(user);
-        Patient foundPatient = findPatient(requestDto.getPatientId());
-        checkUserIsProtectorOfPatient(validProtector, foundPatient);
+        Protector validProtector = userCommonService.findProtector(user);
+        Patient foundPatient = userCommonService.findPatient(requestDto.getPatientId());
+        userCommonService.checkUserIsProtectorOfPatient(validProtector, foundPatient);
 
         LocalDate parsedMedicineIntakeStopDay = dateParser.parseDate(requestDto.getMedicineIntakeStopDay());
         if (!parsedMedicineIntakeStopDay.isAfter(LocalDate.now())) {
@@ -185,9 +115,9 @@ public class MedicineService {
         Medicine foundMedicine = medicineRepository.findById(medicineId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
 
-        Protector validProtector = validateProtector(user);
-        Patient foundPatient = findPatient(foundMedicine.getPatient().getId());
-        checkUserIsProtectorOfPatient(validProtector, foundPatient);
+        Protector validProtector = userCommonService.findProtector(user);
+        Patient foundPatient = userCommonService.findPatient(foundMedicine.getPatient().getId());
+        userCommonService.checkUserIsProtectorOfPatient(validProtector, foundPatient);
 
         List<MedicineInTakeTime> renewedMedicineIntakeTimes = medicineIntakeTimeRepository.findAllByMedicine(foundMedicine);
 
@@ -296,9 +226,9 @@ public class MedicineService {
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchMedicineError));
 
         String originalMedicineImageName = foundMedicine.getMedicineImageName();
-        Protector validProtector = validateProtector(user);
-        Patient foundPatient = findPatient(foundMedicine.getPatient().getId());
-        checkUserIsProtectorOfPatient(validProtector, foundPatient);
+        Protector validProtector = userCommonService.findProtector(user);
+        Patient foundPatient = userCommonService.findPatient(foundMedicine.getPatient().getId());
+        userCommonService.checkUserIsProtectorOfPatient(validProtector, foundPatient);
 
         medicineIntakeRecordRepository.deleteAllByMedicine(foundMedicine);
         medicineIntakeTimeRepository.deleteAllByMedicine(foundMedicine);
@@ -386,41 +316,6 @@ public class MedicineService {
                     }
                 }
             }
-        }
-    }
-
-    private Patient findPatient(Long patientId) {
-        return patientRepository.findById(patientId).orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
-    }
-
-    private Protector validateProtector(User user) {
-        if (user == null) {
-            throw new CustomErrorException(ErrorType.UserNotFoundError);
-        }
-
-        if (user instanceof Protector) {
-            return (Protector) user;
-        }
-
-        throw new CustomErrorException(ErrorType.AccessDeniedError);
-    }
-
-    private Patient validatePatient(User user) {
-        if (user == null) {
-            throw new CustomErrorException(ErrorType.UserNotFoundError);
-        }
-
-        if (user instanceof Patient) {
-            return (Patient) user;
-        }
-
-        throw new CustomErrorException(ErrorType.AccessDeniedError);
-    }
-
-    private void checkUserIsProtectorOfPatient(Protector targetProtector, Patient patient) {
-        // TODO: equals, hashcode 구현
-        if (!patient.getProtector().getUsername().equals(targetProtector.getUsername())) {
-            throw new CustomErrorException(ErrorType.AccessDeniedError);
         }
     }
 }
