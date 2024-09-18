@@ -364,6 +364,12 @@ public class UserService {
     }
 
     private String saveProfileImage(MultipartFile profileImage) {
+
+        // 이미지 확장자가 jpeg, jpg, png가 아니면.
+        if (!(fileService.checkImageFileExtension(profileImage))){
+            throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
+        }
+
         if (profileChecker.checkActiveProfile("prod")) {
             try {
                 return s3FileService.saveImageFile(profileImage);

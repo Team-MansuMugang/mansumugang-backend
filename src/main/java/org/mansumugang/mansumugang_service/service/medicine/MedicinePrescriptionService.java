@@ -52,6 +52,13 @@ public class MedicinePrescriptionService {
 
         String medicinePrescriptionImageName = null;
         if (medicinePrescriptionImage != null) {
+
+            // 이미지 확장자가 jpeg, jpg, png가 아니면.
+            if (!(fileService.checkImageFileExtension(medicinePrescriptionImage))){
+                throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
+            }
+
+
             if (profileChecker.checkActiveProfile("prod")) {
                 try {
                     medicinePrescriptionImageName = s3FileService.saveImageFile(medicinePrescriptionImage);
