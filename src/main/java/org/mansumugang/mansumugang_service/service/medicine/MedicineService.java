@@ -86,6 +86,11 @@ public class MedicineService {
 
         String medicineImageName = null;
         if (medicineImage != null) {
+
+            if (!(fileService.checkImageFileExtension(medicineImage))){
+                throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
+            }
+
             if (profileChecker.checkActiveProfile("prod")) {
                 try {
                     medicineImageName = s3FileService.saveImageFile(medicineImage);
@@ -200,6 +205,11 @@ public class MedicineService {
         }
 
         if (medicineImage != null) {
+
+            if (!(fileService.checkImageFileExtension(medicineImage))){
+                throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
+            }
+
             try {
                 if (profileChecker.checkActiveProfile("prod")) {
                     String originalMedicineImageName = foundMedicine.getMedicineImageName();

@@ -4,10 +4,13 @@ import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
 import lombok.extern.slf4j.Slf4j;
+import org.mansumugang.mansumugang_service.constant.ErrorType;
 import org.mansumugang.mansumugang_service.constant.InternalErrorType;
+import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.exception.InternalErrorException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -37,6 +40,14 @@ public class FileService {
 
     public boolean checkRecordFile(MultipartFile file){
         return file.getContentType() != null && file.getContentType().equals("audio/mpeg");
+    }
+
+    public boolean checkImageFileExtension(MultipartFile file){
+
+        return (StringUtils.getFilenameExtension(file.getOriginalFilename()).equals("jpeg") ||
+                StringUtils.getFilenameExtension(file.getOriginalFilename()).equals("jpg") ||
+                StringUtils.getFilenameExtension(file.getOriginalFilename()).equals("png"));
+
     }
 
     public String saveImageFiles(MultipartFile file) throws InternalErrorException {

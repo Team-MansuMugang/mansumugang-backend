@@ -231,10 +231,17 @@ public class PostService {
             String uniqueFileName = null;
 
             for (MultipartFile imageFile : imageFiles) {
-                if (!fileService.checkImageFile(imageFile)){ // 이미지 파일이 null 또는 content-type 이 image 로 시작하지 않으면.
+                if (!(fileService.checkImageFile(imageFile))){ // 이미지 파일이 null 또는 content-type 이 image 로 시작하지 않으면.
                     fileService.deleteImageFiles(addedImages);
                     throw new CustomErrorException(ErrorType.NoImageFileError);
                 }
+
+                // 이미지 확장자가 jpeg, jpg, png가 아니면.
+                if (!(fileService.checkImageFileExtension(imageFile))){
+                    fileService.deleteImageFiles(addedImages);
+                    throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
+                }
+
 
                 if (profileChecker.checkActiveProfile("prod")) {
                     try {
