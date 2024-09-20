@@ -26,20 +26,24 @@ public class GeneralFileService {
     @Value("${file.upload.image.path}")
     private String imageUploadPath;
 
+    // TODO: 제거 후 image로 통합
     @Value("${file.upload.postImages.path}")
     private String postImageUploadPath;
 
     @Value("${file.upload.audio.path}")
     private String audioUploadPath;
 
+    // TODO: Default 메소드 사용
     public boolean checkImageFile(MultipartFile file) {
         return file.getContentType() != null && file.getContentType().startsWith("image");
     }
 
+    // TODO: 확인 후 사용하지 않으면 삭제 진행
     public boolean checkRecordFile(MultipartFile file){
         return file.getContentType() != null && file.getContentType().equals("audio/mpeg");
     }
 
+    // TODO: 이미지를 저장하는 과정에 포함
     public boolean checkImageFileExtension(MultipartFile file){
 
         return (StringUtils.getFilenameExtension(file.getOriginalFilename()).equals("jpeg") ||
@@ -139,6 +143,7 @@ public class GeneralFileService {
             }
     }
 
+    // TODO: Default 메소드 사용
     private static String generateUniqueFileName(String originalFileName) {
         // 파일 확장자 추출
         String fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
@@ -150,6 +155,7 @@ public class GeneralFileService {
         return uniqueID + fileExtension;
     }
 
+    // TODO: Default 메소드 사용
     public Long getRecordDuration(String fileName) throws InternalErrorException {
         try {
             Path filePath = Paths.get(audioUploadPath + "/" + fileName);
@@ -160,6 +166,7 @@ public class GeneralFileService {
         }
     }
 
+    // TODO: Default 메소드 사용, private로 변환
     public Long getMp3Duration(String filePath) throws IOException, InvalidDataException, UnsupportedTagException {
         Mp3File recordFile = new Mp3File(filePath);
         return recordFile.getLengthInSeconds();

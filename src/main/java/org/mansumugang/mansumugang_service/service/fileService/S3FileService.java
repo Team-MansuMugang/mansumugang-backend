@@ -47,6 +47,7 @@ public class S3FileService {
         return uploadFileToS3("audio/mpeg", "audios/", audio);
     }
 
+    // TODO: 인터페이스를 구성함에 따라 image, postImage, Record에 대한 3가지 형식의 파일 삭제 메소드 따로 구현
     public void deleteFileFromS3(String fileName, FileType fileType) {
         try {
             s3Client.deleteObject(bucket, fileType.getS3Path() + fileName);
