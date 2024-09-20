@@ -14,7 +14,7 @@ import org.mansumugang.mansumugang_service.dto.record.*;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.PatientRepository;
 import org.mansumugang.mansumugang_service.repository.RecordRepository;
-import org.mansumugang.mansumugang_service.service.fileService.FileService;
+import org.mansumugang.mansumugang_service.service.fileService.GeneralFileService;
 import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
 import org.mansumugang.mansumugang_service.utils.ProfileChecker;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,9 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,7 +35,7 @@ public class RecordService {
     private final RecordRepository recordRepository;
     private final PatientRepository patientRepository;
 
-    private final FileService fileService;
+    private final GeneralFileService generalFileService;
     private final S3FileService s3FileService;
     private final ProfileChecker profileChecker;
     private final OpenAIClientService openAIClientService;
@@ -71,12 +69,12 @@ public class RecordService {
                 WhisperTranscription.Response transcription = openAIClientService.createTranscription(request);
                 String transcriptionText = transcription.getText();
 
-                String recordFileName = fileService.saveRecordFile(recordFile);
+                String recordFileName = generalFileService.saveRecordFile(recordFile);
 
-                Long recordDuration = fileService.getRecordDuration(recordFileName);
+                Long recordDuration = generalFileService.getRecordDuration(recordFileName);
 
                 if(profileChecker.checkActiveProfile("prod")) {
-                    fileService.deleteRecordFile(recordFileName);
+                    generalFileService.deleteRecordFile(recordFileName);
                     recordFileName = s3FileService.saveRecordFile(recordFile);
                 }
 
@@ -145,7 +143,7 @@ public class RecordService {
             if(profileChecker.checkActiveProfile("prod")) {
                 s3FileService.deleteFileFromS3(foundRecordFileName, FileType.AUDIO);
             }else{
-                fileService.deleteRecordFile(foundRecordFileName);
+                generalFileService.deleteRecordFile(foundRecordFileName);
             }
         } catch (Exception e) {
             throw new CustomErrorException(ErrorType.InternalServerError);

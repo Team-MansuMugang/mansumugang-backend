@@ -23,9 +23,8 @@ import org.mansumugang.mansumugang_service.dto.user.inquiry.PatientInfoInquiry;
 import org.mansumugang.mansumugang_service.dto.user.inquiry.PatientInquiry;
 import org.mansumugang.mansumugang_service.dto.user.inquiry.ProtectorInfoInquiry;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
-import org.mansumugang.mansumugang_service.exception.InternalErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
-import org.mansumugang.mansumugang_service.service.fileService.FileService;
+import org.mansumugang.mansumugang_service.service.fileService.GeneralFileService;
 import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
 import org.mansumugang.mansumugang_service.utils.ProfileChecker;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,7 +56,7 @@ public class UserService {
 
     private final S3FileService s3FileService;
     private final ProfileChecker profileChecker;
-    private final FileService fileService;
+    private final GeneralFileService generalFileService;
 
     public PatientInquiry.Dto getPatientsByProtector(User user) {
 
@@ -188,7 +187,7 @@ public class UserService {
                     if (profileChecker.checkActiveProfile("prod")) {
                         s3FileService.deleteFileFromS3(medicineImageName, FileType.IMAGE);
                     } else {
-                        fileService.deleteImageFile(medicineImageName);
+                        generalFileService.deleteImageFile(medicineImageName);
                     }
                 } catch (Exception e) {
                     throw new CustomErrorException(ErrorType.InternalServerError);
@@ -206,7 +205,7 @@ public class UserService {
                     if (profileChecker.checkActiveProfile("prod")) {
                         s3FileService.deleteFileFromS3(prescriptionImageName, FileType.IMAGE);
                     } else {
-                        fileService.deleteImageFile(prescriptionImageName);
+                        generalFileService.deleteImageFile(prescriptionImageName);
                     }
                 } catch (Exception e) {
                     throw new CustomErrorException(ErrorType.InternalServerError);
@@ -223,7 +222,7 @@ public class UserService {
                 if (profileChecker.checkActiveProfile("prod")) {
                     s3FileService.deleteFileFromS3(recordFileName, FileType.AUDIO);
                 } else {
-                    fileService.deleteRecordFile(recordFileName);
+                    generalFileService.deleteRecordFile(recordFileName);
                 }
             } catch (Exception e) {
                 throw new CustomErrorException(ErrorType.InternalServerError);
@@ -275,7 +274,7 @@ public class UserService {
                         if (profileChecker.checkActiveProfile("prod")) {
                             s3FileService.deleteFileFromS3(postImageName, FileType.IMAGE);
                         } else {
-                            fileService.deletePostImageFile(postImageName);
+                            generalFileService.deletePostImageFile(postImageName);
                         }
 
                     } catch (Exception e) {
@@ -366,7 +365,7 @@ public class UserService {
     private String saveProfileImage(MultipartFile profileImage) {
 
         // 이미지 확장자가 jpeg, jpg, png가 아니면.
-        if (!(fileService.checkImageFileExtension(profileImage))){
+        if (!(generalFileService.checkImageFileExtension(profileImage))){
             throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
         }
 
@@ -378,7 +377,7 @@ public class UserService {
             }
         } else {
             try {
-                return fileService.saveImageFiles(profileImage);
+                return generalFileService.saveImageFiles(profileImage);
             } catch (Exception e) {
                 throw new CustomErrorException(ErrorType.InternalServerError);
             }
@@ -390,7 +389,7 @@ public class UserService {
             if (profileChecker.checkActiveProfile("prod")) {
                 s3FileService.deleteFileFromS3(imageName, FileType.IMAGE);
             } else {
-                fileService.deleteImageFile(imageName);
+                generalFileService.deleteImageFile(imageName);
             }
         } catch (Exception e) {
             throw new CustomErrorException(ErrorType.InternalServerError);

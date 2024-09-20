@@ -11,8 +11,7 @@ import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicinePrescriptionListGet;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.MedicinePrescriptionRepository;
-import org.mansumugang.mansumugang_service.repository.PatientRepository;
-import org.mansumugang.mansumugang_service.service.fileService.FileService;
+import org.mansumugang.mansumugang_service.service.fileService.GeneralFileService;
 import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
 import org.mansumugang.mansumugang_service.service.user.UserCommonService;
 import org.mansumugang.mansumugang_service.utils.ProfileChecker;
@@ -36,7 +35,7 @@ public class MedicinePrescriptionService {
 
     private final UserCommonService userCommonService;
     private final S3FileService s3FileService;
-    private final FileService fileService;
+    private final GeneralFileService generalFileService;
 
     public MedicinePrescriptionListGet.Dto getMedicinePrescriptions(User user, Long patientId) {
         Protector validatedProtector = userCommonService.findProtector(user);
@@ -55,7 +54,7 @@ public class MedicinePrescriptionService {
         if (medicinePrescriptionImage != null) {
 
             // 이미지 확장자가 jpeg, jpg, png가 아니면.
-            if (!(fileService.checkImageFileExtension(medicinePrescriptionImage))){
+            if (!(generalFileService.checkImageFileExtension(medicinePrescriptionImage))){
                 throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
             }
 
@@ -68,7 +67,7 @@ public class MedicinePrescriptionService {
                 }
             } else {
                 try {
-                    medicinePrescriptionImageName = fileService.saveImageFiles(medicinePrescriptionImage);
+                    medicinePrescriptionImageName = generalFileService.saveImageFiles(medicinePrescriptionImage);
                 } catch (Exception e) {
                     throw new CustomErrorException(ErrorType.InternalServerError);
                 }
@@ -93,7 +92,7 @@ public class MedicinePrescriptionService {
             if (profileChecker.checkActiveProfile("prod")) {
                 s3FileService.deleteFileFromS3(originalMedicinePrescriptionImageName, FileType.IMAGE);
             } else {
-                fileService.deleteImageFile(originalMedicinePrescriptionImageName);
+                generalFileService.deleteImageFile(originalMedicinePrescriptionImageName);
             }
         } catch (Exception e) {
             throw new CustomErrorException(ErrorType.InternalServerError);

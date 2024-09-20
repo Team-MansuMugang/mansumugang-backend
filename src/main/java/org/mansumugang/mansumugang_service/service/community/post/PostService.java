@@ -18,7 +18,7 @@ import org.mansumugang.mansumugang_service.dto.community.post.PostSave;
 import org.mansumugang.mansumugang_service.dto.community.post.PostUpdate;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
-import org.mansumugang.mansumugang_service.service.fileService.FileService;
+import org.mansumugang.mansumugang_service.service.fileService.GeneralFileService;
 import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
 import org.mansumugang.mansumugang_service.utils.ProfileChecker;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +32,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -41,7 +40,7 @@ public class PostService {
 
     private final ProfileChecker profileChecker;
 
-    private final FileService fileService;
+    private final GeneralFileService generalFileService;
     private final S3FileService s3FileService;
 
     private final PostRepository postRepository;
@@ -231,14 +230,14 @@ public class PostService {
             String uniqueFileName = null;
 
             for (MultipartFile imageFile : imageFiles) {
-                if (!(fileService.checkImageFile(imageFile))){ // 이미지 파일이 null 또는 content-type 이 image 로 시작하지 않으면.
-                    fileService.deleteImageFiles(addedImages);
+                if (!(generalFileService.checkImageFile(imageFile))){ // 이미지 파일이 null 또는 content-type 이 image 로 시작하지 않으면.
+                    generalFileService.deleteImageFiles(addedImages);
                     throw new CustomErrorException(ErrorType.NoImageFileError);
                 }
 
                 // 이미지 확장자가 jpeg, jpg, png가 아니면.
-                if (!(fileService.checkImageFileExtension(imageFile))){
-                    fileService.deleteImageFiles(addedImages);
+                if (!(generalFileService.checkImageFileExtension(imageFile))){
+                    generalFileService.deleteImageFiles(addedImages);
                     throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
                 }
 
@@ -249,25 +248,25 @@ public class PostService {
 
 
                     } catch (IOException e) {
-                        fileService.deleteImageFiles(addedImages);
+                        generalFileService.deleteImageFiles(addedImages);
                         throw new CustomErrorException(ErrorType.NoImageFileError);
 
                     } catch (Exception e) {
                         log.error(e.getMessage());
-                        fileService.deleteImageFiles(addedImages);
+                        generalFileService.deleteImageFiles(addedImages);
                         throw new CustomErrorException(ErrorType.InternalServerError);
                     }
                 }else {
                     try {
-                        uniqueFileName = fileService.savePostImageFiles(imageFile);
+                        uniqueFileName = generalFileService.savePostImageFiles(imageFile);
 
                     } catch (NullPointerException e) {
-                        fileService.deleteImageFiles(addedImages);
+                        generalFileService.deleteImageFiles(addedImages);
                         throw new CustomErrorException(ErrorType.NoImageFileError);
 
                     } catch (Exception e) {
                         log.error(e.getMessage());
-                        fileService.deleteImageFiles(addedImages);
+                        generalFileService.deleteImageFiles(addedImages);
                         throw new CustomErrorException(ErrorType.InternalServerError);
                     }
                 }
@@ -293,7 +292,7 @@ public class PostService {
 
                 }else {
                     // 업로드된 이미지 파일 제거
-                    fileService.deletePostImageFile(foundPostImage.getImageName());
+                    generalFileService.deletePostImageFile(foundPostImage.getImageName());
                 }
 
                 // DB에 저장된 이미지 파일 정보 제거
@@ -314,7 +313,7 @@ public class PostService {
                 s3FileService.deleteFileFromS3(foundPostImage.getImageName(), FileType.POST_IMAGE);
 
             }else {
-                fileService.deletePostImageFile(foundPostImage.getImageName());
+                generalFileService.deletePostImageFile(foundPostImage.getImageName());
             }
         }
     }

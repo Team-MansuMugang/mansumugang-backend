@@ -47,6 +47,14 @@ public class S3FileService {
         return uploadFileToS3("audio/mpeg", "audios/", audio);
     }
 
+    public void deleteFileFromS3(String fileName, FileType fileType) {
+        try {
+            s3Client.deleteObject(bucket, fileType.getS3Path() + fileName);
+        } catch (Exception e) {
+            throw new InternalErrorException(InternalErrorType.S3_DELETE_OBJECT_ERROR);
+        }
+    }
+
     private String uploadFileToS3(String contentType, String filePath, MultipartFile file) throws IOException {
         String uniqueFilenameWithoutPath = generateUniqueFileName(file);
         String uniqueFilename = filePath + uniqueFilenameWithoutPath;
@@ -79,13 +87,7 @@ public class S3FileService {
         return uniqueFilenameWithoutPath;
     }
 
-    public void deleteFileFromS3(String fileName, FileType fileType) {
-        try {
-            s3Client.deleteObject(bucket, fileType.getS3Path() + fileName);
-        } catch (Exception e) {
-            throw new InternalErrorException(InternalErrorType.S3_DELETE_OBJECT_ERROR);
-        }
-    }
+
 
 
     // 유효한 파일인지 확인

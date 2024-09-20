@@ -17,7 +17,7 @@ import org.mansumugang.mansumugang_service.dto.medicine.*;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.exception.CustomNotValidErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
-import org.mansumugang.mansumugang_service.service.fileService.FileService;
+import org.mansumugang.mansumugang_service.service.fileService.GeneralFileService;
 import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
 import org.mansumugang.mansumugang_service.service.user.UserCommonService;
 import org.mansumugang.mansumugang_service.utils.DateParser;
@@ -29,10 +29,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,7 +50,7 @@ public class MedicineService {
 
 
 
-    private final FileService fileService;
+    private final GeneralFileService generalFileService;
     private final S3FileService s3FileService;
 
     private final UserCommonService userCommonService;
@@ -87,7 +85,7 @@ public class MedicineService {
         String medicineImageName = null;
         if (medicineImage != null) {
 
-            if (!(fileService.checkImageFileExtension(medicineImage))){
+            if (!(generalFileService.checkImageFileExtension(medicineImage))){
                 throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
             }
 
@@ -99,7 +97,7 @@ public class MedicineService {
                 }
             } else {
                 try {
-                    medicineImageName = fileService.saveImageFiles(medicineImage);
+                    medicineImageName = generalFileService.saveImageFiles(medicineImage);
                 } catch (Exception e) {
                     throw new CustomErrorException(ErrorType.InternalServerError);
                 }
@@ -206,7 +204,7 @@ public class MedicineService {
 
         if (medicineImage != null) {
 
-            if (!(fileService.checkImageFileExtension(medicineImage))){
+            if (!(generalFileService.checkImageFileExtension(medicineImage))){
                 throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
             }
 
@@ -218,8 +216,8 @@ public class MedicineService {
 
                 } else {
                     String originalMedicineImageName = foundMedicine.getMedicineImageName();
-                    foundMedicine.setMedicineImageName(fileService.saveImageFiles(medicineImage));
-                    fileService.deleteImageFile(originalMedicineImageName);
+                    foundMedicine.setMedicineImageName(generalFileService.saveImageFiles(medicineImage));
+                    generalFileService.deleteImageFile(originalMedicineImageName);
                 }
             } catch (Exception e) {
                 throw new CustomErrorException(ErrorType.InternalServerError);
@@ -250,7 +248,7 @@ public class MedicineService {
             if (profileChecker.checkActiveProfile("prod")) {
                 s3FileService.deleteFileFromS3(originalMedicineImageName, FileType.IMAGE);
             } else {
-                fileService.deleteImageFile(originalMedicineImageName);
+                generalFileService.deleteImageFile(originalMedicineImageName);
             }
         } catch (Exception e) {
             throw new CustomErrorException(ErrorType.InternalServerError);

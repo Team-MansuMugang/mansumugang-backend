@@ -4,9 +4,7 @@ import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
 import lombok.extern.slf4j.Slf4j;
-import org.mansumugang.mansumugang_service.constant.ErrorType;
 import org.mansumugang.mansumugang_service.constant.InternalErrorType;
-import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.exception.InternalErrorException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,7 +22,7 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-public class FileService {
+public class GeneralFileService {
     @Value("${file.upload.image.path}")
     private String imageUploadPath;
 
@@ -141,7 +139,7 @@ public class FileService {
             }
     }
 
-    public static String generateUniqueFileName(String originalFileName) {
+    private static String generateUniqueFileName(String originalFileName) {
         // 파일 확장자 추출
         String fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
 
