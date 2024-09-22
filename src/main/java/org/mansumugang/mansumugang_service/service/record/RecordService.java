@@ -6,16 +6,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
 import org.mansumugang.mansumugang_service.constant.FileType;
+import org.mansumugang.mansumugang_service.constant.InternalErrorType;
 import org.mansumugang.mansumugang_service.domain.record.Record;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
+import org.mansumugang.mansumugang_service.dto.file.AudioFileSaveDto;
 import org.mansumugang.mansumugang_service.dto.record.*;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
+import org.mansumugang.mansumugang_service.exception.InternalErrorException;
 import org.mansumugang.mansumugang_service.repository.PatientRepository;
 import org.mansumugang.mansumugang_service.repository.RecordRepository;
-import org.mansumugang.mansumugang_service.service.fileService.GeneralFileService;
-import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
+import org.mansumugang.mansumugang_service.service.file.FileService;
+import org.mansumugang.mansumugang_service.service.file.GeneralFileService;
+import org.mansumugang.mansumugang_service.service.file.S3FileService;
 import org.mansumugang.mansumugang_service.utils.ProfileChecker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -35,9 +39,8 @@ public class RecordService {
     private final RecordRepository recordRepository;
     private final PatientRepository patientRepository;
 
-    private final GeneralFileService generalFileService;
-    private final S3FileService s3FileService;
-    private final ProfileChecker profileChecker;
+    private final FileService fileService;
+
     private final OpenAIClientService openAIClientService;
 
     @Value("${file.upload.audio.api}")
@@ -48,7 +51,7 @@ public class RecordService {
     private String imageApiUrl;
 
     @Transactional
-    public RecordSave.Dto saveRecord(User user, Transcription.Request request){
+    public RecordSave.Dto saveRecord(User user, Transcription.Request request) {
 
         // 1. 음성녹음을 저장하려는 유저가 환자인지 검증
         Patient validPatient = validatePatient(user);
@@ -60,35 +63,47 @@ public class RecordService {
 
         MultipartFile recordFile = request.getFile();
 
-        if (recordFile == null){
+        if (recordFile == null) {
             throw new CustomErrorException(ErrorType.RecordFileNotFound);
         }
-            try{
+        try {
+            AudioFileSaveDto audioFileSaveDto = fileService.saveAudioFile(recordFile);
 
-                // 음성파일 내용 텍스트로 변환 -> open AI 의 Whisper 사용.
-                WhisperTranscription.Response transcription = openAIClientService.createTranscription(request);
-                String transcriptionText = transcription.getText();
+            // 음성파일 내용 텍스트로 변환 -> open AI 의 Whisper 사용.
+            WhisperTranscription.Response transcription = openAIClientService.createTranscription(request);
+            String transcriptionText = transcription.getText();
 
-                String recordFileName = generalFileService.saveRecordFile(recordFile);
+            Record newRecord = recordRepository.save(
+                    Record.of(
+                            validPatient,
+                            audioFileSaveDto.getFileName(),
+                            transcriptionText,
+                            audioFileSaveDto.getAudioDuration()));
 
-                Long recordDuration = generalFileService.getRecordDuration(recordFileName);
+            return RecordSave.Dto.getInfo(newRecord);
+        } catch (InternalErrorException e) {
+            if (e.getInternalErrorType() == InternalErrorType.RecordMetaDataError) {
+                throw new CustomErrorException(ErrorType.NotValidAudioFileError);
+            }
 
-                if(profileChecker.checkActiveProfile("prod")) {
-                    generalFileService.deleteRecordFile(recordFileName);
-                    recordFileName = s3FileService.saveRecordFile(recordFile);
-                }
+            if (e.getInternalErrorType() == InternalErrorType.EmptyFileError) {
+                throw new CustomErrorException(ErrorType.NoAudioFileError);
+            }
 
-                Record newRecord = recordRepository.save(Record.of(validPatient, recordFileName,  transcriptionText, recordDuration));
+            if (e.getInternalErrorType() == InternalErrorType.InvalidFileExtension) {
+                throw new CustomErrorException(ErrorType.NoAudioFileError);
+            }
 
-                return RecordSave.Dto.getInfo(newRecord);
-
-
-            } catch (Exception e) {
+            if (e.getInternalErrorType() == InternalErrorType.FileSaveError
+                    || e.getInternalErrorType() == InternalErrorType.FileDeleteError) {
                 throw new CustomErrorException(ErrorType.InternalServerError);
             }
+        }
+
+        throw new CustomErrorException(ErrorType.InternalServerError);
     }
 
-    public RecordInquiry.Dto getAllPatientsRecords(User user){
+    public RecordInquiry.Dto getAllPatientsRecords(User user) {
         log.info("RecordService -> getAllRecords 메서드 호출");
 
         // 1. 음성을 조회하려는 유저가 보호자 객체인지 검증
@@ -105,7 +120,7 @@ public class RecordService {
 
     }
 
-    public RecordInquiry.Dto getAllRecordsByPatientId(User user, Long patientId){
+    public RecordInquiry.Dto getAllRecordsByPatientId(User user, Long patientId) {
 
         // 1. 음성을 조회하려는 유저가 보호자 객체인지 검증
         Protector validProtector = validateProtector(user);
@@ -123,7 +138,7 @@ public class RecordService {
 
     }
 
-    public RecordDelete.Dto deleteRecord(User user, Long recordId){
+    public RecordDelete.Dto deleteRecord(User user, Long recordId) {
 
         // 1. 음성 녹음 파일을 제거하려는 객체가 보호자 객체가 맞는지 검증
         Protector validProtector = validateProtector(user);
@@ -140,21 +155,16 @@ public class RecordService {
 
         // 5. 서버에서 녹음파일 삭제 진행
         try {
-            if(profileChecker.checkActiveProfile("prod")) {
-                s3FileService.deleteFileFromS3(foundRecordFileName, FileType.AUDIO);
-            }else{
-                generalFileService.deleteRecordFile(foundRecordFileName);
-            }
+            fileService.deleteAudioFile(foundRecordFileName);
         } catch (Exception e) {
             throw new CustomErrorException(ErrorType.InternalServerError);
         }
 
 
-
         return RecordDelete.Dto.fromEntity(foundRecordFileName);
     }
 
-    public RecordSaveLimit.Dto getRecordSaveLimit(User user){
+    public RecordSaveLimit.Dto getRecordSaveLimit(User user) {
 
         // 1. 환자 객체 검증
         Patient validPatient = validatePatient(user);
@@ -221,7 +231,7 @@ public class RecordService {
     private void checkUserIsProtectorOfPatient(Protector protector, Patient patient) {
 
         log.info("유저가 환자의 보호자인지 검증 시작");
-        if(!patient.getProtector().getUsername().equals(protector.getUsername())) {
+        if (!patient.getProtector().getUsername().equals(protector.getUsername())) {
             throw new CustomErrorException(ErrorType.AccessDeniedError);
         }
         log.info("유저가 환자의 보호자인지 검증 완료");
@@ -229,7 +239,7 @@ public class RecordService {
 
     private List<Patient> getPatientsByProtectorId(Protector validProtector) {
         List<Patient> foundPatients = patientRepository.findByProtector_id(validProtector.getId());
-        if (foundPatients == null || foundPatients.isEmpty()){
+        if (foundPatients == null || foundPatients.isEmpty()) {
             throw new CustomErrorException(ErrorType.UserNotFoundError);
         }
         return foundPatients;
@@ -241,7 +251,7 @@ public class RecordService {
 
         List<Record> foundAllRecords = recordRepository.findAllByPatientIdsOrderByCreatedAtDesc(foundPatientIds);
 
-        if(foundAllRecords.isEmpty()){
+        if (foundAllRecords.isEmpty()) {
             throw new CustomErrorException(ErrorType.UserRecordInfoNotFoundError);
         }
 
@@ -251,11 +261,11 @@ public class RecordService {
     private List<Record> getOnePatientRecords(Long patientId) {
         List<Record> foundAllRecords = recordRepository.findByPatientIdOrderByCreatedAtDesc(patientId);
 
-        if (foundAllRecords.isEmpty()){
+        if (foundAllRecords.isEmpty()) {
             throw new CustomErrorException(ErrorType.UserRecordInfoNotFoundError);
         }
 
-        return  foundAllRecords;
+        return foundAllRecords;
     }
 
     private void checkRecordSaveLimit(Patient validPatient) {
@@ -263,11 +273,11 @@ public class RecordService {
         LocalDateTime startOfDay = today.atStartOfDay(); // 자정 (00:00)
         LocalDateTime endOfDay = today.atTime(LocalTime.MAX); // 23:59:59
 
-        int todayRecordCount = recordRepository.countByPatientIdAndCreatedAtBetween(validPatient.getId(), startOfDay, endOfDay) +1;
+        int todayRecordCount = recordRepository.countByPatientIdAndCreatedAtBetween(validPatient.getId(), startOfDay, endOfDay) + 1;
 
         log.info("횟수 : {} ", todayRecordCount);
 
-        if (todayRecordCount > 10){
+        if (todayRecordCount > 10) {
             throw new CustomErrorException(ErrorType.RecordLimitExceeded);
         }
     }

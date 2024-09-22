@@ -3,23 +3,21 @@ package org.mansumugang.mansumugang_service.service.medicine;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
-import org.mansumugang.mansumugang_service.constant.FileType;
+import org.mansumugang.mansumugang_service.constant.InternalErrorType;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicinePrescription;
 import org.mansumugang.mansumugang_service.domain.user.Patient;
 import org.mansumugang.mansumugang_service.domain.user.Protector;
 import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.medicine.MedicinePrescriptionListGet;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
+import org.mansumugang.mansumugang_service.exception.InternalErrorException;
 import org.mansumugang.mansumugang_service.repository.MedicinePrescriptionRepository;
-import org.mansumugang.mansumugang_service.service.fileService.GeneralFileService;
-import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
+import org.mansumugang.mansumugang_service.service.file.FileService;
 import org.mansumugang.mansumugang_service.service.user.UserCommonService;
-import org.mansumugang.mansumugang_service.utils.ProfileChecker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -31,11 +29,8 @@ public class MedicinePrescriptionService {
 
     private final MedicinePrescriptionRepository medicinePrescriptionRepository;
 
-    private final ProfileChecker profileChecker;
-
     private final UserCommonService userCommonService;
-    private final S3FileService s3FileService;
-    private final GeneralFileService generalFileService;
+    private final FileService fileService;
 
     public MedicinePrescriptionListGet.Dto getMedicinePrescriptions(User user, Long patientId) {
         Protector validatedProtector = userCommonService.findProtector(user);
@@ -50,31 +45,25 @@ public class MedicinePrescriptionService {
     public void saveMedicinePrescription(User user, MultipartFile medicinePrescriptionImage) {
         Patient validatedPatient = userCommonService.findPatient(user);
 
-        String medicinePrescriptionImageName = null;
         if (medicinePrescriptionImage != null) {
-
-            // 이미지 확장자가 jpeg, jpg, png가 아니면.
-            if (!(generalFileService.checkImageFileExtension(medicinePrescriptionImage))){
-                throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
-            }
-
-
-            if (profileChecker.checkActiveProfile("prod")) {
-                try {
-                    medicinePrescriptionImageName = s3FileService.saveImageFile(medicinePrescriptionImage);
-                } catch (IOException e) {
-                    throw new CustomErrorException(ErrorType.InternalServerError);
+            try {
+                String medicinePrescriptionImageName = fileService.saveImageFile(medicinePrescriptionImage);
+                medicinePrescriptionRepository.save(MedicinePrescription.of(medicinePrescriptionImageName, validatedPatient));
+            } catch (InternalErrorException e) {
+                if(e.getInternalErrorType() == InternalErrorType.EmptyFileError) {
+                    throw new CustomErrorException(ErrorType.NoImageFileError);
                 }
-            } else {
-                try {
-                    medicinePrescriptionImageName = generalFileService.saveImageFiles(medicinePrescriptionImage);
-                } catch (Exception e) {
+
+                if(e.getInternalErrorType() == InternalErrorType.InvalidFileExtension) {
+                    throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
+                }
+
+                if(e.getInternalErrorType() == InternalErrorType.FileSaveError) {
                     throw new CustomErrorException(ErrorType.InternalServerError);
                 }
             }
         }
 
-        medicinePrescriptionRepository.save(MedicinePrescription.of(medicinePrescriptionImageName, validatedPatient));
     }
 
     public void deleteMedicinePrescription(User user, Long medicinePrescriptionId) {
@@ -89,11 +78,7 @@ public class MedicinePrescriptionService {
         medicinePrescriptionRepository.delete(foundMedicinePrescription);
 
         try {
-            if (profileChecker.checkActiveProfile("prod")) {
-                s3FileService.deleteFileFromS3(originalMedicinePrescriptionImageName, FileType.IMAGE);
-            } else {
-                generalFileService.deleteImageFile(originalMedicinePrescriptionImageName);
-            }
+            fileService.deleteImageFile(originalMedicinePrescriptionImageName);
         } catch (Exception e) {
             throw new CustomErrorException(ErrorType.InternalServerError);
         }

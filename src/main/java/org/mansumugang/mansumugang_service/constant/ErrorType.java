@@ -111,9 +111,20 @@ public enum ErrorType {
 
     // ----- Image ------
     NoImageFileError(
-            HttpStatus.BAD_REQUEST, "유효하지 않은 이미지 파일입니다."
+            HttpStatus.BAD_REQUEST, "이미지 파일이 필요합니다."
     ),
     InvalidImageFileExtension(
+            HttpStatus.BAD_REQUEST, "지원하지 않는 이미지 확장자 입니다."
+    ),
+
+    // ----- Audio ------
+    NoAudioFileError(
+            HttpStatus.BAD_REQUEST, "오디오 파일이 필요합니다."
+    ),
+    NotValidAudioFileError(
+            HttpStatus.BAD_REQUEST, "유효하지 않은 오디오 파일입니다."
+    ),
+    InvalidAudioFileExtension(
             HttpStatus.BAD_REQUEST, "지원하지 않는 이미지 확장자 입니다."
     ),
 
