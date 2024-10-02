@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mansumugang.mansumugang_service.constant.ErrorType;
 import org.mansumugang.mansumugang_service.constant.FileType;
+import org.mansumugang.mansumugang_service.constant.InternalErrorType;
 import org.mansumugang.mansumugang_service.constant.MedicineRecordStatusType;
 import org.mansumugang.mansumugang_service.domain.medicine.Medicine;
 import org.mansumugang.mansumugang_service.domain.medicine.MedicineInTakeTime;
@@ -16,23 +17,19 @@ import org.mansumugang.mansumugang_service.domain.user.User;
 import org.mansumugang.mansumugang_service.dto.medicine.*;
 import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.exception.CustomNotValidErrorException;
+import org.mansumugang.mansumugang_service.exception.InternalErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
-import org.mansumugang.mansumugang_service.service.fileService.FileService;
-import org.mansumugang.mansumugang_service.service.fileService.S3FileService;
+import org.mansumugang.mansumugang_service.service.file.FileService;
 import org.mansumugang.mansumugang_service.service.user.UserCommonService;
 import org.mansumugang.mansumugang_service.utils.DateParser;
-import org.mansumugang.mansumugang_service.utils.ProfileChecker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,21 +38,16 @@ import java.util.stream.Collectors;
 public class MedicineService {
     @Value("${file.upload.image.api}")
     private String imageApiUrl;
-
     private final DateParser dateParser;
-    private final ProfileChecker profileChecker;
+
+    private final FileService fileService;
+    private final UserCommonService userCommonService;
 
     private final MedicineRepository medicineRepository;
     private final MedicineIntakeDayRepository medicineIntakeDayRepository;
     private final MedicineIntakeTimeRepository medicineIntakeTimeRepository;
     private final MedicineIntakeRecordRepository medicineIntakeRecordRepository;
 
-
-
-    private final FileService fileService;
-    private final S3FileService s3FileService;
-
-    private final UserCommonService userCommonService;
 
     // 보호자가 환자에 대한 약 상세정보 조회
     public MedicineDetailGet.Dto getMedicineById(User user, Long medicineId) {
@@ -84,34 +76,29 @@ public class MedicineService {
         }
         validateMedicineIntakeTimes(requestDto.getMedicineIntakeTimes());
 
-        String medicineImageName = null;
         if (medicineImage != null) {
+            try {
+                String medicineImageName = fileService.saveImageFile(medicineImage);
+                Medicine newMedicine = medicineRepository.save(Medicine.of(foundPatient, requestDto, parsedMedicineIntakeStopDay, medicineImageName));
+                List<MedicineIntakeDay> newMedicineIntakeDays = saveMedicineIntakeDays(newMedicine, foundPatient, requestDto.getMedicineIntakeDays());
+                List<MedicineInTakeTime> newMedicineInTakeTimes = saveMedicineIntakeTimes(newMedicine, requestDto.getMedicineIntakeTimes());
 
-            if (!(fileService.checkImageFileExtension(medicineImage))){
-                throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
-            }
-
-            if (profileChecker.checkActiveProfile("prod")) {
-                try {
-                    medicineImageName = s3FileService.saveImageFile(medicineImage);
-                } catch (IOException e) {
-                    throw new CustomErrorException(ErrorType.InternalServerError);
+                savePassedMedicineRecord(newMedicine, newMedicineIntakeDays, newMedicineInTakeTimes);
+            } catch (InternalErrorException e) {
+                if(e.getInternalErrorType() == InternalErrorType.EmptyFileError) {
+                    throw new CustomErrorException(ErrorType.NoImageFileError);
                 }
-            } else {
-                try {
-                    medicineImageName = fileService.saveImageFiles(medicineImage);
-                } catch (Exception e) {
+
+                if(e.getInternalErrorType() == InternalErrorType.InvalidFileExtension) {
+                    throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
+                }
+
+                if(e.getInternalErrorType() == InternalErrorType.FileSaveError) {
                     throw new CustomErrorException(ErrorType.InternalServerError);
                 }
             }
 
         }
-
-        Medicine newMedicine = medicineRepository.save(Medicine.of(foundPatient, requestDto, parsedMedicineIntakeStopDay, medicineImageName));
-        List<MedicineIntakeDay> newMedicineIntakeDays = saveMedicineIntakeDays(newMedicine, foundPatient, requestDto.getMedicineIntakeDays());
-        List<MedicineInTakeTime> newMedicineInTakeTimes = saveMedicineIntakeTimes(newMedicine, requestDto.getMedicineIntakeTimes());
-
-        savePassedMedicineRecord(newMedicine, newMedicineIntakeDays, newMedicineInTakeTimes);
     }
 
     public void updateMedicine(User user, Long medicineId, MultipartFile medicineImage, MedicineUpdate.Request requestDto) {
@@ -205,24 +192,22 @@ public class MedicineService {
         }
 
         if (medicineImage != null) {
-
-            if (!(fileService.checkImageFileExtension(medicineImage))){
-                throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
-            }
-
             try {
-                if (profileChecker.checkActiveProfile("prod")) {
-                    String originalMedicineImageName = foundMedicine.getMedicineImageName();
-                    foundMedicine.setMedicineImageName(s3FileService.saveImageFile(medicineImage));
-                    s3FileService.deleteFileFromS3(originalMedicineImageName, FileType.IMAGE);
-
-                } else {
-                    String originalMedicineImageName = foundMedicine.getMedicineImageName();
-                    foundMedicine.setMedicineImageName(fileService.saveImageFiles(medicineImage));
-                    fileService.deleteImageFile(originalMedicineImageName);
+                String originalMedicineImageName = foundMedicine.getMedicineImageName();
+                foundMedicine.setMedicineImageName(fileService.saveImageFile(medicineImage));
+                fileService.deleteImageFile(originalMedicineImageName);
+            } catch (InternalErrorException e) {
+                if(e.getInternalErrorType() == InternalErrorType.EmptyFileError) {
+                    throw new CustomErrorException(ErrorType.NoImageFileError);
                 }
-            } catch (Exception e) {
-                throw new CustomErrorException(ErrorType.InternalServerError);
+
+                if(e.getInternalErrorType() == InternalErrorType.InvalidFileExtension) {
+                    throw new CustomErrorException(ErrorType.InvalidImageFileExtension);
+                }
+
+                if(e.getInternalErrorType() == InternalErrorType.FileSaveError) {
+                    throw new CustomErrorException(ErrorType.InternalServerError);
+                }
             }
         }
 
@@ -247,11 +232,7 @@ public class MedicineService {
 
 
         try {
-            if (profileChecker.checkActiveProfile("prod")) {
-                s3FileService.deleteFileFromS3(originalMedicineImageName, FileType.IMAGE);
-            } else {
-                fileService.deleteImageFile(originalMedicineImageName);
-            }
+            fileService.deleteImageFile(originalMedicineImageName);
         } catch (Exception e) {
             throw new CustomErrorException(ErrorType.InternalServerError);
         }
