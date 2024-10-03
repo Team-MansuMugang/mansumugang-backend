@@ -19,23 +19,23 @@ public class CommentInquiry {
     @AllArgsConstructor
     @Builder
     public static class CommentElement{
-        private Long commentId; // 댓글 고유번호
+        private Long commentId;
 
-        private Long postId; // 게시물 고유번호
+        private Long postId;
 
-        private String profileImageName; // 댓글 작성자의 프로필 파일 이미지 이름.
+        private String profileImageName;
 
-        private String creator; // 댓글 작성자(닉네임)
+        private String creator;
 
-        private String content; // 댓글 내용
+        private String content;
 
-        private LocalDateTime createdAt; // 댓글 생성시간
+        private LocalDateTime createdAt;
 
-        private LocalDateTime updatedAt; // 댓글 업데이트 시간
+        private LocalDateTime updatedAt;
 
-        private LocalDateTime deletedAt; // 댓글 삭제시간
+        private LocalDateTime deletedAt;
 
-        // 프로필 파일이 설정되었고, deleteAt이 null 이 아니면 프로필 이미지 이름 노출, 프로필 이미지가 null 이고 deletedAt이 null 이면 null 로 설정
+
         public static CommentElement fromEntity(Comment comment) {
             return CommentElement.builder()
                     .commentId(comment.getId())

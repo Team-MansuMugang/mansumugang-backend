@@ -1,5 +1,6 @@
 package org.mansumugang.mansumugang_service.constant;
 
+import com.google.api.Http;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -42,8 +43,14 @@ public enum ErrorType {
     UserNotFoundError(
             HttpStatus.NOT_FOUND, "유저 정보를 찾을 수 없습니다."
     ),
+    UserNotFoundForSignupError(
+            HttpStatus.NOT_FOUND, "등록할 보호자 유저의 정보를 찾을 수 없습니다."
+    ),
     UserTypeDismatchError(
-            HttpStatus.NOT_FOUND, "해당 유저는 보호자가 아닌 환자입니다."
+            HttpStatus.BAD_REQUEST, "해당 유저는 보호자가 아닌 환자입니다."
+    ),
+    UserTypeDismatchForSignupError(
+            HttpStatus.BAD_REQUEST, "등록할 보호자는 보호자가 아닌 환자입니다."
     ),
     ProtectorHasActivePatientsError(
             HttpStatus.CONFLICT, "모든 환자가 탈퇴 되지 않았습니다."

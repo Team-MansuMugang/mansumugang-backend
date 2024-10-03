@@ -43,15 +43,12 @@ public class JwtTokenProvider {
     private Long refreshTokenExpirationPeriod; // RefreshToken 유효기간
 
 
-    // 생성자로 key, userRepository 초기화
     public JwtTokenProvider(@Value("${jwt.secret}") String secretKey, UserRepository userRepository) {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.userRepository = userRepository;
     }
 
-    // 유저 정보 -> AccessToken, RefreshToken 생성 메서드
-    // AccessToken 생성
     public String generateAccessToken(Authentication authentication){
         Claims claims = Jwts.claims().setSubject(authentication.getName());
         Date now = new Date();
@@ -65,7 +62,6 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    // RefreshToken 생성
     public String generateRefreshToken(){
         Date now = new Date();
 
@@ -77,29 +73,24 @@ public class JwtTokenProvider {
     }
 
 
-    // JwtToken 복호화 -> 토큰에 있는 정보를 꺼내는 메서드
     public Authentication getAuthentication(String accessToken){
-        // 토큰 복호화
+
         Claims claims = parseClaims(accessToken);
 
-        // 복호화한 클레임에 사용자 id 의 값이 null 이라면 에러발생
         if(claims.get("sub")==null){
             throw new CustomErrorException(ErrorType.NotValidAccessTokenError);
         }
 
-        // AccessToken 의 sub 존재 O
         String username = claims.get("sub").toString(); // 복호화된 accessToken 에서 사용자 id 추출
         User user = userRepository.findByUsername(username).orElseThrow(()->new CustomErrorException(ErrorType.UserNotFoundError));
 
         return new UsernamePasswordAuthenticationToken(user, "", user.getAuthorities());
     }
 
-    // 토큰을 검증하는 메서드 : access / refresh
     public void validateToken(TokenType tokenType, String token){
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
 
-            // 잘못된 토큰 형식이나 지원되지 않는 토큰 형식, 또는 기타 보안 예외가 발생한 경우.
         } catch (SecurityException | MalformedJwtException | UnsupportedJwtException | IllegalArgumentException e) {
             if (tokenType == TokenType.ACCESS_TOKEN) throw new CustomErrorException(ErrorType.NotValidAccessTokenError);
             if (tokenType == TokenType.REFRESH_TOKEN) throw new CustomErrorException(ErrorType.NotValidRefreshTokenError);
@@ -111,7 +102,6 @@ public class JwtTokenProvider {
         }
     }
 
-    // 토큰이 만료되었는지 확인하는 메서드
     public boolean isTokenExpired(TokenType tokenType, String token){
         try{
             validateToken(tokenType, token);
@@ -125,7 +115,6 @@ public class JwtTokenProvider {
         return false;
     }
 
-    // 토큰을 문자열에서 추출
     public String resolveToken(String value){
 
         // 문자열이 비어있지 않고, Bearer 로 시작한다면 Bearer 을 제외한 나머지 문자열 반환
@@ -136,7 +125,6 @@ public class JwtTokenProvider {
         return null;
     }
 
-    // Access/Refresh 토큰을 응답으로 반환하는 역할
     public void responseAccessAndRefreshToken(HttpServletResponse response, String accessToken, String refreshToken, String userType){
 
         // 응답 속성 설정
@@ -153,7 +141,6 @@ public class JwtTokenProvider {
 
     }
 
-    // 토큰 재발행 메서드
     public String reIssueToken(String accessToken){
         Authentication authentication = getAuthentication(accessToken);
         Claims claims = Jwts.claims().setSubject(authentication.getName());

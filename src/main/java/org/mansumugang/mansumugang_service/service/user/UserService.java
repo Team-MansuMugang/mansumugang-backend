@@ -58,13 +58,12 @@ public class UserService {
     private final PostImageRepository postImageRepository;
 
     private final FileService fileService;
+    private final UserCommonService userCommonService;
 
     public PatientInquiry.Dto getPatientsByProtector(User user) {
 
-        // 1. AuthenticationPrincipal 로 넘겨받은 user 가 보호자 객체인지 검증
-        Protector validProtector = validateProtector(user);
+        Protector validProtector = userCommonService.findProtector(user);
 
-        // 2. 검증된 보호자 객체로 보호자의 환자 찾기.
         List<Patient> foundPatients = getAllPatientsByProtectorId(validProtector);
 
         return PatientInquiry.Dto.fromEntity(foundPatients, imageApiUrl);
@@ -73,8 +72,7 @@ public class UserService {
 
     public ProtectorInfoInquiry.Dto getProtectorOwnInfo(User user) {
 
-        // 1. AuthenticationPrincipal 로 넘겨받은 user 가 보호자 객체인지 검증
-        Protector validProtector = validateProtector(user);
+        Protector validProtector = userCommonService.findProtector(user);
 
         return ProtectorInfoInquiry.Dto.fromEntity(validProtector, imageApiUrl);
 
@@ -82,8 +80,7 @@ public class UserService {
 
     public PatientInfoInquiry.Dto getPatientOwnInfo(User user) {
 
-        // 1. AuthenticationPrincipal 로 넘겨받은 user 가 보호자 객체인지 검증
-        Patient validPatient = validatePatient(user);
+        Patient validPatient = userCommonService.findPatient(user);
 
         return PatientInfoInquiry.Dto.fromEntity(validPatient, imageApiUrl);
 
@@ -91,8 +88,7 @@ public class UserService {
 
     public FamilyMemberInquiry.Dto getFamilyMember(User user) {
 
-        // 1. AuthenticationPrincipal 로 넘격받은 user 가 환자 객체인지 검증
-        Patient validPatient = validatePatient(user);
+        Patient validPatient = userCommonService.findPatient(user);
 
         Protector foundProtector = protectorRepository.findById(validPatient.getProtector().getId())
                 .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
@@ -110,18 +106,15 @@ public class UserService {
     @Transactional
     public ProtectorInfoUpdate.Dto updateProtectorInfo(User user, Long protectorId, ProtectorInfoUpdate.Request request) {
 
-        // 1.User 가 보호자 객체인지 검증
-        Protector validProtector = validateProtector(user);
+        Protector validProtector = userCommonService.findProtector(user);
 
         Protector foundProtector = protectorRepository.findById(protectorId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
 
-        // 2. 검증된 보호자 객체의 id와 경로변수의 protectorId가 동일한지 검증. => 아니면 예외 처리
         if (!validProtector.getId().equals(foundProtector.getId())) {
             throw new CustomErrorException(ErrorType.AccessDeniedError);
         }
 
-        // 3. 변경하려는 닉네임이 기존 본인의 닉네임과 동일하지 않거나 다른 닉네임이 존재한다면 => 예외 처리.
         String newNickname = request.getNickname();
 
         if (!validProtector.getNickname().equals(newNickname)) {
@@ -130,7 +123,6 @@ public class UserService {
             }
         }
 
-        // 4. 유저 정보 업데이트 시작.
         foundProtector.update(request, newNickname);
 
         return ProtectorInfoUpdate.Dto.fromEntity(validProtector);
@@ -140,19 +132,15 @@ public class UserService {
     @Transactional
     public PatientInfoUpdate.Dto updatePatientInfo(User user, Long patientId, PatientInfoUpdate.Request request) {
 
-        // 1. User 가 환자 객체인지 검증
-        Patient validPatient = validatePatient(user);
+        Patient validPatient = userCommonService.findPatient(user);
 
-        // 2. 경로변수로 받은 환자 객체 조회
         Patient foundPatient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
 
-        // 3. validPatent와 foundPatent가 동일한 환자이어야함.
         if (!validPatient.getId().equals(foundPatient.getId())) {
             throw new CustomErrorException(ErrorType.AccessDeniedError);
         }
 
-        // 4. 유저 정보 업데이트 시작.
         foundPatient.update(request);
 
         return PatientInfoUpdate.Dto.fromEntity(validPatient);
@@ -162,10 +150,8 @@ public class UserService {
     @Transactional
     public PatientInfoDelete.Dto deletePatientInfo(User user, Long patientId) {
 
-        // 1. 환자 객체 검증
-        Patient validPatient = validatePatient(user);
+        Patient validPatient = userCommonService.findPatient(user);
 
-        // 2. 회원 탈퇴를 진행할 유저와 경로변수로 찾은 환자 정보가 같은지 검증
         Patient foundPatient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
 
@@ -177,8 +163,6 @@ public class UserService {
             throw new CustomErrorException(ErrorType.AccessDeniedError);
         }
 
-        // 3. 약 이미지, 처방전, 음성녹음 삭제
-        // 3.1. 약이미지 이름 찾기 -> 약이미지 파일 삭제
         List<Medicine> foundMedicines = medicineRepository.findAllByPatientId(validPatient.getId());
         for (Medicine foundMedicine : foundMedicines) {
 
@@ -192,7 +176,6 @@ public class UserService {
             }
         }
 
-        // 3.2 처방전 이미지 이름 찾기 -> 이미지 파일 삭제
         List<MedicinePrescription> foundPrescriptions = medicinePrescriptionRepository.findAllByPatientId(validPatient.getId());
         for (MedicinePrescription foundPrescription : foundPrescriptions) {
 
@@ -206,7 +189,6 @@ public class UserService {
             }
         }
 
-        // 3.3 음성녹음 파일 이름 찾기 -> 음성녹음 파일 삭제
         List<Record> foundRecords = recordRepository.findAllByPatientId(validPatient.getId());
         for (Record foundRecord : foundRecords) {
 
@@ -219,7 +201,6 @@ public class UserService {
 
         }
 
-        // 4. 회원 정보와 관련된 모든 정보 삭제 진행
         patientRepository.delete(foundPatient);
 
         return PatientInfoDelete.Dto.fromEntity(username, name, usertype);
@@ -229,10 +210,8 @@ public class UserService {
     @Transactional
     public ProtectorInfoDelete.Dto deleteProtectorInfo(User user, Long protectorId) {
 
-        // 1. user가 보호자 객체인지 검증
-        Protector validProtector = validateProtector(user);
+        Protector validProtector = userCommonService.findProtector(user);
 
-        // 2. 경로변수로 찾은 보호자 정보와 user의 보호자 정보가 일치하는지 검증
         Protector foundProtector = protectorRepository.findById(protectorId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
 
@@ -244,13 +223,11 @@ public class UserService {
             throw new CustomErrorException(ErrorType.AccessDeniedError);
         }
 
-        // 3. 보호자의 환자가 전부 탈퇴가 진행되지 않았다면 보호자는 탈퇴 불가.
         List<Patient> foundPatients = patientRepository.findByProtector_id(protectorId);
         if (!foundPatients.isEmpty()) {
             throw new CustomErrorException(ErrorType.ProtectorHasActivePatientsError);
         }
 
-        // 4. 전부 탈퇴 되었다면 삭제 진행. => 보호자는 게시물, 게시물 이미지, 댓글, 대댓글 등등 삭제
         List<Post> foundPosts = postRepository.findAllByProtectorId(validProtector.getId());
         for (Post foundPost : foundPosts) {
 
@@ -269,7 +246,6 @@ public class UserService {
             }
         }
 
-        // 5. 보호자 정보 및 관련 정보들 DB에서 삭제
         protectorRepository.delete(foundProtector);
 
         return ProtectorInfoDelete.Dto.fromEntity(username, name, usertype);
@@ -277,50 +253,43 @@ public class UserService {
 
     @Transactional
     public void updatePatientProfileImage(User user, MultipartFile userProfileImage) {
-        Patient validatedPatient = validatePatient(user);
+        Patient validatedPatient =  userCommonService.findPatient(user);
 
         Patient foundPatient = patientRepository.findById(validatedPatient.getId())
                 .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
 
-        // 새 프로필 이미지 저장
         String newUserProfileImageName = saveProfileImage(userProfileImage);
 
-        // 프로필 이미지가 존재할 경우 삭제
         if (foundPatient.getProfileImageName() != null) {
             deleteProfileImage(foundPatient.getProfileImageName());
         }
 
-        // 데이터베이스 내 프로필 이미지 이름 변경
         foundPatient.setProfileImageName(newUserProfileImageName);
     }
 
     @Transactional
     public void updateProtectorProfileImage(User user, MultipartFile userProfileImage) {
-        Protector validatedProtector = validateProtector(user);
+        Protector validatedProtector = userCommonService.findProtector(user);
 
         Protector foundProtector = protectorRepository.findById(validatedProtector.getId())
                 .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
 
-        // 새 프로필 이미지 저장
         String newUserProfileImageName = saveProfileImage(userProfileImage);
 
-        // 프로필 이미지가 존재할 경우 삭제
         if (foundProtector.getProfileImageName() != null) {
             deleteProfileImage(foundProtector.getProfileImageName());
         }
 
-        // 데이터베이스 내 프로필 이미지 이름 변경
         foundProtector.setProfileImageName(newUserProfileImageName);
     }
 
     @Transactional
     public void deleteProtectorProfileImage(User user) {
-        Protector validatedProtector = validateProtector(user);
+        Protector validatedProtector = userCommonService.findProtector(user);
 
         Protector foundProtector = protectorRepository.findById(validatedProtector.getId())
                 .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
 
-        // 프로필 이미지가 존재할 경우 삭제
         if (foundProtector.getProfileImageName() != null) {
             deleteProfileImage(foundProtector.getProfileImageName());
             foundProtector.setProfileImageName(null);
@@ -332,12 +301,11 @@ public class UserService {
 
     @Transactional
     public void deletePatientProfileImage(User user) {
-        Patient validatedPatient = validatePatient(user);
+        Patient validatedPatient =  userCommonService.findPatient(user);
 
         Patient foundPatient = patientRepository.findById(validatedPatient.getId())
                 .orElseThrow(() -> new CustomErrorException(ErrorType.UserNotFoundError));
 
-        // 프로필 이미지가 존재할 경우 삭제
         if (foundPatient.getProfileImageName() != null) {
             deleteProfileImage(foundPatient.getProfileImageName());
             foundPatient.setProfileImageName(null);
@@ -372,31 +340,6 @@ public class UserService {
         } catch (Exception e) {
             throw new CustomErrorException(ErrorType.InternalServerError);
         }
-    }
-
-    private Protector validateProtector(User user) {
-
-        if (user == null) {
-            throw new CustomErrorException(ErrorType.UserNotFoundError);
-        }
-
-        if (user instanceof Protector) {
-            return (Protector) user;
-        }
-
-        throw new CustomErrorException(ErrorType.AccessDeniedError);
-    }
-
-    private Patient validatePatient(User user) {
-        if (user == null) {
-            throw new CustomErrorException(ErrorType.UserNotFoundError);
-        }
-
-        if (user instanceof Patient) {
-            return (Patient) user;
-        }
-
-        throw new CustomErrorException(ErrorType.AccessDeniedError);
     }
 
 

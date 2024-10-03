@@ -24,7 +24,6 @@ public class LoginFailureHandler extends SimpleUrlAuthenticationFailureHandler {
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException {
 
-        log.info("LoginFailureHandler 호출");
 
         HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
         ErrorResponseDto errorResponseDto = ErrorResponseDto.of(ErrorType.InternalServerError.name(), ErrorType.InternalServerError.getMessage());

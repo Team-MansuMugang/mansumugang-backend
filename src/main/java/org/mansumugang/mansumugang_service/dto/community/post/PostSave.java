@@ -35,9 +35,7 @@ public class PostSave {
         @NotNull
         private String categoryCode;
 
-
     }
-
 
     @Getter
     @Setter
@@ -45,12 +43,12 @@ public class PostSave {
     @Builder
     public static class Dto{
 
-        private String title; // 게시물 제목
-        private String categoryCode; // 게시물 카테고리
-        private String username; // 게시물 작성자 아이디
-        private String nickname; // 게시물 작성자 닉네임
-        private LocalDateTime createdAt; // 게시물 작성시간
-        private LocalDateTime updatedAt; // 게시물 업데이트 시간
+        private String title;
+        private String categoryCode;
+        private String username;
+        private String nickname;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
 
         public static Dto fromEntity(Post post){
 

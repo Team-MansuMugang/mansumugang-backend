@@ -31,8 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain chain
     ) throws ServletException, IOException {
-        log.info("JwtAuthenticationFilter 호출");
-        // 1. request header 에서 jwt 토큰 추츨
+
         String accessToken = jwtTokenProvider.resolveToken(request.getHeader("Authorization"));
 
         if(accessToken == null){
@@ -40,7 +39,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // 2. validateToken 으로 유효성 검사
         try{
             jwtTokenProvider.validateToken(TokenType.ACCESS_TOKEN, accessToken);
             Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
@@ -65,7 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     public void jwtExceptionHandler(HttpServletResponse response, Exception e) {
-        log.info("Exception Info:" + e.getMessage());
+
         ErrorType errorType = ErrorType.InternalServerError;
         if (e instanceof CustomErrorException) {
             errorType = ((CustomErrorException) e).getErrorType();

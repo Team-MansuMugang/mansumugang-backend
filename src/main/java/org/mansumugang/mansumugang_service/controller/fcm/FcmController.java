@@ -33,9 +33,5 @@ public class FcmController {
         return ResponseEntity.ok(FcmTokenSave.Response.createNewResponse());
     }
 
-//    @PostMapping("/message")
-//    public ResponseEntity<FcmMessage.Response> sendMessage() {
-//        fcmService.sendMessage(Message);
-//        return new ResponseEntity<>(FcmMessage.Response.createNewResponse(), HttpStatus.CREATED);
-//    }
+
 }

@@ -33,12 +33,11 @@ public class Record {
     private Long duration;
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String content; // 녹음파일을 텍스트로 변환한 내용.
+    private String content;
 
     @CreatedDate
     private LocalDateTime createdAt;
 
-    // Patient 와의 관계 정의
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "patient_id", nullable = false)

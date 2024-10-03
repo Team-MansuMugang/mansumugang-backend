@@ -20,6 +20,7 @@ import org.mansumugang.mansumugang_service.exception.CustomErrorException;
 import org.mansumugang.mansumugang_service.exception.InternalErrorException;
 import org.mansumugang.mansumugang_service.repository.*;
 import org.mansumugang.mansumugang_service.service.file.FileService;
+import org.mansumugang.mansumugang_service.service.user.UserCommonService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +40,7 @@ public class PostService {
     private String imageApiUrl;
 
     private final FileService fileService;
+    private final UserCommonService userCommonService;
 
     private final PostRepository postRepository;
     private final PostCategoryRepository postCategoryRepository;
@@ -47,27 +49,22 @@ public class PostService {
     private final PostBookmarkRepository postBookmarkRepository;
     private final CommentRepository commentRepository;
 
-    private final int PAGE_SIZE = 10; // 한 페이지에 보여줄 게시물 개수 -> 한 페이지당 10개.
+    private final int PAGE_SIZE = 10;
 
     @Transactional
     public PostSave.Dto savePostImage(User user, PostSave.Request request, List<MultipartFile> imageFiles){
 
-        log.info("서비스 호출");
 
         List<String> addedImages = new ArrayList<>();
         List<PostImage> postImages = new ArrayList<>();
 
-        // 1. 받은 User 객체가 보호자 객체인지 확인하기.
-        Protector validProtector = validateProtector(user);
+        Protector validProtector = userCommonService.findProtector(user);
 
-        // 2. 지정할 게시물의 카테고리 찾기
         PostCategory foundPostCategory = postCategoryRepository.findByCategoryCode(request.getCategoryCode())
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchCategoryError));
 
-        // 3. 게시물 저장
         Post savedPost = postRepository.save(Post.of(request, foundPostCategory ,validProtector));
 
-        // 4. 이미지 파일 저장.
         savePostImage(imageFiles, addedImages, savedPost, postImages);
 
         return PostSave.Dto.fromEntity(savedPost);
@@ -75,20 +72,17 @@ public class PostService {
 
     public PostInquiry.PostListResponse getPosts(User user,String categoryCode, int pageNo){
 
-        validateProtector(user);
+        userCommonService.findProtector(user);
 
-        // 1번 페이지에서 최신 작성 게시물 순으로 정렬한다는 의미
         Pageable pageable = PageRequest.of(pageNo - 1, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Post> postPage;
 
         if (categoryCode != null && !categoryCode.isEmpty()){
 
-            // 1. 쿼리파라미터로 받은 카테고리가 존재하는지 검증
             PostCategory foundPostCategory = postCategoryRepository.findByCategoryCode(categoryCode)
                     .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchCategoryError));
 
-            // 2. 카테고리로 게시물들 조회
             postPage = postRepository.findAllByPostCategoryId(foundPostCategory.getId(), pageable);
 
         } else{
@@ -101,24 +95,18 @@ public class PostService {
 
     public PostInquiry.PostDetailResponse getPostDetail(User user, Long id){
 
-        Protector validProtector = validateProtector(user);
+        Protector validProtector = userCommonService.findProtector(user);
 
-        // 1. 경로변수로 받은 id로 게시물 조회 -> 없으면 예외 처리
         Post foundPost = postRepository.findById(id).orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchPostError));
 
-        // 2. 찾아진 게시물로 게시물 이미지 조회 -> 게시물 저장시 이미지 저장이 필수가 아니기 때문에 빈 리스트일 수 있음.
         List<PostImage> foundPostImages = postImageRepository.findPostImageByPostId(foundPost.getId());
 
-        // 3. 찾아진 게시물로 좋아요 수 카운트 -> 최솟값 : 0
         Long likeCount = postLikeRepository.countByPostId(foundPost.getId());
 
-        // 4.찾아진 게시물로 북마크 수 카운트 -> 최솟값 : 0
         Long bookmarkCount = postBookmarkRepository.countByPostId(foundPost.getId());
 
-        // 5. 찾아진 게시물로 댓글 수 카운트 -> 최솟값 : 0
         Long commentCount = commentRepository.countByPostId(foundPost.getId());
 
-        // 6. 현재 게시물 상세정보에 접근한 유저가 좋아요를 누른지 판단
         boolean isLiked;
 
         PostLike foundPostLike = postLikeRepository.findByProtectorIdAndPostId(validProtector.getId(), foundPost.getId());
@@ -136,24 +124,18 @@ public class PostService {
         List<String> imageFilesToDelete = new ArrayList<>();
         List<PostImage> postImages = new ArrayList<>();
 
-        // 1. 넘겨받은 user객체가 보호자 객체인지 검증
-        Protector validProtector = validateProtector(user);
+        Protector validProtector = userCommonService.findProtector(user);
 
-        // 2. request에서 postId->게시물 조회 없으면 예외처리.
         Post foundPost = postRepository.findById(request.getPostId())
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchPostError));
 
-        // 3. request 에서 categoryCode 로 카테고리 검색 없으면 예외처리.
         PostCategory foundPostCategory = postCategoryRepository.findByCategoryCode(request.getCategoryCode())
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchCategoryError));
 
-        // 3. user.getUsername 과 게시물 작성자의 아이디가 같은지 검증
         if (!validProtector.getUsername().equals(foundPost.getProtector().getUsername())){
             throw new CustomErrorException(ErrorType.NotTheAuthorOfThePost);
         }
 
-        // (수정사항 : 이미지 파일을 요청으로 받으면 기존의 이미지 삭제 및 요청에 담긴 이미지를 저장.)
-        // 이미지 제거 로직.
         if (imageFiles != null){
             List<PostImage> foundPostImages = postImageRepository.findPostImageByPostId(foundPost.getId());
             for (PostImage foundPostImage : foundPostImages) {
@@ -162,10 +144,8 @@ public class PostService {
             deletePostImages(imageFilesToDelete);
         }
 
-        // 이미지 파일 추가
         savePostImage(imageFiles, addedImages, foundPost, postImages );
 
-        // 4. 게시물 수정 시작
         foundPost.update(request, foundPostCategory);
 
 
@@ -175,44 +155,25 @@ public class PostService {
     @Transactional
     public PostDelete.Dto deletePost(User user, Long postId){
 
-        // 1. 넘겨받은 user객체가 보호자 객체인지 검증
-        Protector validProtector = validateProtector(user);
+        Protector validProtector = userCommonService.findProtector(user);
 
-        // 2. postId->게시물 조회 없으면 예외처리.
         Post foundPost = postRepository.findById(postId)
                 .orElseThrow(() -> new CustomErrorException(ErrorType.NoSuchPostError));
 
         Long foundPostId = foundPost.getId();
         String foundPostTitle = foundPost.getTitle();
 
-        // 3. user.getUsername 과 게시물 작성자의 아이디가 같은지 검증
         if (!validProtector.getUsername().equals(foundPost.getProtector().getUsername())){
             throw new CustomErrorException(ErrorType.NotTheAuthorOfThePost);
         }
 
-        // 4. foundPostId로 게시물의 이미지들 조회 -> postImages에서 삭제, DB에서도 삭제
         deletePostImageFiles(foundPostId);
 
-        // 5. 게시물 삭제
         postRepository.delete(foundPost);
 
         return PostDelete.Dto.fromEntity(foundPostId, foundPostTitle);
     }
 
-    private Protector validateProtector(User user){
-        log.info("AuthenticationPrincipal 로 받은 유저 객체가 보호자 객체인지 검증 시작");
-        if (user == null) {
-            throw new CustomErrorException(ErrorType.UserNotFoundError);
-        }
-
-        if (user instanceof Protector) {
-
-            log.info("보호자 객체 검증 완료");
-            return (Protector) user;
-        }
-
-        throw new CustomErrorException(ErrorType.AccessDeniedError);
-    }
 
     private void savePostImage(List<MultipartFile> imageFiles, List<String> addedImages, Post savedPost, List<PostImage> postImages) {
 

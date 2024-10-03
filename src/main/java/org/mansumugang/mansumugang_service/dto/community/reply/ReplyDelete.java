@@ -14,9 +14,9 @@ public class ReplyDelete {
     @Builder
     public static class Dto{
 
-        private Long replyId; // 삭제된 대댓글의 아이디
+        private Long replyId;
         private Long commentId;
-        private LocalDateTime deletedAt; // 대댓글 삭제 시간.
+        private LocalDateTime deletedAt;
 
         public static Dto fromEntity(Reply deletedReply){
             return Dto.builder()
@@ -34,9 +34,9 @@ public class ReplyDelete {
     public static class Response{
 
         private String message;
-        private Long replyId; // 삭제된 대댓글의 아이디
+        private Long replyId;
         private Long commentId;
-        private LocalDateTime deletedAt; // 대댓글 삭제 시간.
+        private LocalDateTime deletedAt;
 
         public static Response createNewResponse(Dto dto){
             return Response.builder()
