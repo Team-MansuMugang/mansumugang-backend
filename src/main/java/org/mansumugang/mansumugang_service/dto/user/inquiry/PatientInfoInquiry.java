@@ -16,12 +16,12 @@ public class PatientInfoInquiry {
         private String imageApiUrl;
         private Long patientId;
         private String username;
-        private String name; // 환자 이름 추가
+        private String name;
         private String birthdate;
-        private String telephone; // 전화번호 추가
+        private String telephone;
         private String profileImageName;
         private LocalDateTime createdAt;
-        private LocalDateTime updatedAt; // 수정시간 추가
+        private LocalDateTime updatedAt;
         private String usertype;
 
         public static Dto fromEntity(Patient foundPatient, String imageApiUrl){
@@ -48,9 +48,9 @@ public class PatientInfoInquiry {
         private String message;
         private Long patientId;
         private String username;
-        private String name; // 환자 이름 추가
+        private String name;
         private String birthdate;
-        private String telephone; // 전화번호 추가.
+        private String telephone;
         private String profileImageName;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;

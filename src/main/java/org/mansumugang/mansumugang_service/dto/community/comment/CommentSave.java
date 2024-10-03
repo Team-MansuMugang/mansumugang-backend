@@ -33,11 +33,11 @@ public class CommentSave {
     @AllArgsConstructor
     @Builder
     public static class Dto{
-        private Long id; // 게시물 아이디
-        private String nickname; // 댓글 작성자 닉네임
-        private String content; // 댓글 내용
-        private LocalDateTime createdAt; // 댓글 작성시간
-        private LocalDateTime updatedAt; // 댓글 업데이트 시간
+        private Long id;
+        private String nickname;
+        private String content;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
 
         public static Dto fromEntity(Comment savedComment){
             return Dto.builder()
@@ -55,11 +55,11 @@ public class CommentSave {
     @Builder
     public static class Response{
         private String message;
-        private Long id; // 게시물 아이디
-        private String nickname; // 댓글 작성자 닉네임
-        private String content; // 댓글 내용
-        private LocalDateTime createdAt; // 댓글 작성시간
-        private LocalDateTime updatedAt; // 댓글 업데이트 시간
+        private Long id;
+        private String nickname;
+        private String content;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
 
         public static Response createNewResponse(Dto dto){
             return Response.builder()

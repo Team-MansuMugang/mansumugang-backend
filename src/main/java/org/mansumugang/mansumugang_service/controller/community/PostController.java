@@ -32,7 +32,6 @@ public class PostController {
             @Valid @RequestPart(name = "post") PostSave.Request request,
             @RequestPart(name = "imageFiles", required = false)List<MultipartFile> imageFiles
     ){
-        log.info("컨트롤러 호출");
 
         PostSave.Dto dto = postService.savePostImage(user, request, imageFiles);
 
@@ -40,8 +39,6 @@ public class PostController {
 
     }
 
-    // 게시물 미리보기
-    // 쿼리파라미터 -> 게시물 리스트 조회(추가됨.)
     @GetMapping()
     public ResponseEntity<PostInquiry.PostListResponse> getPost(@AuthenticationPrincipal User user,
                                                                 @RequestParam(required = false) String categoryCode,
@@ -53,7 +50,6 @@ public class PostController {
 
     }
 
-    // 게시물 상세정보 조회
     @GetMapping("/{id}")
     public ResponseEntity<PostInquiry.PostDetailResponse> getPost(@AuthenticationPrincipal User user,
                                                                   @PathVariable(name = "id") Long id){
@@ -64,7 +60,6 @@ public class PostController {
 
     }
 
-    // 게시물 수정
     @PatchMapping()
     public ResponseEntity<PostUpdate.Response> updatePost(@AuthenticationPrincipal User user,
                                                           @RequestPart(name = "imageFiles", required = false) List<MultipartFile> imageFiles,
@@ -76,7 +71,6 @@ public class PostController {
         return new ResponseEntity<>(PostUpdate.Response.createNewResponse(dto), HttpStatus.CREATED);
     }
 
-    // 게시물 삭제
     @DeleteMapping("/{id}/delete")
     public ResponseEntity<PostDelete.Response> deletePost(@AuthenticationPrincipal User user,
                                                           @PathVariable(name = "id") Long postId){
