@@ -17,21 +17,21 @@ public class ReplyInquiry {
     @AllArgsConstructor
     @Builder
     private static class ReplyElement{
-        private Long replyId; // 대댓글 고유번호
+        private Long replyId;
 
-        private Long commentId; // 댓글 고유번호
+        private Long commentId;
 
-        private String profileImageName; // 대댓글 작성자 프로필 이미지 파일
+        private String profileImageName;
 
-        private String creator; // 대댓글 작성자(닉네임)
+        private String creator;
 
-        private String content; // 대댓글 내용
+        private String content;
 
-        private LocalDateTime createdAt; // 대댓글 작성시간
+        private LocalDateTime createdAt;
 
-        private LocalDateTime updatedAt; // 대댓글 업데이트 시간
+        private LocalDateTime updatedAt;
 
-        private LocalDateTime deletedAt; // 대댓글 삭제 시간
+        private LocalDateTime deletedAt;
 
         public static ReplyElement fromEntity(Reply reply){
             return ReplyElement.builder()

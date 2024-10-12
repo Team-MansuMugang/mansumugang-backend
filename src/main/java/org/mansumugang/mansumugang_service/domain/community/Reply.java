@@ -36,14 +36,10 @@ public class Reply {
 
     private LocalDateTime deletedAt;
 
-    // 다른 테이블과의 관계
-
-    // 1. 댓글
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     Comment comment;
 
-    // 2. 유저
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     Protector protector;

@@ -62,14 +62,12 @@ public class CommonFileService {
         }
     }
 
-    // 유효한 파일인지 확인
     protected void checkFileValid(MultipartFile file) {
         if (file.isEmpty() || Objects.isNull(file.getOriginalFilename())) {
             throw new InternalErrorException(InternalErrorType.EmptyFileError);
         }
     }
 
-    // 유효한 이미지 파일인지 확인
     protected void checkImageFileValid(MultipartFile imageFile) {
         checkFileValid(imageFile);
 
@@ -77,7 +75,6 @@ public class CommonFileService {
             throw new InternalErrorException(InternalErrorType.EmptyFileError);
         }
 
-        // 파일 확장자 추출 및 검증
         String extension = getFileExtension(imageFile);
         List<String> allowedExtentionList = Arrays.asList("jpg", "jpeg", "png");
         if (!allowedExtentionList.contains(extension)) {
@@ -85,18 +82,15 @@ public class CommonFileService {
         }
     }
 
-    // 유효한 음성 파일인지 확인
     protected void checkAudioFileValid(MultipartFile audioFile) {
         checkFileValid(audioFile);
 
-        // 파일 확장자 추출 및 검증
         String extension = getFileExtension(audioFile);
         if (!extension.equals("mp3")) {
             throw new InternalErrorException(InternalErrorType.InvalidFileExtension);
         }
     }
 
-    // 파일 확장자 추출
     protected String getFileExtension(MultipartFile file) {
         String filename = file.getOriginalFilename();
         if (filename == null) {
@@ -111,9 +105,8 @@ public class CommonFileService {
         return filename.substring(lastDotIndex + 1).toLowerCase();
     }
 
-    // UUID를 이용하여 파일이름 생성
     protected String generateUniqueFileName(MultipartFile file) {
-        // UUID 생성 및 하이픈 제거
+
         String fileExtension = getFileExtension(file);
         String uuid = UUID.randomUUID().toString().replaceAll("-", "");
         return uuid + "." + fileExtension;

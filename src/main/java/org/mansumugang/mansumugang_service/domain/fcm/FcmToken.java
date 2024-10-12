@@ -32,8 +32,6 @@ public class FcmToken {
     @CreatedDate
     private LocalDateTime createdAt;
 
-
-    // Protector 와의 관계 정의
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "protector_id", nullable = false)
