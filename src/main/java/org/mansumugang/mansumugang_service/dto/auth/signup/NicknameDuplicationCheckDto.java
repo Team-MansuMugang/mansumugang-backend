@@ -11,5 +11,5 @@ public class NicknameDuplicationCheckDto {
 
     @NotBlank(message = "닉네임은 공백일 수 없습니다.")
     @Size(max = 20, message = "닉네임은 최대 20자리까지 입력해주세요.")
-    String nickname; // 사용자 닉네임
+    String nickname;
 }

@@ -22,20 +22,19 @@ public class PostUpdate {
     public static class Request{
 
         @NotNull(message = "값이 null이면 안됩니다.")
-        private Long postId; // 수정할 게시물 아이디
+        private Long postId;
 
         @NotBlank
         @Size(min = 2, message = "제목은 2글자 이상이어야 합니다!")
-        private String title; // 수정할 게시물 제목
+        private String title;
 
         @NotBlank
         @Size(min = 2, message = "내용은 2글자 이상이어야 합니다!")
-        private String content; // 수정할 게시물 내용
+        private String content;
 
         @NotNull(message = "값이 null이면 안됩니다.")
-        private String categoryCode; // 수정할 게시물 카테고리코드
+        private String categoryCode;
 
-//        private List<String> imageFilesToDelete; // 제거할 이미지 파일들
 
     }
 
@@ -43,9 +42,9 @@ public class PostUpdate {
     @AllArgsConstructor
     @Builder
     public static class Dto{
-        private Long postId; // 수정된 게시물 아이디
+        private Long postId;
         private String title;
-        private String nickname; // 수정된 게시물의 작성자(닉네임)
+        private String nickname;
         private String content;
         private String categoryCode;
         private LocalDateTime updatedAt;
@@ -67,9 +66,9 @@ public class PostUpdate {
     @Builder
     public static class Response{
         private String message;
-        private Long postId; // 수정된 게시물 아이디
+        private Long postId;
         private String title;
-        private String nickname; // 수정된 게시물의 작성자(닉네임)
+        private String nickname;
         private String content;
         private String categoryCode;
         private LocalDateTime updatedAt;

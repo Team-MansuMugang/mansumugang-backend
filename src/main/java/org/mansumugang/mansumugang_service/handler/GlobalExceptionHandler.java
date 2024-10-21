@@ -8,6 +8,7 @@ import org.mansumugang.mansumugang_service.exception.CustomNotValidErrorExceptio
 import org.mansumugang.mansumugang_service.exception.ErrorResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.validation.BindException;
@@ -15,6 +16,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
@@ -73,6 +75,18 @@ public class GlobalExceptionHandler {
                 );
 
         return new ResponseEntity<>(errorResponseDto, ErrorType.AccessDeniedError.getHttpStatus());
+    }
+
+    // JSON 문법 오류 등으로 인한 파싱 실패 시 처리
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponseDto> handleJsonParseException(HttpMessageNotReadableException e) {
+        ErrorResponseDto errorResponseDto = ErrorResponseDto.of(
+                ErrorType.NotValidRequestBodyError.name(),
+                ErrorType.NotValidRequestBodyError.getMessage()
+        );
+
+        return new ResponseEntity<>(errorResponseDto, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(BindException.class)

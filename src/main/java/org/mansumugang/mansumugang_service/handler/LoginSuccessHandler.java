@@ -28,9 +28,6 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
-        log.info("LoginSuccessHandler 호출");
-
-        // SecurityContext 에서 UserDetails 객체 가져오기
         User user = (User)authentication.getPrincipal();
         String usertype = user.getUsertype();
 

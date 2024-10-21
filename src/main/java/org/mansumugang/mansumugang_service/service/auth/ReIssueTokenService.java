@@ -19,18 +19,12 @@ public class ReIssueTokenService {
     private final JwtTokenProvider jwtTokenProvider;
 
     public ReissueTokenDto reissueToken(String accessToken, String refreshToken){
-        log.info("reissueToken 호출");
 
         ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
 
-        // 1. 토큰 리졸브
         String resolvedAccessToken = jwtTokenProvider.resolveToken(accessToken);
         String resolvedRefreshToken = jwtTokenProvider.resolveToken(refreshToken);
 
-        log.info("resolve 된 accessToken={}", resolvedAccessToken);
-        log.info("resolve 된 refreshToken={}", resolvedRefreshToken);
-
-        // resolve 된 access/refresh token 이 null 이라면 예외 발생
         if (resolvedAccessToken == null){
             throw new CustomErrorException(ErrorType.NotValidAccessTokenError);
         }
@@ -39,17 +33,12 @@ public class ReIssueTokenService {
             throw new CustomErrorException(ErrorType.NotValidRefreshTokenError);
         }
 
-        // 2. redis 에 저장된 토큰 가져오기
         String savedAccessToken = valueOperations.get(resolvedRefreshToken);
 
         if(savedAccessToken == null){
             throw new CustomErrorException(ErrorType.NoSuchRefreshTokenError);
         }
 
-        log.info("토큰 가져오기 성공, savedAccessToken={}", savedAccessToken);
-
-        // 3. refreshToken 유효성 검사
-        log.info("refreshToken 유효성 검사 시작");
         boolean isRefreshTokenExpired = jwtTokenProvider.isTokenExpired(TokenType.REFRESH_TOKEN, resolvedRefreshToken);
 
         if (isRefreshTokenExpired){
@@ -61,19 +50,14 @@ public class ReIssueTokenService {
             valueOperations.getAndDelete(resolvedRefreshToken);
             throw new CustomErrorException(ErrorType.NoSuchAccessTokenError);
         }
-        log.info("refreshToken 유효성 검사 완료");
 
-        // 4. accessToken 유효성 검사
-        log.info("acessToken 유효성 검사 시작");
         boolean isAccessTokenExpired = jwtTokenProvider.isTokenExpired(TokenType.ACCESS_TOKEN, resolvedAccessToken);
 
         if (!isAccessTokenExpired){
             valueOperations.getAndDelete(resolvedRefreshToken);
             throw new CustomErrorException(ErrorType.NotExpiredAccessTokenError);
         }
-        log.info("accessToken 유효성 검사 완료");
 
-        // 5. 토큰 재발행
         String reissueToken = jwtTokenProvider.reIssueToken(resolvedAccessToken);
         valueOperations.getAndDelete(resolvedRefreshToken);
         valueOperations.set(resolvedRefreshToken, reissueToken);

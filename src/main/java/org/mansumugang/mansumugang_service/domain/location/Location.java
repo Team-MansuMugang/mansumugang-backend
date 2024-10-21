@@ -35,12 +35,10 @@ public class Location {
     @CreatedDate
     private LocalDateTime createdAt;
 
-    // Patient 와의 관계 정의
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
-
 
 
     public Location(double latitude, double longitude, LocalDateTime createdAt, Patient patient) {

@@ -24,13 +24,12 @@ public class PatientLocationController {
 
     private final UserLocationService userLocationService;
 
-    // 환자 현재 위치 정보 저장
     @PostMapping("/save")
     public ResponseEntity<PatientLocation.Response> saveUserLocation(
-            @AuthenticationPrincipal User patient,
+            @AuthenticationPrincipal User user,
             @RequestBody PatientLocationRequestDto patientLocationRequestDto
     ){
-        PatientLocation.Dto patientLocationDto = userLocationService.saveUserLocation(patient, patientLocationRequestDto);
+        PatientLocation.Dto patientLocationDto = userLocationService.saveUserLocation(user, patientLocationRequestDto);
 
 
         return new ResponseEntity<>(PatientLocation.Response.fromDto(patientLocationDto), HttpStatus.CREATED);
@@ -38,22 +37,22 @@ public class PatientLocationController {
 
     @GetMapping("/user/{patient_id}")
     public ResponseEntity<PatientLocation.Response> getUserLatestLocation(
-            @AuthenticationPrincipal User protector,
+            @AuthenticationPrincipal User user,
             @PathVariable("patient_id") Long patientId
     ){
-        PatientLocation.Dto patientLocationDto = userLocationService.getUserLatestLocation(protector, patientId);
+        PatientLocation.Dto patientLocationDto = userLocationService.getUserLatestLocation(user, patientId);
 
         return new ResponseEntity<>(PatientLocation.Response.fromDto(patientLocationDto), HttpStatus.OK);
     }
 
     @GetMapping("/user")
     public ResponseEntity<PatientLocationList.Response> getUserLocationWithinRange(
-            @AuthenticationPrincipal User protector,
+            @AuthenticationPrincipal User user,
             @RequestParam("patient_id") Long patientId,
             @RequestParam("time") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)  LocalDateTime standardTime
     ){
 
-        PatientLocationList.Dto userLocationWithinRange = userLocationService.getUserLocationWithinRange(protector, patientId, standardTime);
+        PatientLocationList.Dto userLocationWithinRange = userLocationService.getUserLocationWithinRange(user, patientId, standardTime);
 
         return ResponseEntity.ok(PatientLocationList.Response.fromDto(userLocationWithinRange));
     }
