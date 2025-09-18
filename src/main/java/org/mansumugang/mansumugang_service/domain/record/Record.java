@@ -64,5 +64,9 @@ public class Record {
                 .build();
     }
 
+    void updateContent(String content) {
+        this.content = content;
+    }
+
 
 }

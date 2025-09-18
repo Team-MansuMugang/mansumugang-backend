@@ -19,6 +19,7 @@ import org.mansumugang.mansumugang_service.repository.RecordRepository;
 import org.mansumugang.mansumugang_service.service.file.FileService;
 import org.mansumugang.mansumugang_service.service.user.UserCommonService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,7 +39,7 @@ public class RecordService {
 
     private final FileService fileService;
 
-    private final OpenAIClientService openAIClientService;
+    private final RecordAsyncService recordAsyncService;
     private final UserCommonService userCommonService;
 
     @Value("${file.upload.audio.api}")
@@ -61,16 +62,15 @@ public class RecordService {
         }
         try {
             AudioFileSaveDto audioFileSaveDto = fileService.saveAudioFile(recordFile);
-
-            WhisperTranscription.Response transcription = openAIClientService.createTranscription(request);
-            String transcriptionText = transcription.getText();
-
             Record newRecord = recordRepository.save(
                     Record.of(
                             validPatient,
                             audioFileSaveDto.getFileName(),
-                            transcriptionText,
+                            "녹음 내용을 분석하고 있어요!\n잠시만 기다려주세요.",
                             audioFileSaveDto.getAudioDuration()));
+
+            // 비동기로 STT 진행
+            recordAsyncService.updateTranscriptionAsync(newRecord, request);
 
             return RecordSave.Dto.getInfo(newRecord);
         } catch (InternalErrorException e) {
