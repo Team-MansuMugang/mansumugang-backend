@@ -22,14 +22,10 @@ public class PostLike {
 
     private boolean status;
 
-    // 다른 테이블과의 관계
-
-    // 1. 게시물
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Post post;
 
-    // 2. 유저
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Protector protector;

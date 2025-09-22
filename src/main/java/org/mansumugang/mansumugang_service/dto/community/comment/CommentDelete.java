@@ -14,9 +14,9 @@ public class CommentDelete {
     @AllArgsConstructor
     @Builder
     public static class Dto{
-        private Long commentId; // 삭제된 댓글의 아이디
-        private Long postId; // 삭제된 댓글의 게시물 아이디
-        private LocalDateTime deletedAt; // 대댓글 삭제 시간.
+        private Long commentId;
+        private Long postId;
+        private LocalDateTime deletedAt;
 
         public static Dto fromEntity(Comment deletedComment){
             return Dto.builder()
@@ -32,9 +32,9 @@ public class CommentDelete {
     @Builder
     public static class Response{
         private String message;
-        private Long commentId; // 삭제된 댓글의 아이디
-        private Long postId; // 삭제된 댓글의 게시물 아이디
-        private LocalDateTime deletedAt; // 대댓글 삭제 시간.
+        private Long commentId;
+        private Long postId;
+        private LocalDateTime deletedAt;
 
         public static Response CreateNewResponse(Dto dto){
             return Response.builder()

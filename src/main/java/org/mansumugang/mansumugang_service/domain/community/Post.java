@@ -24,29 +24,25 @@ public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // 게시물 고유번호
+    private Long id;
 
     @Column(nullable = false)
-    private String title; // 제목
+    private String title;
 
-     // 가변길이를 갖는 큰 데이터를 처리할 때 사용함.
      @Column(columnDefinition = "TEXT")
-     private String content; // 내용
+     private String content;
 
     @CreatedDate
-    private LocalDateTime createdAt; // 작성 시간
+    private LocalDateTime createdAt;
 
     @LastModifiedDate
-    private LocalDateTime updatedAt; // 업데이트 시간
+    private LocalDateTime updatedAt;
 
-    // 다른테이블과의 연관 관계
 
-    // 0. 유저
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Protector protector;
 
-    // 1. 카테고리
     @ManyToOne(fetch = FetchType.LAZY)
     private PostCategory postCategory;
 

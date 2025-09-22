@@ -23,12 +23,10 @@ import org.springframework.stereotype.Service;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
-    private final PatientRepository patientRepository;
-    private final ProtectorRepository protectorRepository;
+
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        log.info("UserDetailsService 호출");
 
         return userRepository.findByUsername(username).orElseThrow(()->
                  new CustomErrorException(ErrorType.UserNotFoundError));

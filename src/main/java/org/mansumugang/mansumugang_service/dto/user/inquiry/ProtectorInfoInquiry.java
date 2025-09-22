@@ -16,14 +16,14 @@ public class ProtectorInfoInquiry {
         private String imageApiUrl;
         private Long protectorId;
         private String username;
-        private String name; // 유저 실명 추가
+        private String name;
         private String email;
         private String nickname;
         private String birthdate;
-        private String telephone; // 전화번호 추가
+        private String telephone;
         private String profileImageName;
         private LocalDateTime createdAt;
-        private LocalDateTime updatedAt; // 수정시간 추가
+        private LocalDateTime updatedAt;
         private String usertype;
 
         public static Dto fromEntity(Protector foundProtector, String imageApiUrl){
@@ -52,11 +52,11 @@ public class ProtectorInfoInquiry {
         private String message;
         private Long protectorId;
         private String username;
-        private String name; // 유저 실명 추가
+        private String name;
         private String email;
         private String nickname;
         private String birthdate;
-        private String telephone; // 전화번호 추가.
+        private String telephone;
         private String profileImageName;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;

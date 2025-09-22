@@ -1,12 +1,10 @@
 package org.mansumugang.mansumugang_service.dto.medicine;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import org.mansumugang.mansumugang_service.validation.ValidDate;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
@@ -33,7 +31,6 @@ public class MedicineUpdate {
 
         private List<DayOfWeek> medicineIntakeDayToDelete;
 
-        @ValidDate(message = "유효하지 않은 날짜 형식입니다.")
         private String medicineIntakeStopDay;
     }
 

@@ -30,27 +30,27 @@ public abstract class User implements UserDetails {
     @Column(name = "user_id")
     private Long id;
 
-    private String username; // 유저 id
+    private String username;
 
-    private String password; // 비밀번호
+    private String password;
 
-    private String name; // 이름
+    private String name;
 
-    private String birthdate; // 사용자 생년월일
+    private String birthdate;
 
-    private String telephone; // 사용자 전화번호
+    private String telephone;
 
-    private String usertype; // 환자, 보호자 구분
+    private String usertype;
 
-    private String profileImageName; // 사용자 프로필 이미지
+    private String profileImageName;
 
-    private String authority; // 사용자 권한 : User / Admin
+    private String authority;
 
     @CreatedDate
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    private LocalDateTime updatedAt; // 유저 정보 업데이트 시간
+    private LocalDateTime updatedAt;
 
 
     public User(

@@ -89,7 +89,6 @@ public class UserController {
         return new ResponseEntity<>(UserProfileImageDelete.Response.createNewResponse(), HttpStatus.CREATED);
     }
 
-    // 유저 정보 수정
     @PatchMapping("/protector/{id}")
     public ResponseEntity<ProtectorInfoUpdate.Response> updateProtectorInfo(@AuthenticationPrincipal User user,
                                                                             @PathVariable(name = "id") Long protectorId,

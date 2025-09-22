@@ -7,8 +7,7 @@ import lombok.Getter;
 @Getter
 public enum FileType {
     AUDIO("audios/"),
-    IMAGE("images/"),
-    POST_IMAGE("postImages/");
+    IMAGE("images/");
 
     private final String s3Path;
 }

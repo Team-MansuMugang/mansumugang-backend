@@ -24,21 +24,6 @@ public class MedicineController {
         return new ResponseEntity<>(MedicineDetailGet.Response.fromDto(dto), HttpStatus.OK);
     }
 
-    @GetMapping("/protector")
-    public ResponseEntity<MedicineSummaryInfo.Response> getMedicineSummaryInfoByDate(@AuthenticationPrincipal User user,
-                                                                                     @RequestParam(required = true) String date,
-                                                                                     @RequestParam(required = true) Long patientId) {
-        MedicineSummaryInfo.Dto medicineByDate = medicineService.getMedicineSummaryInfoByDate(user, patientId, date);
-        return new ResponseEntity<>(MedicineSummaryInfo.Response.fromDto(medicineByDate), HttpStatus.OK);
-    }
-
-    @GetMapping("/patient")
-    public ResponseEntity<MedicineSummaryInfo.Response> getMedicineSummaryInfoByDate(@AuthenticationPrincipal User user,
-                                                                                     @RequestParam(required = true) String date) {
-        MedicineSummaryInfo.Dto medicineByDate = medicineService.getMedicineSummaryInfoByDate(user, date);
-        return new ResponseEntity<>(MedicineSummaryInfo.Response.fromDto(medicineByDate), HttpStatus.OK);
-    }
-
     @PostMapping()
     public ResponseEntity<MedicineSave.Response> saveMedicine(@AuthenticationPrincipal User user,
                                                               @RequestPart(name = "image", required = false) MultipartFile medicineImage,

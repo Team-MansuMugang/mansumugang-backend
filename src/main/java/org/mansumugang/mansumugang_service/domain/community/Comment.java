@@ -36,10 +36,6 @@ public class Comment {
 
     private LocalDateTime deletedAt;
 
-
-    // 다른 테이블과의 관계
-
-    // 1. 게시물
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     Post post;

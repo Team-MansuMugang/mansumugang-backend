@@ -15,7 +15,7 @@ public class RecordSave {
     public static class Dto{
         private String recordFileName;
         private Long recordDuration;
-        private String recordContent; // 음성파일 내용 텍스트 변환 결과 추가
+        private String recordContent;
         private String name;
 
         public static Dto getInfo(Record newRecord){

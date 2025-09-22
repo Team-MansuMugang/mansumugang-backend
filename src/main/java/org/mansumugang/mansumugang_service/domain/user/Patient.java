@@ -19,13 +19,11 @@ import java.util.List;
 @Getter
 public class Patient extends User {
 
-    // Protector 와의 관계 정의
     @ManyToOne(fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "protector_id", nullable = false)
     private Protector protector;
 
-    // UserLocation 과의 관계 추가
     @OneToMany(mappedBy = "patient")
     private List<Location> userLocations;
 

@@ -22,6 +22,7 @@ public class HospitalController {
     @GetMapping("/{hospitalId}")
     public ResponseEntity<HospitalDetailGet.Response> getHospitalDetail(@AuthenticationPrincipal User user,
                                                                         @PathVariable Long hospitalId) {
+
         HospitalDetailGet.Dto dto = hospitalService.getHospitalDetail(user, hospitalId);
         return new ResponseEntity<>(HospitalDetailGet.Response.fromDto(dto), HttpStatus.OK);
     }
@@ -43,7 +44,7 @@ public class HospitalController {
     }
 
     @DeleteMapping("/{hospitalId}")
-    public ResponseEntity<HospitalDelete.Response> updateHospital(@AuthenticationPrincipal User user,
+    public ResponseEntity<HospitalDelete.Response> deleteHospital(@AuthenticationPrincipal User user,
                                                                   @PathVariable Long hospitalId) {
         hospitalService.deleteHospital(user, hospitalId);
         return new ResponseEntity<>(HospitalDelete.Response.createNewResponse(), HttpStatus.CREATED);
